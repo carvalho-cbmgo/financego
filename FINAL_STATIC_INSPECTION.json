@@ -1,0 +1,23 @@
+{
+  "demo_profile_hits": [
+    "scripts/test-nubank-csv.ts",
+    "scripts/test-refunds-nubank.ts",
+    "src/app/api/demo/seed/route.ts"
+  ],
+    "README.md",
+    "DEPLOY_CHECKLIST.md",
+    "NOTIFICACOES_BANCARIAS.md",
+    "supabase/schema.sql",
+    "scripts/sync-core.ts",
+    "src/app/api/statements/import/route.ts",
+    "src/app/api/notifications/ingest/route.ts",
+    "src/app/api/demo/seed/route.ts"
+  ],
+  "static_secret_hits": [
+    "NOTIFICACOES_BANCARIAS.md",
+    "android-notification-forwarder/README.md",
+    "src/app/api/notifications/batch/route.ts"
+  ],
+  "page_supabase_admin_imports": [],
+  "rls_count": 13
+}

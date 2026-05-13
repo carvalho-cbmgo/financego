@@ -1,0 +1,17 @@
+{
+  "error_fixed": "Cannot find name 'supabaseAdmin' in src/app/dashboard/page.tsx and related pages",
+  "issues_before": [
+    "src/app/dashboard/page.tsx"
+  ],
+  "patched_pages": [
+    "src/app/dashboard/page.tsx",
+    "src/app/budgets/page.tsx",
+    "src/app/goals/page.tsx",
+    "src/app/notifications/page.tsx",
+    "src/app/charts/page.tsx",
+    "src/app/statements/page.tsx",
+    "src/app/refunds/page.tsx"
+  ],
+  "issues_after": [],
+  "recommendation": "Run npm run build again. If another file appears, send the new error."
+}

@@ -1,0 +1,6 @@
+{
+  "fixed_error": "supabaseUrl is required during next build / collecting page data",
+  "patched_file": "src/lib/supabase.ts",
+  "added_file": ".env.local.example",
+  "supabase_top_level_create_client_remaining": []
+}

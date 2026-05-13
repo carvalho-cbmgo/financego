@@ -1,0 +1,17 @@
+{
+  "fixed_error": "Parameter 'tx' implicitly has an 'any' type",
+  "main_file": "src/app/api/android/daily-summary/route.ts",
+  "patched_files": [
+    "src/app/api/android/daily-summary/route.ts",
+    "src/app/api/export/pdf/route.ts",
+    "src/app/api/statements/import/route.ts",
+    "src/app/budgets/page.tsx",
+    "src/app/charts/page.tsx",
+    "src/app/dashboard/page.tsx",
+    "src/app/goals/page.tsx",
+    "src/app/notifications/page.tsx",
+    "src/app/refunds/page.tsx",
+    "src/app/statements/page.tsx"
+  ],
+  "next_step": "Run npm run build again."
+}

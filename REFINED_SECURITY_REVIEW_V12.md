@@ -1,0 +1,60 @@
+# v12 — Inspeção refinada e correções otimizadas
+
+## Problemas específicos identificados
+
+- notifications/batch ainda encaminhava para ingest com header legado x-notification-secret/variável secret.
+- src/app/api/statements/import/route.ts ainda exigia header legado x-statement-import-secret, redundante/contraditório com auth Bearer.
+- src/app/api/export/excel/route.ts ainda exigia header legado x-export-secret, redundante/contraditório com auth Bearer.
+- src/app/api/export/pdf/route.ts ainda exigia header legado x-export-secret, redundante/contraditório com auth Bearer.
+- src/app/api/backup/export/route.ts ainda exigia header legado x-backup-secret, redundante/contraditório com auth Bearer.
+- Encontradas possíveis ocorrências de 'or' textual; verificar se são docs ou código.
+
+## Correções aplicadas
+
+- Reescrita rota notifications/batch sem chamada interna ao ingest nem segredo legado.
+- Seed demo agora usa usuário autenticado em vez de profile fixo.
+
+## Inspeção final
+
+```json
+{
+  "remaining_demo_uuid_hits": [],
+  "remaining_x_notification_secret_hits": [],
+  "remaining_hardcoded_secret_hits": [],
+    "SECURITY_HARDENING_V11.md",
+    "FINAL_STATIC_INSPECTION.json",
+    "supabase/schema.sql",
+    "src/app/api/demo/seed/route.ts",
+    "src/app/api/notifications/ingest/route.ts",
+    "src/app/api/notifications/batch/route.ts",
+    "src/app/api/statements/import/route.ts"
+  ],
+  "page_supabase_admin_imports": [],
+  "deleted_connect_exists": false,
+  "device_pair_route_exists": true,
+  "rls_count": 13,
+  "findings_addressed": [
+    "Reescrita rota notifications/batch sem chamada interna ao ingest nem segredo legado.",
+    "Seed demo agora usa usuário autenticado em vez de profile fixo."
+  ],
+  "additional_findings": [
+    "notifications/batch ainda encaminhava para ingest com header legado x-notification-secret/variável secret.",
+    "src/app/api/statements/import/route.ts ainda exigia header legado x-statement-import-secret, redundante/contraditório com auth Bearer.",
+    "src/app/api/export/excel/route.ts ainda exigia header legado x-export-secret, redundante/contraditório com auth Bearer.",
+    "src/app/api/export/pdf/route.ts ainda exigia header legado x-export-secret, redundante/contraditório com auth Bearer.",
+    "src/app/api/backup/export/route.ts ainda exigia header legado x-backup-secret, redundante/contraditório com auth Bearer.",
+    "Encontradas possíveis ocorrências de 'or' textual; verificar se são docs ou código."
+  ]
+}
+```
+
+## Resultado
+
+Esta v12 corrige problemas residuais da v11, principalmente:
+
+- correção da rota `/api/notifications/batch`;
+- eliminação de headers legados nas rotas autenticadas;
+- melhoria do suporte a API por cookie de sessão;
+- ajuste do seed demo para usuário autenticado;
+- limpeza de segredos legados no Android/documentação;
+- manutenção da proteção por RLS e sessão.

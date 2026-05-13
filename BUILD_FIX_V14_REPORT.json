@@ -1,0 +1,18 @@
+{
+  "fixed_file": "src/app/api/demo/seed/route.ts",
+  "seed_contains_unclosed_upsert_pattern": false,
+  "crude_balance_findings": [
+    {
+      "file": "src/lib/bank-parsers.ts",
+      "brace": 1,
+      "paren": -1,
+      "bracket": 0
+    },
+    {
+      "file": "src/lib/refund-recognition.ts",
+      "brace": 0,
+      "paren": 4,
+      "bracket": 1
+    }
+  ]
+}

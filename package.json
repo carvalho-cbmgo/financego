@@ -1,0 +1,27 @@
+{
+  "name": "finance-mvp-v17-typescript-callback-fix",
+  "version": "0.17.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "sync:worker": "tsx scripts/sync-worker.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "exceljs": "^4.4.0",
+    "jspdf": "^2.5.2",
+    "pdf-parse": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.8",
+    "@types/react": "^19.0.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "@types/pdf-parse": "^1.1.5"
+  }
+}
