@@ -36,6 +36,12 @@ export type ParsedBankTransaction = {
   originalRefundMerchant?: string;
 };
 
+function ensureKnownType(type: ParsedBankTransaction["type"] | null | undefined): "debit" | "credit" | "transfer" {
+  if (type === "credit" || type === "debit" || type === "transfer") return type;
+  // Regra de fallback: na duvida, usa despesa.
+  return "debit";
+}
+
 function normalize(input?: string | null) {
   return (input || "")
     .normalize("NFD")
@@ -84,7 +90,7 @@ function baseBuild(args: {
     description,
     merchant,
     postedAt: args.postedAt,
-    type: refund.isRefund ? "credit" : (args.type || guessType(description, args.amount)),
+    type: ensureKnownType(refund.isRefund ? "credit" : (args.type || guessType(description, args.amount))),
     category: refund.isRefund ? "Estornos" : ai.category,
     subcategory: refund.isRefund ? "Crédito de estorno" : ai.subcategory,
     confidence: refund.isRefund ? 0.99 : ai.confidence,
@@ -117,7 +123,7 @@ function guessType(text: string, amount: number): ParsedBankTransaction["type"] 
   if (amount > 0) return "credit";
   if (/pix|transferencia|ted|doc/.test(s)) return "transfer";
   if (/compra|pagamento|debito|cartao|parcela/.test(s)) return "debit";
-  return amount < 0 ? "debit" : "unknown";
+  return "debit";
 }
 
 function extractMerchant(text: string) {

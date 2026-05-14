@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < txs.length; i++) {
       const [description, amount, app_category, app_subcategory, posted_at] = txs[i];
+      const type = Number(amount) > 0 ? "credit" : "debit";
 
       const { error: txUpsertError } = await supabaseAdmin.from("transactions").upsert(
         {
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
           description,
           amount,
           posted_at,
+          type,
           app_category,
           app_subcategory,
           source_category: "demo",
