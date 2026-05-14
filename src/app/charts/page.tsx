@@ -11,7 +11,7 @@ export default async function ChartsPage() {
   const ref = monthRef();
   const { data: txs } = await supabaseAdmin
     .from("transactions")
-    .select("amount, app_category, posted_at")
+    .select("amount, app_category, posted_at, is_consolidated")
     .gte("posted_at", `${ref}-01T00:00:00.000Z`);
 
   const byCategory = new Map<string, number>();
@@ -19,7 +19,7 @@ export default async function ChartsPage() {
 
   for (const tx of txs || []) {
     const amount = Number(tx.amount || 0);
-    if (amount < 0) {
+    if (tx.is_consolidated !== false && amount < 0) {
       const value = Math.abs(amount);
       total += value;
       const category = tx.app_category || "Outros";

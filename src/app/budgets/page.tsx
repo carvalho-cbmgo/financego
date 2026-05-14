@@ -10,11 +10,11 @@ export default async function BudgetsPage() {
   const supabaseAdmin = createUserDb(accessToken);
   const ref = monthRef();
   const { data: budgets } = await supabaseAdmin.from("budgets").select("id, category, planned_amount").eq("profile_id", user.id).eq("month_ref", ref).order("category");
-  const { data: monthTxs } = await supabaseAdmin.from("transactions").select("amount, app_category, posted_at").gte("posted_at", `${ref}-01T00:00:00.000Z`);
+  const { data: monthTxs } = await supabaseAdmin.from("transactions").select("amount, app_category, posted_at, is_consolidated").gte("posted_at", `${ref}-01T00:00:00.000Z`);
 
   const spentByCategory = new Map<string, number>();
   for (const tx of (monthTxs || []) as any[]) {
-    if (Number(tx.amount) < 0) {
+    if (tx.is_consolidated !== false && Number(tx.amount) < 0) {
       const key = tx.app_category || "Outros";
       spentByCategory.set(key, (spentByCategory.get(key) || 0) + Math.abs(Number(tx.amount)));
     }

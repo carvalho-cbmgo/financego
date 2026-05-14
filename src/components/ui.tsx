@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ReactNode } from "react";
 
 export function PageShell({ children }: { children: ReactNode }) {
@@ -9,13 +9,14 @@ export function PageShell({ children }: { children: ReactNode }) {
           <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>Finance MVP</div>
           <nav style={{ display: "grid", gap: 10 }}>
             <NavLink href="/dashboard">Dashboard</NavLink>
-            <NavLink href="/dashboard?tab=transactions">Transações</NavLink>
-            <NavLink href="/budgets">Orçamento</NavLink>
+            <NavLink href="/dashboard?tab=transactions">Transacoes</NavLink>
+            <NavLink href="/accounts">Contas</NavLink>
+            <NavLink href="/budgets">Orcamento</NavLink>
             <NavLink href="/goals">Metas</NavLink>
-            <NavLink href="/notifications">Notificações</NavLink>
-            <NavLink href="/charts">Gráficos</NavLink>
+            <NavLink href="/notifications">Notificacoes</NavLink>
+            <NavLink href="/charts">Graficos</NavLink>
             <NavLink href="/statements">Importar fatura</NavLink>
-            <NavLink href="/exports">Exportações</NavLink>
+            <NavLink href="/exports">Exportacoes</NavLink>
             <NavLink href="/refunds">Estornos</NavLink>
             <NavLink href="/login">Login</NavLink>
           </nav>
@@ -28,14 +29,17 @@ export function PageShell({ children }: { children: ReactNode }) {
 
 function NavLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} style={{
-      padding: "10px 12px",
-      borderRadius: 10,
-      background: "rgba(255,255,255,0.08)",
-      color: "#fff",
-      textDecoration: "none",
-      display: "block"
-    }}>
+    <Link
+      href={href}
+      style={{
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: "rgba(255,255,255,0.08)",
+        color: "#fff",
+        textDecoration: "none",
+        display: "block",
+      }}
+    >
       {children}
     </Link>
   );

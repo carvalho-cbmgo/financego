@@ -315,3 +315,11 @@ alter table audit_logs enable row level security;
 drop policy if exists "audit_logs_own_select" on audit_logs;
 create policy "audit_logs_own_select" on audit_logs for select using (profile_id = auth.uid());
 create index if not exists idx_audit_logs_profile_created on audit_logs(profile_id, created_at desc);
+
+-- v18: contas por banco/tipo e consolidacao de transacoes
+alter table transactions add column if not exists is_consolidated boolean not null default true;
+alter table statement_imports add column if not exists account_id uuid references accounts(id) on delete set null;
+
+create index if not exists idx_accounts_profile_bank on accounts(profile_id, institution_name);
+create index if not exists idx_transactions_profile_account_posted on transactions(profile_id, account_id, posted_at desc);
+create index if not exists idx_transactions_profile_consolidated on transactions(profile_id, is_consolidated, posted_at desc);

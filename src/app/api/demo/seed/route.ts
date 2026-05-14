@@ -88,6 +88,7 @@ export async function POST(req: NextRequest) {
         {
           profile_id: profileId,
           account_id: conta?.id,
+          bank_key: "generic",
           dedupe_hash: `demo-${profileId}-${i + 1}`,
           description,
           amount,
@@ -96,6 +97,7 @@ export async function POST(req: NextRequest) {
           app_category,
           app_subcategory,
           source_category: "demo",
+          is_consolidated: true,
           status: "posted",
           currency_code: "BRL",
           raw: { demo: true },

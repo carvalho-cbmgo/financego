@@ -4,6 +4,7 @@ import { auditLog } from "@/lib/audit-log";
 import { getDeviceByToken } from "@/lib/device-auth";
 import { parseNotificationByBank } from "@/lib/bank-parsers";
 import { supabaseAdmin } from "@/lib/supabase";
+import { ensureAccountForBank } from "@/lib/accounts";
 
 async function saveParsedNotification(body: any, profileId: string, devicePublicId?: string | null) {
   const parsed = parseNotificationByBank({
@@ -34,11 +35,13 @@ async function saveParsedNotification(body: any, profileId: string, devicePublic
 
   if (eventError) throw eventError;
   if (!parsed) return { ok: true, parsed: false, event_id: event?.id };
+  const accountId = await ensureAccountForBank(profileId, parsed.bankKey);
 
   const { data: tx, error: txError } = await supabaseAdmin
     .from("transactions")
     .upsert({
       profile_id: profileId,
+      account_id: accountId,
       bank_key: parsed.bankKey,
       dedupe_hash: parsed.dedupeHash,
       description: parsed.description,
@@ -58,6 +61,7 @@ async function saveParsedNotification(body: any, profileId: string, devicePublic
       source_device_id: devicePublicId || body.deviceId || body.device_id || null,
       source_notification_id: body.notificationId || body.id || null,
       is_transfer: parsed.type === "transfer",
+      is_consolidated: true,
       is_refund: !!parsed.isRefund,
       refund_status: parsed.isRefund ? "refund" : "none",
       refund_match_key: parsed.refundMatchKey || null,

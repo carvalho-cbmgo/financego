@@ -60,10 +60,26 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const bankKey = String(form.get("bank_key") || "generic") as BankKey;
     const sourceType = String(form.get("source_type") || "manual_text");
+    const accountId = String(form.get("account_id") || "").trim();
     const profileId = user.id;
     const file = form.get("file") as File | null;
     let rawText = String(form.get("raw_text") || "");
     let pdfInfo: any = null;
+
+    if (!accountId) {
+      return NextResponse.json({ error: "Selecione uma conta para importar a fatura." }, { status: 400 });
+    }
+
+    const { data: account } = await supabaseAdmin
+      .from("accounts")
+      .select("id")
+      .eq("id", accountId)
+      .eq("profile_id", profileId)
+      .maybeSingle();
+
+    if (!account?.id) {
+      return NextResponse.json({ error: "Conta invÃ¡lida para este usuÃ¡rio." }, { status: 400 });
+    }
 
     let fileName: string | null = null;
     if (file && file.size > 0) {
@@ -91,6 +107,7 @@ export async function POST(req: NextRequest) {
       .from("statement_imports")
       .insert({
         profile_id: profileId,
+        account_id: accountId,
         bank_key: bankKey,
         source_type: sourceType === "pdf" ? "pdf_text" : sourceType,
         file_name: fileName,
@@ -117,6 +134,7 @@ export async function POST(req: NextRequest) {
         .from("transactions")
         .upsert({
           profile_id: profileId,
+          account_id: accountId,
           statement_import_id: importRun?.id,
           bank_key: tx.bankKey,
           dedupe_hash: tx.dedupeHash,
@@ -135,6 +153,7 @@ export async function POST(req: NextRequest) {
           installment_total: tx.installmentTotal || null,
           installment_group_key: tx.installmentGroupKey || null,
           is_transfer: tx.type === "transfer",
+          is_consolidated: true,
           is_refund: !!tx.isRefund,
           refund_status: tx.isRefund ? "refund" : "none",
           refund_match_key: tx.refundMatchKey || null,
