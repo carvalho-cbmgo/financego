@@ -10,17 +10,8 @@ export const dynamic = "force-dynamic";
 type DashboardParams = {
   tab?: string;
   account_id?: string;
-  bank?: string;
+  bank_id?: string;
 };
-
-function normalize(input?: string | null) {
-  return (input || "")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<DashboardParams> }) {
   const { user, accessToken } = await requireServerSession();
@@ -28,21 +19,27 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
 
   const selectedAccountId = String(params.account_id || "");
-  const selectedBank = String(params.bank || "");
+  const selectedBankId = String(params.bank_id || "");
 
-  const { data: accounts } = await supabaseAdmin
-    .from("accounts")
-    .select("id, name, balance, institution_name, type")
-    .eq("profile_id", user.id)
-    .order("institution_name")
-    .order("created_at", { ascending: false });
+  const [{ data: banks }, { data: accounts }] = await Promise.all([
+    supabaseAdmin
+      .from("banks")
+      .select("id, name, code")
+      .eq("profile_id", user.id)
+      .order("name"),
+    supabaseAdmin
+      .from("accounts")
+      .select("id, bank_id, name, balance, institution_name, type")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
+  const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
   const accountById = new Map<string, any>((accounts || []).map((acc: any) => [String(acc.id), acc]));
-  const bankOptions = Array.from(new Set((accounts || []).map((acc: any) => String(acc.institution_name || "").trim()).filter(Boolean)));
 
-  const bankMatchedAccountIds = selectedBank
+  const bankMatchedAccountIds = selectedBankId
     ? (accounts || [])
-      .filter((acc: any) => normalize(acc.institution_name) === normalize(selectedBank))
+      .filter((acc: any) => String(acc.bank_id || "") === selectedBankId)
       .map((acc: any) => String(acc.id))
     : [];
 
@@ -55,7 +52,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   if (selectedAccountId) {
     txQuery = txQuery.eq("account_id", selectedAccountId);
-  } else if (selectedBank) {
+  } else if (selectedBankId) {
     if (bankMatchedAccountIds.length) txQuery = txQuery.in("account_id", bankMatchedAccountIds);
     else txQuery = txQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
   }
@@ -73,7 +70,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   if (selectedAccountId) {
     monthTxQuery = monthTxQuery.eq("account_id", selectedAccountId);
-  } else if (selectedBank) {
+  } else if (selectedBankId) {
     if (bankMatchedAccountIds.length) monthTxQuery = monthTxQuery.in("account_id", bankMatchedAccountIds);
     else monthTxQuery = monthTxQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
   }
@@ -94,8 +91,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const selectedAccounts = selectedAccountId
     ? (accounts || []).filter((a: any) => String(a.id) === selectedAccountId)
-    : selectedBank
-      ? (accounts || []).filter((a: any) => normalize(a.institution_name) === normalize(selectedBank))
+    : selectedBankId
+      ? (accounts || []).filter((a: any) => String(a.bank_id || "") === selectedBankId)
       : (accounts || []);
 
   const saldo = selectedAccounts.reduce((sum: number, acc: any) => sum + Number(acc.balance || 0), 0);
@@ -113,7 +110,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const returnParams = new URLSearchParams();
   returnParams.set("tab", "transactions");
-  if (selectedBank) returnParams.set("bank", selectedBank);
+  if (selectedBankId) returnParams.set("bank_id", selectedBankId);
   if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
   const returnUrl = `/dashboard?${returnParams.toString()}`;
 
@@ -121,24 +118,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <PageShell>
       <div style={{ display: "grid", gap: 18 }}>
         <div>
-          <h1 style={{ margin: 0 }}>Dashboard</h1>
-          <p style={{ color: "#6b7280" }}>
-            Visao geral do mes atual com filtros por banco e conta.
+          <h1 style={{ margin: 0 }}>Visao financeira</h1>
+          <p style={{ color: "var(--muted)" }}>
+            Analise geral ou segmentada por banco e conta.
           </p>
         </div>
 
         <FilterForm
-          selectedBank={selectedBank}
+          selectedBankId={selectedBankId}
           selectedAccountId={selectedAccountId}
-          bankOptions={bankOptions}
+          banks={banks || []}
           accounts={accounts || []}
         />
 
         <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
           <Stat label="Saldo das contas no filtro" value={brl(saldo)} />
-          <Stat label="Receitas consolidadas (mes)" value={brl(receitas)} />
-          <Stat label="Despesas consolidadas (mes)" value={brl(gastos)} />
-          <Stat label="Despesas previstas (nao consol.)" value={brl(gastosPrevistos)} />
+          <Stat label="Receitas consolidadas" value={brl(receitas)} />
+          <Stat label="Despesas consolidadas" value={brl(gastos)} />
+          <Stat label="Despesas previstas" value={brl(gastosPrevistos)} />
           <Stat label="Orcamento do mes" value={brl(totalBudget)} />
           <Stat label="Patrimonio nas metas" value={brl(totalGoalsCurrent)} />
           <Stat label="Objetivo total" value={brl(totalGoalsTarget)} />
@@ -147,22 +144,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {params.tab === "transactions" ? (
           <>
             {(accounts || []).length ? (
-              <Card title="Lancar transacao manual (permite previsao de gasto futuro)">
-                <ManualTransactionForm accounts={accounts || []} returnUrl={returnUrl} selectedAccountId={selectedAccountId} />
+              <Card title="Lancar transacao (inclusive futura e nao consolidada)">
+                <ManualTransactionForm accounts={accounts || []} bankById={bankById} returnUrl={returnUrl} selectedAccountId={selectedAccountId} />
               </Card>
             ) : (
               <Card title="Cadastre uma conta para registrar transacoes">
                 <p style={{ marginTop: 0 }}>Nenhuma conta encontrada para este usuario.</p>
-                <Link href="/accounts">Ir para cadastro de contas</Link>
+                <Link href="/accounts">Ir para bancos e contas</Link>
               </Card>
             )}
 
-            <TransactionsTable txs={txs || []} accounts={accounts || []} accountById={accountById} returnUrl={returnUrl} />
+            <TransactionsTable txs={txs || []} accounts={accounts || []} accountById={accountById} bankById={bankById} returnUrl={returnUrl} />
           </>
         ) : (
           <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1.2fr .8fr" }}>
             <Card title="Ultimas transacoes">
-              <TransactionsMini txs={txs || []} accountById={accountById} />
+              <TransactionsMini txs={txs || []} accountById={accountById} bankById={bankById} />
             </Card>
             <Card title="Resumo das metas">
               <GoalsMini goals={goals || []} />
@@ -174,16 +171,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   );
 }
 
-function FilterForm(input: { selectedBank: string; selectedAccountId: string; bankOptions: string[]; accounts: any[] }) {
+function FilterForm(input: { selectedBankId: string; selectedAccountId: string; banks: any[]; accounts: any[] }) {
   return (
     <Card title="Filtros de analise">
       <form action="/dashboard" method="get" style={{ display: "grid", gap: 10 }}>
         <input type="hidden" name="tab" value="transactions" />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10 }}>
-          <select name="bank" defaultValue={input.selectedBank} style={inputStyle}>
+          <select name="bank_id" defaultValue={input.selectedBankId} style={inputStyle}>
             <option value="">Todos os bancos</option>
-            {input.bankOptions.map((bank) => (
-              <option key={bank} value={bank}>{bank}</option>
+            {input.banks.map((bank: any) => (
+              <option key={bank.id} value={bank.id}>
+                {bank.name} {bank.code ? `(${bank.code})` : ""}
+              </option>
             ))}
           </select>
 
@@ -203,18 +202,23 @@ function FilterForm(input: { selectedBank: string; selectedAccountId: string; ba
   );
 }
 
-function ManualTransactionForm(input: { accounts: any[]; returnUrl: string; selectedAccountId: string }) {
+function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, any>; returnUrl: string; selectedAccountId: string }) {
   return (
     <form action="/api/transactions/save" method="post" style={{ display: "grid", gap: 10 }}>
       <input type="hidden" name="return_url" value={input.returnUrl} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1fr", gap: 10 }}>
         <select name="account_id" required defaultValue={input.selectedAccountId || String(input.accounts[0]?.id || "")} style={inputStyle}>
-          {input.accounts.map((account: any) => (
-            <option key={account.id} value={account.id}>
-              {account.institution_name} - {account.name} ({accountTypeLabel(account.type)})
-            </option>
-          ))}
+          {input.accounts.map((account: any) => {
+            const bank = input.bankById.get(String(account.bank_id || ""));
+            const bankName = bank?.name || account.institution_name || "Sem banco";
+
+            return (
+              <option key={account.id} value={account.id}>
+                {bankName} - {account.name} ({accountTypeLabel(account.type)})
+              </option>
+            );
+          })}
         </select>
         <input name="description" required placeholder="Descricao da transacao" style={inputStyle} />
         <input name="posted_at" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required style={inputStyle} />
@@ -233,7 +237,7 @@ function ManualTransactionForm(input: { accounts: any[]; returnUrl: string; sele
 
       <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
         <input name="is_consolidated" type="checkbox" defaultChecked />
-        Consolidada (desmarque para registrar como NAO CONSOLIDADA e prever gasto futuro)
+        Consolidada (desmarque para registrar como NAO CONSOLIDADA)
       </label>
 
       <button style={buttonDark}>Salvar transacao</button>
@@ -241,20 +245,22 @@ function ManualTransactionForm(input: { accounts: any[]; returnUrl: string; sele
   );
 }
 
-function TransactionsMini({ txs, accountById }: { txs: any[]; accountById: Map<string, any> }) {
+function TransactionsMini({ txs, accountById, bankById }: { txs: any[]; accountById: Map<string, any>; bankById: Map<string, any> }) {
   if (!txs.length) return <div>Nenhuma transacao ainda.</div>;
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
       {txs.map((tx: any) => {
         const account = accountById.get(String(tx.account_id || ""));
+        const bank = account ? bankById.get(String(account.bank_id || "")) : null;
+        const bankName = bank?.name || account?.institution_name || "Sem banco";
 
         return (
           <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", paddingBottom: 10, borderBottom: "1px solid #eee" }}>
             <div>
               <div style={{ fontWeight: 700 }}>{tx.description || "Sem descricao"}</div>
-              <div style={{ color: "#6b7280", fontSize: 13 }}>
-                {(account?.institution_name || "Sem banco")} - {(account?.name || "Sem conta")} - {shortDate(tx.posted_at)}
+              <div style={{ color: "var(--muted)", fontSize: 13 }}>
+                {bankName} - {account?.name || "Sem conta"} - {shortDate(tx.posted_at)}
               </div>
             </div>
             <div style={{ fontWeight: 700 }}>{brl(tx.amount)}</div>
@@ -282,7 +288,7 @@ function GoalsMini({ goals }: { goals: any[] }) {
             <div style={{ height: 10, background: "#e5e7eb", borderRadius: 999 }}>
               <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: "#111827", borderRadius: 999 }} />
             </div>
-            <div style={{ marginTop: 6, color: "#6b7280", fontSize: 13 }}>
+            <div style={{ marginTop: 6, color: "var(--muted)", fontSize: 13 }}>
               {brl(goal.current_amount)} de {brl(goal.target_amount)}
             </div>
           </div>
@@ -292,9 +298,15 @@ function GoalsMini({ goals }: { goals: any[] }) {
   );
 }
 
-function TransactionsTable(input: { txs: any[]; accounts: any[]; accountById: Map<string, any>; returnUrl: string }) {
+function TransactionsTable(input: {
+  txs: any[];
+  accounts: any[];
+  accountById: Map<string, any>;
+  bankById: Map<string, any>;
+  returnUrl: string;
+}) {
   return (
-    <Card title="Transacoes por conta, banco, acao e consolidacao">
+    <Card title="Transacoes por banco e conta">
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
@@ -315,15 +327,17 @@ function TransactionsTable(input: { txs: any[]; accounts: any[]; accountById: Ma
             {input.txs.map((tx: any) => {
               const formId = `tx-form-${tx.id}`;
               const account = input.accountById.get(String(tx.account_id || ""));
+              const bank = account ? input.bankById.get(String(account.bank_id || "")) : null;
+              const bankName = bank?.name || account?.institution_name || "-";
               const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
 
               return (
                 <tr key={tx.id}>
                   <Td>{shortDate(tx.posted_at)}</Td>
                   <Td>{tx.description || "-"}</Td>
-                  <Td>{account?.institution_name || "-"}</Td>
+                  <Td>{bankName}</Td>
                   <Td>
-                    <select form={formId} name="account_id" required defaultValue={selectedAccountId} style={{ width: 220, ...compactInput }}>
+                    <select form={formId} name="account_id" required defaultValue={selectedAccountId} style={{ width: 240, ...compactInput }}>
                       {input.accounts.map((a: any) => (
                         <option key={a.id} value={a.id}>
                           {a.institution_name} - {a.name} ({accountTypeLabel(a.type)})

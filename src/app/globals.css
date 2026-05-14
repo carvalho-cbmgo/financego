@@ -1,0 +1,177 @@
+:root {
+  --font-body: "Trebuchet MS", "Tahoma", sans-serif;
+  --font-heading: "Gill Sans", "Segoe UI Semibold", sans-serif;
+  --bg: #f4f8f7;
+  --bg-accent: #d9efe9;
+  --panel: #ffffff;
+  --ink: #15212a;
+  --muted: #61737f;
+  --line: #d4dee3;
+  --brand: #0f766e;
+  --brand-strong: #0b5d57;
+  --brand-soft: #d7f1ed;
+  --danger-soft: #ffe3df;
+  --shadow: 0 16px 45px rgba(11, 31, 43, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-body), "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(900px 500px at 0% -10%, var(--bg-accent) 0%, transparent 75%),
+    radial-gradient(600px 320px at 100% 0%, #e9f5f2 0%, transparent 70%),
+    var(--bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-heading), var(--font-body), sans-serif;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+}
+
+.shell-wrap {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.shell-grid {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+}
+
+.shell-aside {
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  border-radius: 24px;
+  background: linear-gradient(165deg, #0f2933 0%, #153f4f 100%);
+  color: #f5fbff;
+  padding: 20px;
+  box-shadow: 0 24px 45px rgba(7, 23, 30, 0.35);
+}
+
+.shell-brand-block {
+  margin-bottom: 24px;
+}
+
+.shell-brand-caption {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.shell-brand-title {
+  font-family: var(--font-heading), var(--font-body), sans-serif;
+  font-size: 33px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.shell-brand-subtitle {
+  margin-top: 8px;
+  color: #b8d8e4;
+  font-size: 13px;
+}
+
+.shell-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.shell-nav-link {
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(190, 231, 248, 0.13);
+  background: rgba(202, 233, 244, 0.08);
+  color: #f3fbff;
+  text-decoration: none;
+  display: block;
+  font-weight: 600;
+}
+
+.shell-main {
+  min-width: 0;
+}
+
+.fg-card {
+  background: var(--panel);
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+}
+
+.fg-card-title {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.fg-stat {
+  background: linear-gradient(145deg, #ffffff 0%, #eff7f5 100%);
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid #cfdfdc;
+  box-shadow: 0 12px 24px rgba(22, 52, 49, 0.08);
+}
+
+.fg-stat-label {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.fg-stat-value {
+  font-size: 30px;
+  font-weight: 800;
+  margin-top: 8px;
+  font-family: var(--font-heading), var(--font-body), sans-serif;
+}
+
+@media (max-width: 1024px) {
+  .shell-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shell-aside {
+    position: static;
+    top: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell-wrap {
+    padding: 12px;
+  }
+
+  .shell-brand-title {
+    font-size: 27px;
+  }
+}

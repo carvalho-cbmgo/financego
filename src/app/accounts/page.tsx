@@ -1,4 +1,4 @@
-import { PageShell, Card } from "@/components/ui";
+﻿import { PageShell, Card } from "@/components/ui";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl } from "@/lib/format";
@@ -10,17 +10,24 @@ export default async function AccountsPage() {
   const { user, accessToken } = await requireServerSession();
   const supabaseAdmin = createUserDb(accessToken);
 
+  const { data: banks } = await supabaseAdmin
+    .from("banks")
+    .select("id, name, code, created_at")
+    .eq("profile_id", user.id)
+    .order("name");
+
   const { data: accounts } = await supabaseAdmin
     .from("accounts")
-    .select("id, name, institution_name, type, balance, created_at")
+    .select("id, bank_id, name, institution_name, type, balance, created_at")
     .eq("profile_id", user.id)
-    .order("institution_name")
     .order("created_at", { ascending: false });
 
   const { data: txs } = await supabaseAdmin
     .from("transactions")
     .select("account_id, amount, is_consolidated")
     .eq("profile_id", user.id);
+
+  const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
 
   const statsByAccount = new Map<string, { consolidatedExpense: number; plannedExpense: number; consolidatedIncome: number; txCount: number }>();
   for (const tx of (txs || []) as any[]) {
@@ -40,30 +47,69 @@ export default async function AccountsPage() {
 
   return (
     <PageShell>
-      <div style={{ display: "grid", gap: 16, maxWidth: 1200 }}>
-        <h1 style={{ margin: 0 }}>Contas por banco</h1>
+      <div style={{ display: "grid", gap: 16, maxWidth: 1240 }}>
+        <h1 style={{ margin: 0 }}>Bancos e contas</h1>
 
-        <Card title="Cadastrar conta">
-          <form action="/api/accounts/save" method="post" style={{ display: "grid", gap: 10 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              <input name="bank_name" required placeholder="Banco (ex: NUBANK, BTG, PORTO SEGURO)" style={input} />
-              <input name="account_name" required placeholder="Nome da conta (ex: Cartao principal)" style={input} />
-              <select name="account_type" style={input} defaultValue="CONTA_CORRENTE">
-                <option value="CONTA_CORRENTE">CONTA_CORRENTE</option>
-                <option value="CARTAO_DE_CREDITO">CARTAO_DE_CREDITO</option>
-              </select>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 10 }}>
-              <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" style={input} />
-              <div style={{ color: "#6b7280", alignSelf: "center" }}>
-                Cada transacao podera ser vinculada a uma dessas contas para analise por banco/conta.
+        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 1.4fr" }}>
+          <Card title="1) Cadastrar banco">
+            <form action="/api/banks/save" method="post" style={{ display: "grid", gap: 10 }}>
+              <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" style={input} />
+              <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" style={input} />
+              <button style={button}>Salvar banco</button>
+            </form>
+            <p style={{ color: "#6b7280", marginBottom: 0 }}>
+              Cadastre primeiro os bancos. Depois, vincule cada conta a um banco.
+            </p>
+          </Card>
+
+          <Card title="2) Cadastrar conta vinculada a banco">
+            <form action="/api/accounts/save" method="post" style={{ display: "grid", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <select name="bank_id" required style={input} defaultValue={String(banks?.[0]?.id || "")}>
+                  {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
+                  {(banks || []).map((bank: any) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.name} {bank.code ? `(${bank.code})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <input name="account_name" required placeholder="Nome da conta (ex: Conta principal)" style={input} />
+                <select name="account_type" style={input} defaultValue="CONTA_CORRENTE">
+                  <option value="CONTA_CORRENTE">CONTA_CORRENTE</option>
+                  <option value="CARTAO_DE_CREDITO">CARTAO_DE_CREDITO</option>
+                </select>
               </div>
-            </div>
-            <button style={button}>Salvar conta</button>
-          </form>
+              <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" style={input} />
+              <button style={button} disabled={!banks?.length}>Salvar conta</button>
+            </form>
+          </Card>
+        </div>
+
+        <Card title="Bancos cadastrados">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <Th>Banco</Th>
+                <Th>Codigo</Th>
+                <Th>Contas vinculadas</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {(banks || []).map((bank: any) => {
+                const totalAccounts = (accounts || []).filter((account: any) => String(account.bank_id || "") === String(bank.id)).length;
+                return (
+                  <tr key={bank.id}>
+                    <Td>{bank.name}</Td>
+                    <Td>{bank.code || "-"}</Td>
+                    <Td>{totalAccounts}</Td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </Card>
 
-        <Card title="Contas cadastradas e visao financeira">
+        <Card title="Contas cadastradas e visao financeira por conta">
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
@@ -86,9 +132,12 @@ export default async function AccountsPage() {
                   txCount: 0,
                 };
 
+                const bank = bankById.get(String(account.bank_id || ""));
+                const bankName = bank?.name || account.institution_name || "-";
+
                 return (
                   <tr key={account.id}>
-                    <Td>{account.institution_name || "-"}</Td>
+                    <Td>{bankName}</Td>
                     <Td>{account.name || "-"}</Td>
                     <Td>{accountTypeLabel(account.type)}</Td>
                     <Td>{brl(account.balance || 0)}</Td>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { ensureDemoProfile, seedBudgetsAndGoals } from "@/lib/demo";
 import { getApiUserFromCookiesOrRequest, unauthorized } from "@/lib/auth-server";
+import { ensureBankByName } from "@/lib/accounts";
 
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_SEED !== "true") {
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
 
     const profileId = user.id;
     await ensureDemoProfile(profileId, user.email || "demo@example.com");
+    const bank = await ensureBankByName(profileId, "BANCO DEMO");
 
     let { data: item, error: itemReadError } = await supabaseAdmin
       .from("financial_items")
@@ -55,12 +57,13 @@ export async function POST(req: NextRequest) {
         .from("accounts")
         .insert({
           profile_id: profileId,
+          bank_id: bank.id,
           financial_item_id: item?.id,
-          type: "BANK",
+          type: "CHECKING_ACCOUNT",
           subtype: "CHECKING_ACCOUNT",
           name: "Conta principal",
           balance: 12450.35,
-          institution_name: "Banco Demo",
+          institution_name: bank.name,
           last_balance_at: new Date().toISOString(),
           raw: { demo: true },
         })

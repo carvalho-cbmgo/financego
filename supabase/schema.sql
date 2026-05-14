@@ -323,3 +323,38 @@ alter table statement_imports add column if not exists account_id uuid reference
 create index if not exists idx_accounts_profile_bank on accounts(profile_id, institution_name);
 create index if not exists idx_transactions_profile_account_posted on transactions(profile_id, account_id, posted_at desc);
 create index if not exists idx_transactions_profile_consolidated on transactions(profile_id, is_consolidated, posted_at desc);
+
+-- v19: cadastro separado de bancos e vinculo de contas
+create table if not exists banks (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid references profiles(id) on delete cascade,
+  name text not null,
+  code text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(profile_id, name)
+);
+
+alter table banks enable row level security;
+drop policy if exists "banks_own" on banks;
+create policy "banks_own" on banks for all using (profile_id = auth.uid()) with check (profile_id = auth.uid());
+
+alter table accounts add column if not exists bank_id uuid references banks(id) on delete set null;
+create index if not exists idx_accounts_profile_bank_id on accounts(profile_id, bank_id);
+create index if not exists idx_banks_profile_name on banks(profile_id, name);
+
+drop trigger if exists trg_banks_updated_at on banks;
+create trigger trg_banks_updated_at before update on banks for each row execute function touch_updated_at();
+
+insert into banks (profile_id, name)
+select distinct a.profile_id, coalesce(nullif(trim(a.institution_name), ''), 'BANCO NAO INFORMADO')
+from accounts a
+where a.profile_id is not null
+on conflict (profile_id, name) do nothing;
+
+update accounts a
+set bank_id = b.id
+from banks b
+where a.profile_id = b.profile_id
+  and coalesce(nullif(trim(a.institution_name), ''), 'BANCO NAO INFORMADO') = b.name
+  and a.bank_id is null;

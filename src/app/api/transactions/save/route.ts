@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getApiUserFromCookiesOrRequest, unauthorized } from "@/lib/auth-server";
 import { bankKeyFromBankName } from "@/lib/accounts";
@@ -6,7 +6,7 @@ import { bankKeyFromBankName } from "@/lib/accounts";
 function parseAction(input: string) {
   const normalized = input.trim().toLowerCase();
   if (normalized === "receita") return "credit" as const;
-  if (normalized === "transferencia" || normalized === "transferência") return "transfer" as const;
+  if (normalized === "transferencia" || normalized === "transferência" || normalized === "transfer") return "transfer" as const;
   return "debit" as const;
 }
 
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   const { data: account } = await supabaseAdmin
     .from("accounts")
-    .select("id, institution_name")
+    .select("id, institution_name, bank_id")
     .eq("id", accountId)
     .eq("profile_id", user.id)
     .maybeSingle();
@@ -56,9 +56,19 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL(withError(returnUrl, "invalid_account"), req.url));
   }
 
+  const { data: bank } = account.bank_id
+    ? await supabaseAdmin
+      .from("banks")
+      .select("name")
+      .eq("id", account.bank_id)
+      .eq("profile_id", user.id)
+      .maybeSingle()
+    : { data: null as any };
+
+  const bankName = String(bank?.name || account.institution_name || "GENERICO");
   const amount = computeAmountByAction(type, inputAmount);
   const postedAt = `${postedAtDate}T12:00:00.000Z`;
-  const bankKey = bankKeyFromBankName(account.institution_name);
+  const bankKey = bankKeyFromBankName(bankName);
 
   await supabaseAdmin.from("transactions").insert({
     profile_id: user.id,

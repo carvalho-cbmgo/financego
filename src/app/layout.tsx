@@ -1,12 +1,13 @@
 import { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata = {
-  title: "Finance MVP",
-  description: "Controle financeiro pessoal com Open Finance",
+  title: "Finance GO",
+  description: "Gestao financeira pessoal por banco, conta e consolidacao de transacoes.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    title: "Finance MVP",
+    title: "Finance GO",
     statusBarStyle: "black-translucent",
   },
 };
@@ -15,13 +16,13 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#6d5dfc",
+  themeColor: "#0f766e",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body style={{ margin: 0, fontFamily: "Arial, sans-serif" }}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

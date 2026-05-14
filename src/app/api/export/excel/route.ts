@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       .eq("profile_id", profileId);
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "Finance MVP";
+    workbook.creator = "Finance GO";
     workbook.created = new Date();
 
     const txSheet = workbook.addWorksheet("Transações");

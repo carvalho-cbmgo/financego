@@ -9,18 +9,30 @@ export async function POST(req: Request) {
 
   const form = await req.formData();
   const accountId = String(form.get("id") || "");
-  const bankName = String(form.get("bank_name") || "").trim();
+  const bankId = String(form.get("bank_id") || "").trim();
   const accountName = String(form.get("account_name") || "").trim();
   const accountType = parseAccountType(String(form.get("account_type") || ""));
   const balance = Number(form.get("balance") || 0);
 
-  if (!bankName || !accountName) {
+  if (!bankId || !accountName) {
     return NextResponse.redirect(new URL("/accounts?error=missing_fields", req.url));
+  }
+
+  const { data: bank } = await supabaseAdmin
+    .from("banks")
+    .select("id, name")
+    .eq("id", bankId)
+    .eq("profile_id", user.id)
+    .maybeSingle();
+
+  if (!bank?.id) {
+    return NextResponse.redirect(new URL("/accounts?error=invalid_bank", req.url));
   }
 
   const payload = {
     profile_id: user.id,
-    institution_name: bankName,
+    bank_id: bank.id,
+    institution_name: bank.name,
     name: accountName,
     type: accountType,
     subtype: accountType,

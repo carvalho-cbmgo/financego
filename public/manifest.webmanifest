@@ -1,11 +1,11 @@
 {
-  "name": "Finance MVP",
-  "short_name": "Finance",
-  "description": "Controle financeiro pessoal com Open Finance",
+  "name": "Finance GO",
+  "short_name": "Finance GO",
+  "description": "Gestao financeira pessoal por banco, conta e consolidacao de transacoes",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#6d5dfc",
+  "background_color": "#0f766e",
+  "theme_color": "#0f766e",
   "orientation": "portrait",
   "icons": [
     {

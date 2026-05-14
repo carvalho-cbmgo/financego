@@ -3,6 +3,7 @@ import { PageShell, Card } from "@/components/ui";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { shortDate } from "@/lib/format";
+import { accountTypeLabel } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
@@ -10,20 +11,26 @@ export default async function StatementsPage() {
   const { user, accessToken } = await requireServerSession();
   const supabaseAdmin = createUserDb(accessToken);
 
-  const { data: accounts } = await supabaseAdmin
-    .from("accounts")
-    .select("id, name, institution_name, type")
-    .eq("profile_id", user.id)
-    .order("institution_name")
-    .order("created_at", { ascending: false });
+  const [{ data: banks }, { data: accounts }, { data: imports }] = await Promise.all([
+    supabaseAdmin
+      .from("banks")
+      .select("id, name, code")
+      .eq("profile_id", user.id)
+      .order("name"),
+    supabaseAdmin
+      .from("accounts")
+      .select("id, bank_id, name, institution_name, type")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("statement_imports")
+      .select("id, bank_key, account_id, source_type, file_name, status, total_detected, total_imported, total_duplicates, created_at")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(30),
+  ]);
 
-  const { data: imports } = await supabaseAdmin
-    .from("statement_imports")
-    .select("id, bank_key, account_id, source_type, file_name, status, total_detected, total_imported, total_duplicates, created_at")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
-
+  const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
   const accountById = new Map<string, any>((accounts || []).map((acc: any) => [String(acc.id), acc]));
 
   return (
@@ -34,9 +41,9 @@ export default async function StatementsPage() {
         {!accounts?.length ? (
           <Card title="Sem contas cadastradas">
             <p style={{ marginTop: 0 }}>
-              Para importar transacoes, primeiro cadastre ao menos uma conta (por banco e tipo).
+              Para importar transacoes, primeiro cadastre bancos e contas.
             </p>
-            <Link href="/accounts">Ir para cadastro de contas</Link>
+            <Link href="/accounts">Ir para bancos e contas</Link>
           </Card>
         ) : null}
 
@@ -44,11 +51,16 @@ export default async function StatementsPage() {
           <form action="/api/statements/import" method="post" encType="multipart/form-data" style={{ display: "grid", gap: 12 }}>
             <label>Conta de destino</label>
             <select name="account_id" required style={input}>
-              {(accounts || []).map((account: any) => (
-                <option key={account.id} value={account.id}>
-                  {account.institution_name} - {account.name} ({account.type || "CHECKING_ACCOUNT"})
-                </option>
-              ))}
+              {(accounts || []).map((account: any) => {
+                const bank = bankById.get(String(account.bank_id || ""));
+                const bankName = bank?.name || account.institution_name || "Sem banco";
+
+                return (
+                  <option key={account.id} value={account.id}>
+                    {bankName} - {account.name} ({accountTypeLabel(account.type)})
+                  </option>
+                );
+              })}
             </select>
 
             <label>Tipo de arquivo</label>
@@ -79,7 +91,7 @@ export default async function StatementsPage() {
             <label>Ou cole o texto da fatura</label>
             <textarea name="raw_text" placeholder="Cole aqui as linhas da fatura/extrato, caso nao envie arquivo..." style={{ ...input, minHeight: 160 }} />
 
-            <p style={{ color: "#6b7280", margin: 0 }}>
+            <p style={{ color: "var(--muted)", margin: 0 }}>
               A importacao ficara vinculada ao usuario autenticado e a conta selecionada.
             </p>
 
@@ -92,8 +104,8 @@ export default async function StatementsPage() {
             <thead>
               <tr>
                 <Th>Data</Th>
-                <Th>Banco</Th>
-                <Th>Conta</Th>
+                <Th>Banco (parser)</Th>
+                <Th>Conta destino</Th>
                 <Th>Arquivo</Th>
                 <Th>Status</Th>
                 <Th>Detectadas</Th>
@@ -104,7 +116,9 @@ export default async function StatementsPage() {
             <tbody>
               {(imports || []).map((item: any) => {
                 const account = accountById.get(String(item.account_id));
-                const accountLabel = account ? `${account.institution_name} - ${account.name}` : "-";
+                const bank = account ? bankById.get(String(account.bank_id || "")) : null;
+                const bankName = bank?.name || account?.institution_name || "-";
+                const accountLabel = account ? `${bankName} - ${account.name}` : "-";
 
                 return (
                   <tr key={item.id}>

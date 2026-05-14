@@ -8,7 +8,6 @@ function typeFromAction(action: string) {
   if (normalized === "receita" || normalized === "credit") return "credit";
   if (normalized === "transferencia" || normalized === "transferência" || normalized === "transfer") return "transfer";
 
-  // Regra de fallback: na duvida, classifica como despesa.
   return "debit";
 }
 

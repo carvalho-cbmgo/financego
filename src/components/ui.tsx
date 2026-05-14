@@ -1,27 +1,41 @@
 ﻿import Link from "next/link";
 import { ReactNode } from "react";
 
+const navItems = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard?tab=transactions", label: "Transacoes" },
+  { href: "/accounts", label: "Bancos e Contas" },
+  { href: "/budgets", label: "Orcamento" },
+  { href: "/goals", label: "Metas" },
+  { href: "/notifications", label: "Notificacoes" },
+  { href: "/charts", label: "Graficos" },
+  { href: "/statements", label: "Importar fatura" },
+  { href: "/exports", label: "Exportacoes" },
+  { href: "/refunds", label: "Estornos" },
+  { href: "/login", label: "Login" },
+];
+
 export function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#f6f7fb", color: "#111827" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh" }}>
-        <aside style={{ background: "#0f172a", color: "#fff", padding: 20 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 24 }}>Finance MVP</div>
-          <nav style={{ display: "grid", gap: 10 }}>
-            <NavLink href="/dashboard">Dashboard</NavLink>
-            <NavLink href="/dashboard?tab=transactions">Transacoes</NavLink>
-            <NavLink href="/accounts">Contas</NavLink>
-            <NavLink href="/budgets">Orcamento</NavLink>
-            <NavLink href="/goals">Metas</NavLink>
-            <NavLink href="/notifications">Notificacoes</NavLink>
-            <NavLink href="/charts">Graficos</NavLink>
-            <NavLink href="/statements">Importar fatura</NavLink>
-            <NavLink href="/exports">Exportacoes</NavLink>
-            <NavLink href="/refunds">Estornos</NavLink>
-            <NavLink href="/login">Login</NavLink>
+    <div className="shell-wrap">
+      <div className="shell-grid">
+        <aside className="shell-aside">
+          <div className="shell-brand-block">
+            <div className="shell-brand-caption">Sistema</div>
+            <div className="shell-brand-title">Finance GO</div>
+            <div className="shell-brand-subtitle">Gestao inteligente por banco, conta e consolidacao.</div>
+          </div>
+
+          <nav className="shell-nav">
+            {navItems.map((item) => (
+              <NavLink key={item.href} href={item.href}>
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
         </aside>
-        <main style={{ padding: 24 }}>{children}</main>
+
+        <main className="shell-main">{children}</main>
       </div>
     </div>
   );
@@ -29,17 +43,7 @@ export function PageShell({ children }: { children: ReactNode }) {
 
 function NavLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link
-      href={href}
-      style={{
-        padding: "10px 12px",
-        borderRadius: 10,
-        background: "rgba(255,255,255,0.08)",
-        color: "#fff",
-        textDecoration: "none",
-        display: "block",
-      }}
-    >
+    <Link href={href} className="shell-nav-link">
       {children}
     </Link>
   );
@@ -47,8 +51,8 @@ function NavLink({ href, children }: { href: string; children: ReactNode }) {
 
 export function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section style={{ background: "#fff", borderRadius: 16, padding: 18, boxShadow: "0 8px 24px rgba(15,23,42,0.05)", border: "1px solid #e5e7eb" }}>
-      <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 10 }}>{title}</div>
+    <section className="fg-card">
+      <div className="fg-card-title">{title}</div>
       {children}
     </section>
   );
@@ -56,9 +60,9 @@ export function Card({ title, children }: { title: string; children: ReactNode }
 
 export function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: "#fff", borderRadius: 16, padding: 18, border: "1px solid #e5e7eb" }}>
-      <div style={{ color: "#6b7280", fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 800, marginTop: 6 }}>{value}</div>
+    <div className="fg-stat">
+      <div className="fg-stat-label">{label}</div>
+      <div className="fg-stat-value">{value}</div>
     </div>
   );
 }
@@ -67,7 +71,8 @@ export const primaryBtn = {
   padding: "12px 16px",
   borderRadius: 12,
   border: "none",
-  background: "#111827",
+  background: "var(--brand)",
   color: "#fff",
   fontWeight: 700,
+  cursor: "pointer",
 };
