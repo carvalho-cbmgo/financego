@@ -102,7 +102,7 @@ export function AccountsFilterPanel(input: {
           const typeLabel = accountTypeLabel(account.type);
           const isCreditCard = typeLabel === "CARTAO_DE_CREDITO";
           const accountName = String(account.name || "").trim() || "Sem nome";
-          const displayName = `${account.bankName} + ${accountName}`;
+          const displayName = `${account.bankName} - ${accountName}`;
 
           return (
             <label key={account.id} className={`fg-account-item ${checked ? "is-checked" : ""}`}>
