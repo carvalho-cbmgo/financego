@@ -783,33 +783,44 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-account-item-main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
 .fg-account-item-text {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .fg-account-item-kind {
-  text-align: right;
-  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 1px 5px;
+  line-height: 1.1;
 }
 
 .fg-account-item-kind.is-credit {
   color: #9f2f3b;
+  border-color: #b64653;
+  background: #fff3f5;
 }
 
 .fg-account-item-kind.is-checking {
   color: #2c6c36;
+  border-color: #4a9256;
+  background: #f2f8f1;
 }
 
 .fg-account-item-balance {

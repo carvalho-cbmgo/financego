@@ -117,7 +117,7 @@ export function AccountsFilterPanel(input: {
                   {displayName}
                 </span>
                 <span className={`fg-account-item-kind ${isCreditCard ? "is-credit" : "is-checking"}`}>
-                  {isCreditCard ? "Credito" : "Corrente"}
+                  {isCreditCard ? "Crédito" : "Corrente"}
                 </span>
               </span>
               <span className="fg-account-item-balance">{brl(account.balance || 0)}</span>
