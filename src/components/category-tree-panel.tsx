@@ -1,10 +1,22 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { brl } from "@/lib/format";
 import { notifyGlobalLoading } from "@/components/global-loading-overlay";
+import { ROOT_CATEGORY_NAME, normalizeCategoryName } from "@/lib/category-catalog";
 import type { CategoryGroupStats, CategoryLeafStats } from "@/lib/category-tree";
+
+type CategoryCatalogItem = {
+  name: string;
+  parentName: string;
+};
+
+type DialogState =
+  | { mode: "edit"; categoryName: string }
+  | { mode: "add_subcategory"; categoryName: string }
+  | { mode: "delete"; categoryName: string }
+  | null;
 
 function normalizeValue(input?: string | null) {
   return (input || "")
@@ -20,11 +32,8 @@ function stableCsv(values: string[]) {
   return [...values].sort((a, b) => a.localeCompare(b, "pt-BR")).join("|");
 }
 
-function parseCsv(input: string) {
-  return input
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
+function sortedUnique(values: string[]) {
+  return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "pt-BR"));
 }
 
 export function CategoryTreePanel(input: {
@@ -33,17 +42,20 @@ export function CategoryTreePanel(input: {
   selectedBankId: string;
   selectedAccountIds: string[];
   selectedAccountId: string;
+  categoriesCatalog?: CategoryCatalogItem[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selected, setSelected] = useState<string[]>(input.selectedCategories);
   const [searchText, setSearchText] = useState("");
   const [message, setMessage] = useState("");
-  const [savingCategory, setSavingCategory] = useState("");
-  const [editingCategory, setEditingCategory] = useState("");
-  const [editingValue, setEditingValue] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const [menuCategory, setMenuCategory] = useState("");
+  const [dialog, setDialog] = useState<DialogState>(null);
+  const [nameValue, setNameValue] = useState("");
+  const [parentValue, setParentValue] = useState(ROOT_CATEGORY_NAME);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>(() => {
-    return Object.fromEntries(input.groups.map((group) => [group.name, true]));
+    return Object.fromEntries(input.groups.map((group) => [group.name, false]));
   });
 
   const selectedSignature = useMemo(() => stableCsv(input.selectedCategories), [input.selectedCategories]);
@@ -56,7 +68,7 @@ export function CategoryTreePanel(input: {
     setOpenMap((current) => {
       const next = { ...current };
       for (const group of input.groups) {
-        if (typeof next[group.name] !== "boolean") next[group.name] = true;
+        if (typeof next[group.name] !== "boolean") next[group.name] = false;
       }
       return next;
     });
@@ -80,6 +92,32 @@ export function CategoryTreePanel(input: {
 
   const visibleLeaves = filteredGroups.flatMap((group) => group.leaves.map((leaf) => leaf.name));
 
+  const categoryParentMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    for (const group of input.groups) {
+      for (const leaf of group.leaves) map.set(leaf.name, ROOT_CATEGORY_NAME);
+    }
+
+    for (const item of input.categoriesCatalog || []) {
+      const name = normalizeCategoryName(item.name);
+      const parentName = normalizeCategoryName(item.parentName || ROOT_CATEGORY_NAME);
+      map.set(name, parentName);
+    }
+
+    map.set(ROOT_CATEGORY_NAME, ROOT_CATEGORY_NAME);
+    return map;
+  }, [input.groups, input.categoriesCatalog]);
+
+  const parentOptions = useMemo(() => {
+    const names = [ROOT_CATEGORY_NAME];
+    for (const group of input.groups) {
+      for (const leaf of group.leaves) names.push(leaf.name);
+    }
+    for (const item of input.categoriesCatalog || []) names.push(normalizeCategoryName(item.name));
+    return sortedUnique(names.map((name) => normalizeCategoryName(name)));
+  }, [input.groups, input.categoriesCatalog]);
+
   function navigateWith(nextSelected: string[]) {
     const params = new URLSearchParams(window.location.search);
 
@@ -101,11 +139,19 @@ export function CategoryTreePanel(input: {
 
     const nextHref = `/dashboard?${params.toString()}`;
     const currentHref = `${window.location.pathname}${window.location.search}`;
-    if (nextHref === currentHref) return;
+    if (nextHref === currentHref) return false;
 
     notifyGlobalLoading(true);
     startTransition(() => {
       router.replace(nextHref, { scroll: false });
+    });
+    return true;
+  }
+
+  function refreshPanel() {
+    notifyGlobalLoading(true);
+    startTransition(() => {
+      router.refresh();
     });
   }
 
@@ -147,66 +193,152 @@ export function CategoryTreePanel(input: {
     setOpenMap((current) => ({ ...current, [groupName]: !current[groupName] }));
   }
 
-  function openRename(leafName: string) {
-    setEditingCategory(leafName);
-    setEditingValue(leafName);
+  function expandAll() {
+    setOpenMap(Object.fromEntries(filteredGroups.map((group) => [group.name, true])));
+  }
+
+  function collapseAll() {
+    setOpenMap(Object.fromEntries(filteredGroups.map((group) => [group.name, false])));
+  }
+
+  function openCategoryMenu(categoryName: string) {
+    setMenuCategory((current) => (current === categoryName ? "" : categoryName));
     setMessage("");
   }
 
-  async function saveRename(oldCategory: string) {
-    const nextCategory = editingValue.trim();
+  function openDialog(mode: "edit" | "add_subcategory" | "delete", categoryName: string) {
+    setDialog({ mode, categoryName });
+    setMenuCategory("");
+    setMessage("");
 
-    if (!nextCategory) {
-      setMessage("Informe um nome valido para categoria.");
+    if (mode === "edit") {
+      setNameValue(categoryName);
+      setParentValue(categoryParentMap.get(categoryName) || ROOT_CATEGORY_NAME);
       return;
     }
 
-    if (nextCategory === oldCategory) {
-      setEditingCategory("");
-      setEditingValue("");
+    if (mode === "add_subcategory") {
+      setNameValue("");
+      setParentValue(categoryName || ROOT_CATEGORY_NAME);
       return;
     }
+
+    setNameValue("");
+    setParentValue(ROOT_CATEGORY_NAME);
+  }
+
+  function closeDialog() {
+    setDialog(null);
+    setNameValue("");
+    setParentValue(ROOT_CATEGORY_NAME);
+  }
+
+  function applySelectionRename(oldName: string, newName: string) {
+    if (!selected.includes(oldName)) return false;
+    const next = Array.from(new Set(selected.map((item) => (item === oldName ? newName : item))));
+    setSelected(next);
+    return navigateWith(next);
+  }
+
+  function applySelectionDelete(oldName: string) {
+    if (!selected.includes(oldName)) return false;
+    const next = selected.filter((item) => item !== oldName);
+    setSelected(next);
+    return navigateWith(next);
+  }
+
+  async function runCategoryAction(payload: Record<string, string>, onSuccess: () => void) {
+    setIsWorking(true);
+    setMessage("");
+    notifyGlobalLoading(true);
 
     try {
-      setSavingCategory(oldCategory);
-      setMessage("");
-
-      const response = await fetch("/api/categories/rename", {
+      const response = await fetch("/api/categories/manage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          old_category: oldCategory,
-          new_category: nextCategory,
-          return_url: `${window.location.pathname}${window.location.search}`,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const payload = await response.json().catch(() => ({}));
-
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setMessage(String(payload?.error || "Nao foi possivel renomear categoria."));
+        setMessage(String(data?.error || "Nao foi possivel atualizar categoria."));
         return;
       }
 
-      const current = parseCsv(new URLSearchParams(window.location.search).get("categories") || "");
+      setMessage("Categorias atualizadas com sucesso.");
+      onSuccess();
+    } catch {
+      setMessage("Erro inesperado ao atualizar categoria.");
+    } finally {
+      setIsWorking(false);
+      notifyGlobalLoading(false);
+    }
+  }
 
-      if (current.includes(oldCategory)) {
-        const patched = current.map((item) => (item === oldCategory ? nextCategory : item));
-        navigateWith(Array.from(new Set(patched)));
-      } else {
-        notifyGlobalLoading(true);
-        startTransition(() => {
-          router.refresh();
-        });
+  function confirmDialogAction() {
+    if (!dialog) return;
+    if (isWorking || isPending) return;
+
+    if (dialog.mode === "edit") {
+      const nextName = nameValue.trim();
+      if (!nextName) {
+        setMessage("Informe um nome valido para categoria.");
+        return;
       }
 
-      setEditingCategory("");
-      setEditingValue("");
-    } catch {
-      setMessage("Erro inesperado ao renomear categoria.");
-    } finally {
-      setSavingCategory("");
+      const selectedOldName = dialog.categoryName;
+      const selectedNewName = normalizeCategoryName(nextName);
+      const selectedParent = normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME);
+
+      runCategoryAction(
+        {
+          action: "edit",
+          category_name: selectedOldName,
+          new_name: selectedNewName,
+          parent_name: selectedParent || ROOT_CATEGORY_NAME,
+        },
+        () => {
+          closeDialog();
+          const redirected = applySelectionRename(selectedOldName, selectedNewName);
+          if (!redirected) refreshPanel();
+        },
+      );
+      return;
     }
+
+    if (dialog.mode === "add_subcategory") {
+      const nextName = nameValue.trim();
+      if (!nextName) {
+        setMessage("Informe o nome da sub-categoria.");
+        return;
+      }
+
+      runCategoryAction(
+        {
+          action: "add_subcategory",
+          category_name: dialog.categoryName,
+          new_name: normalizeCategoryName(nextName),
+          parent_name: normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME),
+        },
+        () => {
+          closeDialog();
+          refreshPanel();
+        },
+      );
+      return;
+    }
+
+    runCategoryAction(
+      {
+        action: "delete",
+        category_name: dialog.categoryName,
+      },
+      () => {
+        closeDialog();
+        const redirected = applySelectionDelete(dialog.categoryName);
+        if (!redirected) refreshPanel();
+      },
+    );
   }
 
   return (
@@ -226,11 +358,17 @@ export function CategoryTreePanel(input: {
         </div>
 
         <div className="fg-category-tree-actions">
-          <button type="button" className="fg-btn-secondary" onClick={selectVisible} disabled={isPending || !visibleLeaves.length}>
+          <button type="button" className="fg-btn-secondary" onClick={selectVisible} disabled={isPending || isWorking || !visibleLeaves.length}>
             Marcar visiveis
           </button>
-          <button type="button" className="fg-btn-secondary" onClick={clearSelection} disabled={isPending || !selected.length}>
+          <button type="button" className="fg-btn-secondary" onClick={clearSelection} disabled={isPending || isWorking || !selected.length}>
             Limpar filtro
+          </button>
+          <button type="button" className="fg-btn-secondary" onClick={expandAll} disabled={isPending || isWorking || !filteredGroups.length}>
+            Expandir
+          </button>
+          <button type="button" className="fg-btn-secondary" onClick={collapseAll} disabled={isPending || isWorking || !filteredGroups.length}>
+            Recolher
           </button>
         </div>
       </div>
@@ -269,8 +407,8 @@ export function CategoryTreePanel(input: {
               {openMap[group.name] ? (
                 <div className="fg-category-leaf-list">
                   {groupLeaves.map((leaf) => {
-                    const isEditing = editingCategory === leaf.name;
-                    const isSaving = savingCategory === leaf.name;
+                    const menuOpen = menuCategory === leaf.name;
+                    const disableActions = isWorking || isPending || leaf.name === ROOT_CATEGORY_NAME;
 
                     return (
                       <div key={`${group.name}:${leaf.name}`} className="fg-category-leaf-row">
@@ -285,33 +423,46 @@ export function CategoryTreePanel(input: {
 
                         <span className="fg-category-leaf-value">{leaf.txCount}</span>
 
-                        <button type="button" className="fg-category-edit-btn" onClick={() => openRename(leaf.name)} disabled={isSaving}>
-                          ✎
-                        </button>
+                        <div className="fg-category-inline-actions">
+                          <button
+                            type="button"
+                            className="fg-category-edit-btn"
+                            onClick={() => openCategoryMenu(leaf.name)}
+                            disabled={isWorking || isPending}
+                            aria-label={`Editar categoria ${leaf.name}`}
+                          >
+                            E
+                          </button>
 
-                        {isEditing ? (
-                          <div className="fg-category-edit-inline">
-                            <input
-                              className="fg-input"
-                              value={editingValue}
-                              onChange={(event) => setEditingValue(event.target.value)}
-                            />
-                            <button type="button" className="fg-btn-secondary" onClick={() => saveRename(leaf.name)} disabled={isSaving}>
-                              {isSaving ? "Salvando..." : "Salvar"}
-                            </button>
-                            <button
-                              type="button"
-                              className="fg-btn-secondary"
-                              onClick={() => {
-                                setEditingCategory("");
-                                setEditingValue("");
-                              }}
-                              disabled={isSaving}
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        ) : null}
+                          {menuOpen ? (
+                            <div className="fg-category-mini-menu">
+                              <button
+                                type="button"
+                                className="fg-btn-secondary"
+                                onClick={() => openDialog("edit", leaf.name)}
+                                disabled={disableActions}
+                              >
+                                Editar categoria
+                              </button>
+                              <button
+                                type="button"
+                                className="fg-btn-secondary"
+                                onClick={() => openDialog("add_subcategory", leaf.name)}
+                                disabled={isWorking || isPending}
+                              >
+                                Adicionar sub-categoria
+                              </button>
+                              <button
+                                type="button"
+                                className="fg-btn-danger"
+                                onClick={() => openDialog("delete", leaf.name)}
+                                disabled={disableActions || leaf.name === "Outros"}
+                              >
+                                Excluir categoria
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     );
                   })}
@@ -326,6 +477,75 @@ export function CategoryTreePanel(input: {
 
       <div className="fg-field-note">Categorias selecionadas: {selected.length} | Total visivel: {visibleLeaves.length}</div>
       <div className="fg-field-note">Soma de gastos na arvore: {brl(filteredGroups.reduce((sum, group) => sum + group.totalAbs, 0))}</div>
+
+      {dialog ? (
+        <div className="fg-category-dialog-backdrop" role="dialog" aria-modal="true">
+          <div className="fg-category-dialog">
+            <div className="fg-card-title">
+              {dialog.mode === "edit" ? "Editar categoria" : null}
+              {dialog.mode === "add_subcategory" ? "Adicionar sub-categoria" : null}
+              {dialog.mode === "delete" ? "Excluir categoria" : null}
+            </div>
+
+            {dialog.mode === "edit" ? (
+              <div className="fg-form">
+                <input
+                  className="fg-input"
+                  value={nameValue}
+                  onChange={(event) => setNameValue(event.target.value)}
+                  placeholder="Novo nome da categoria"
+                />
+                <select className="fg-select" value={parentValue} onChange={(event) => setParentValue(event.target.value)}>
+                  {parentOptions
+                    .filter((name) => name !== dialog.categoryName || name === ROOT_CATEGORY_NAME)
+                    .map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            ) : null}
+
+            {dialog.mode === "add_subcategory" ? (
+              <div className="fg-form">
+                <input
+                  className="fg-input"
+                  value={nameValue}
+                  onChange={(event) => setNameValue(event.target.value)}
+                  placeholder="Nome da sub-categoria"
+                />
+                <select className="fg-select" value={parentValue} onChange={(event) => setParentValue(event.target.value)}>
+                  {parentOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                <div className="fg-field-note">
+                  Se categoria pai nao for informada no cadastro, o sistema usa Raiz automaticamente.
+                </div>
+              </div>
+            ) : null}
+
+            {dialog.mode === "delete" ? (
+              <div className="fg-field-note">
+                A categoria <strong>{dialog.categoryName}</strong> sera removida e os lancamentos vinculados serao movidos para <strong>Outros</strong>.
+              </div>
+            ) : null}
+
+            <div className="fg-account-actions">
+              <button type="button" className="fg-btn" onClick={confirmDialogAction} disabled={isWorking || isPending}>
+                {isWorking ? "Salvando..." : "Confirmar"}
+              </button>
+              <button type="button" className="fg-btn-secondary" onClick={closeDialog} disabled={isWorking || isPending}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
+

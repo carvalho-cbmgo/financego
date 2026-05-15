@@ -8,6 +8,7 @@ import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, shortDate, monthRef } from "@/lib/format";
 import { accountTypeLabel } from "@/lib/accounts";
+import { ROOT_CATEGORY_NAME } from "@/lib/category-catalog";
 import { buildCategoryGroups } from "@/lib/category-tree";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const monthStart = `${selectedMonthRef}-01T00:00:00.000Z`;
   const monthEnd = `${nextMonthRef(selectedMonthRef)}-01T00:00:00.000Z`;
 
-  const [{ data: banks }, { data: accounts }] = await Promise.all([
+  const [{ data: banks }, { data: accounts }, categoriesCatalogResponse] = await Promise.all([
     supabaseAdmin
       .from("banks")
       .select("id, name, code")
@@ -55,7 +56,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .select("id, bank_id, name, balance, institution_name, type")
       .eq("profile_id", user.id)
       .order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("categories")
+      .select("id, name, parent_id")
+      .eq("profile_id", user.id),
   ]);
+
+  const categoriesCatalog = categoriesCatalogResponse.error
+    ? []
+    : buildCategoryCatalog(categoriesCatalogResponse.data || []);
 
   const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
   const accountById = new Map<string, any>((accounts || []).map((acc: any) => [String(acc.id), acc]));
@@ -205,6 +214,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 selectedBankId={selectedBankId}
                 selectedAccountIds={selectedAccountIds}
                 selectedAccountId={selectedAccountId}
+                categoriesCatalog={categoriesCatalog}
               />
             </div>
           ) : null}
@@ -755,6 +765,18 @@ function parseCsvList(input?: string) {
 function capitalize(value: string) {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function buildCategoryCatalog(rows: Array<{ id: string; name: string; parent_id: string | null }>) {
+  const idToName = new Map<string, string>();
+  for (const row of rows || []) idToName.set(String(row.id), String(row.name || ""));
+
+  return (rows || [])
+    .map((row) => ({
+      name: String(row.name || ""),
+      parentName: row.parent_id ? idToName.get(String(row.parent_id)) || ROOT_CATEGORY_NAME : ROOT_CATEGORY_NAME,
+    }))
+    .filter((row) => row.name.length > 0);
 }
 
 
