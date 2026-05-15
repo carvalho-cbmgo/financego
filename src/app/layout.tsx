@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import "./globals.css";
+import GlobalLoadingOverlay from "@/components/global-loading-overlay";
 
 export const metadata = {
   title: "Finance GO",
@@ -22,7 +23,10 @@ export const viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <GlobalLoadingOverlay />
+        {children}
+      </body>
     </html>
   );
 }

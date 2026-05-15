@@ -1,6 +1,7 @@
 ﻿import Link from "next/link";
 import { Fragment } from "react";
 import { PageShell, Card } from "@/components/ui";
+import { AccountsFilterPanel } from "@/components/accounts-filter-panel";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, shortDate, monthRef } from "@/lib/format";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 type DashboardParams = {
   tab?: string;
   account_id?: string;
+  account_ids?: string;
   bank_id?: string;
   edit_tx?: string;
 };
@@ -21,6 +23,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const params = await searchParams;
 
   const selectedAccountId = String(params.account_id || "");
+  const selectedAccountIds = parseCsvList(params.account_ids);
+  if (!selectedAccountIds.length && selectedAccountId) selectedAccountIds.push(selectedAccountId);
   const selectedBankId = String(params.bank_id || "");
   const selectedEditTxId = String(params.edit_tx || "");
   const currentTab = params.tab === "transactions" ? "transactions" : "overview";
@@ -54,8 +58,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     .order("posted_at", { ascending: false })
     .limit(240);
 
-  if (selectedAccountId) {
-    txQuery = txQuery.eq("account_id", selectedAccountId);
+  if (selectedAccountIds.length) {
+    txQuery = txQuery.in("account_id", selectedAccountIds);
   } else if (selectedBankId) {
     if (bankMatchedAccountIds.length) txQuery = txQuery.in("account_id", bankMatchedAccountIds);
     else txQuery = txQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
@@ -72,8 +76,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     .eq("profile_id", user.id)
     .gte("posted_at", monthStart);
 
-  if (selectedAccountId) {
-    monthTxQuery = monthTxQuery.eq("account_id", selectedAccountId);
+  if (selectedAccountIds.length) {
+    monthTxQuery = monthTxQuery.in("account_id", selectedAccountIds);
   } else if (selectedBankId) {
     if (bankMatchedAccountIds.length) monthTxQuery = monthTxQuery.in("account_id", bankMatchedAccountIds);
     else monthTxQuery = monthTxQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
@@ -81,8 +85,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const { data: monthTxs } = await monthTxQuery;
 
-  const selectedAccounts = selectedAccountId
-    ? (accounts || []).filter((a: any) => String(a.id) === selectedAccountId)
+  const selectedAccounts = selectedAccountIds.length
+    ? (accounts || []).filter((a: any) => selectedAccountIds.includes(String(a.id)))
     : selectedBankId
       ? (accounts || []).filter((a: any) => String(a.bank_id || "") === selectedBankId)
       : (accounts || []);
@@ -128,7 +132,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const returnParams = new URLSearchParams();
   returnParams.set("tab", "transactions");
   if (selectedBankId) returnParams.set("bank_id", selectedBankId);
-  if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
+  if (selectedAccountIds.length) returnParams.set("account_ids", selectedAccountIds.join(","));
+  else if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
   const returnUrl = `/dashboard?${returnParams.toString()}`;
 
   const monthRefLabel = formatMonthRef(ref);
@@ -139,7 +144,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div className="fg-legacy-grid">
         <aside className="fg-legacy-side">
           <div className="fg-legacy-side-title">Contas</div>
-          <AccountsSidePanel accounts={accounts || []} bankById={bankById} selectedAccountId={selectedAccountId} />
+          <AccountsSidePanel
+            accounts={accounts || []}
+            bankById={bankById}
+            selectedAccountIds={selectedAccountIds}
+            selectedBankId={selectedBankId}
+            currentTab={currentTab}
+          />
         </aside>
 
         <section className="fg-stack">
@@ -147,7 +158,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             monthRefLabel={monthRefLabel}
             currentTab={currentTab}
             selectedBankId={selectedBankId}
-            selectedAccountId={selectedAccountId}
+            selectedAccountId={selectedAccountIds[0] || selectedAccountId}
             banks={banks || []}
             accounts={accounts || []}
             dateInfo={dateInfo}
@@ -160,7 +171,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   accounts={accounts || []}
                   bankById={bankById}
                   returnUrl={returnUrl}
-                  selectedAccountId={selectedAccountId}
+                  selectedAccountId={selectedAccountIds[0] || selectedAccountId}
                 />
               </Card>
 
@@ -289,31 +300,28 @@ function SummaryRow({ label, value, tone }: { label: string; value: string; tone
 function AccountsSidePanel(input: {
   accounts: any[];
   bankById: Map<string, any>;
-  selectedAccountId: string;
+  selectedAccountIds: string[];
+  selectedBankId: string;
+  currentTab: "overview" | "transactions";
 }) {
-  if (!input.accounts.length) return <div className="fg-empty">Sem contas.</div>;
+  const rows = input.accounts.map((account: any) => {
+    const bank = input.bankById.get(String(account.bank_id || ""));
+    return {
+      id: String(account.id),
+      name: String(account.name || ""),
+      balance: Number(account.balance || 0),
+      type: account.type || null,
+      bankName: String(bank?.name || account.institution_name || "Sem banco"),
+    };
+  });
 
   return (
-    <div className="fg-account-list">
-      {input.accounts.map((account: any) => {
-        const bank = input.bankById.get(String(account.bank_id || ""));
-        const bankName = bank?.name || account.institution_name || "Sem banco";
-        const isActive = input.selectedAccountId === String(account.id);
-
-        return (
-          <Link
-            key={account.id}
-            href={`/dashboard?tab=overview&account_id=${account.id}`}
-            className="fg-account-item"
-            style={{ background: isActive ? "#e7f1cc" : "transparent" }}
-          >
-            <span className="fg-account-item-dot" aria-hidden="true" />
-            <span>{accountTypeLabel(account.type)} {bankName}</span>
-            <span className="fg-account-item-balance">{brl(account.balance || 0)}</span>
-          </Link>
-        );
-      })}
-    </div>
+    <AccountsFilterPanel
+      accounts={rows}
+      selectedAccountIds={input.selectedAccountIds}
+      selectedBankId={input.selectedBankId}
+      currentTab={input.currentTab}
+    />
   );
 }
 
@@ -630,7 +638,18 @@ function formatCurrentDateInfo() {
   return { weekdayDate, accessText };
 }
 
+function parseCsvList(input?: string) {
+  if (!input) return [];
+
+  return input
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
+
 function capitalize(value: string) {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+
