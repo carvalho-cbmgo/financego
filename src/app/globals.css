@@ -232,6 +232,100 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-split { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 8px; }
 .fg-stack { display: grid; gap: 8px; }
+.fg-accounts-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fg-accounts-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #9cbf45;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f8fce9 0%, #edf6cf 100%);
+  color: #274017;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fg-accounts-action-pill:hover {
+  background: linear-gradient(180deg, #f2f9db 0%, #e2f0b6 100%);
+  border-color: #88ac31;
+}
+
+.fg-accounts-action-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  border: 1px solid #8fae3a;
+  background: #ffffff;
+  color: #4e6f1e;
+}
+
+.fg-accounts-create-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fg-accounts-fold {
+  border: 1px solid #cfdbb6;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbe9 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(20, 26, 40, 0.08);
+  scroll-margin-top: 84px;
+}
+
+.fg-accounts-fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2f4421;
+  background: linear-gradient(180deg, #f4f9e2 0%, #e8f0cb 100%);
+}
+
+.fg-accounts-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fg-accounts-fold-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid #88ac31;
+  background: #ffffff;
+  color: #4b6d1d;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fg-accounts-fold[open] > summary {
+  border-bottom: 1px solid #cfdbb6;
+}
+
+.fg-accounts-fold-body {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
 .fg-category-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .fg-category-bar { height: 7px; background: #ddd; overflow: hidden; }
 .fg-category-bar > span { display: block; height: 100%; background: #7fa32f; }
@@ -1190,6 +1284,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   .fg-legacy-grid,
   .fg-overview-grid,
   .fg-split,
+  .fg-accounts-create-grid,
   .fg-grid-4,
   .fg-grid-3,
   .fg-grid-2 {

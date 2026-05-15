@@ -94,7 +94,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <div className="fg-stack">
         <SectionIntro
           title="Bancos & Contas"
-          subtitle="Cadastre primeiro o banco e depois as contas vinculadas. Edite cada registro de forma individual para manter os dados organizados."
+          subtitle="Gerencie bancos e contas com cadastro rapido e edicao individual. Use os atalhos para abrir somente o formulario necessario."
         />
 
         {status ? (
@@ -117,38 +117,92 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <Stat label="Receitas consolidadas" value={brl(totals.consolidatedIncome)} tone="positive" />
         </div>
 
-        <div className="fg-split">
-          <Card title="1) Cadastrar banco">
-            <form action="/api/banks/save" method="post" className="fg-form">
-              <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
-              <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
-              <button className="fg-btn">Salvar banco</button>
-            </form>
-            <p className="fg-field-note">Dica: use o nome oficial para facilitar filtros e comparativos.</p>
-          </Card>
+        <Card title="Cadastro rapido">
+          <div className="fg-accounts-quick-actions">
+            <a href="#cadastro-conta-corrente" className="fg-accounts-action-pill">
+              <span className="fg-accounts-action-icon">CC</span>
+              Cadastrar Conta
+            </a>
+            <a href="#cadastro-cartao-credito" className="fg-accounts-action-pill">
+              <span className="fg-accounts-action-icon">CR</span>
+              Cadastrar Cartao
+            </a>
+          </div>
+          <p className="fg-field-note">Escolha o tipo desejado e abra somente o bloco necessario.</p>
+        </Card>
 
-          <Card title="2) Cadastrar conta vinculada">
-            <form action="/api/accounts/save" method="post" className="fg-form">
-              <div className="fg-grid-3">
-                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
-                  {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
-                  {(banks || []).map((bank: any) => (
-                    <option key={bank.id} value={bank.id}>
-                      {bank.name} {bank.code ? `(${bank.code})` : ""}
-                    </option>
-                  ))}
-                </select>
-                <input name="account_name" required placeholder="Nome da conta (ex: Conta principal)" className="fg-input" />
-                <select name="account_type" className="fg-select" defaultValue="CONTA_CORRENTE">
-                  <option value="CONTA_CORRENTE">CONTA_CORRENTE</option>
-                  <option value="CARTAO_DE_CREDITO">CARTAO_DE_CREDITO</option>
-                </select>
-              </div>
-              <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
-              <button className="fg-btn" disabled={!banks?.length}>Salvar conta</button>
-            </form>
-            <p className="fg-field-note">Cada transacao do sistema fica vinculada a uma dessas contas.</p>
-          </Card>
+        <div className="fg-accounts-create-grid">
+          <details className="fg-accounts-fold" open={!banks?.length}>
+            <summary>
+              <span className="fg-accounts-fold-icon">BK</span>
+              <span>1) Cadastrar banco</span>
+            </summary>
+            <div className="fg-accounts-fold-body">
+              <form action="/api/banks/save" method="post" className="fg-form">
+                <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
+                <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
+                <button className="fg-btn">Salvar banco</button>
+              </form>
+              <p className="fg-field-note">Dica: use o nome oficial para facilitar filtros e comparativos.</p>
+            </div>
+          </details>
+
+          <details className="fg-accounts-fold" id="cadastro-conta-corrente">
+            <summary>
+              <span className="fg-accounts-fold-icon">CC</span>
+              <span>2) Cadastrar Conta</span>
+            </summary>
+            <div className="fg-accounts-fold-body">
+              <form action="/api/accounts/save" method="post" className="fg-form">
+                <input type="hidden" name="account_type" value="CONTA_CORRENTE" />
+                <div className="fg-grid-2">
+                  <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
+                    {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
+                    {(banks || []).map((bank: any) => (
+                      <option key={bank.id} value={bank.id}>
+                        {bank.name} {bank.code ? `(${bank.code})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <input name="account_name" required placeholder="Nome da conta (ex: Conta principal)" className="fg-input" />
+                </div>
+                <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
+                <button className="fg-btn" disabled={!banks?.length}>Salvar conta corrente</button>
+              </form>
+            </div>
+          </details>
+
+          <details className="fg-accounts-fold" id="cadastro-cartao-credito">
+            <summary>
+              <span className="fg-accounts-fold-icon">CR</span>
+              <span>3) Cadastrar Cartao</span>
+            </summary>
+            <div className="fg-accounts-fold-body">
+              <form action="/api/accounts/save" method="post" className="fg-form">
+                <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
+                <div className="fg-grid-2">
+                  <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
+                    {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
+                    {(banks || []).map((bank: any) => (
+                      <option key={bank.id} value={bank.id}>
+                        {bank.name} {bank.code ? `(${bank.code})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <input name="account_name" required placeholder="Nome do cartao (ex: Cartao principal)" className="fg-input" />
+                </div>
+                <input
+                  name="balance"
+                  type="number"
+                  step="0.01"
+                  placeholder="Saldo/Fatura inicial (opcional)"
+                  className="fg-input"
+                />
+                <button className="fg-btn" disabled={!banks?.length}>Salvar cartao</button>
+              </form>
+              <p className="fg-field-note">Cada transacao do sistema fica vinculada a uma dessas contas.</p>
+            </div>
+          </details>
         </div>
 
         {editingBank ? (
