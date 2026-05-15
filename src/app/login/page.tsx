@@ -8,6 +8,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,55 +55,119 @@ export default function LoginPage() {
   return (
     <main className="fg-login-screen">
       <div className="fg-login-backdrop" aria-hidden="true" />
+      <div className="fg-login-orb fg-login-orb-a" aria-hidden="true" />
+      <div className="fg-login-orb fg-login-orb-b" aria-hidden="true" />
 
-      <section className="fg-login-card" aria-label="Acesso ao Finance GO">
-        <div className="fg-login-badge">Finance GO</div>
-        <h1 className="fg-login-title">{mode === "login" ? "Entrar" : "Criar conta"}</h1>
-        <p className="fg-login-subtitle">Use seu e-mail e senha para acessar seu controle financeiro.</p>
+      <section className="fg-login-shell" aria-label="Acesso ao Finance GO">
+        <aside className="fg-login-brand-panel">
+          <p className="fg-login-brand-kicker">Plataforma financeira inteligente</p>
+          <div className="fg-login-brand-wordmark">
+            <span className="fg-login-brand-finance">Finance</span>
+            <span className="fg-login-brand-go">GO</span>
+          </div>
+          <p className="fg-login-brand-copy">
+            Controle suas contas, transacoes e categorias em uma experiencia moderna, clara e profissional.
+          </p>
+          <div className="fg-login-feature-list">
+            <span className="fg-login-feature-item">Analise por banco e conta</span>
+            <span className="fg-login-feature-item">Planejamento de despesas futuras</span>
+            <span className="fg-login-feature-item">Atualizacao rapida e segura</span>
+          </div>
+        </aside>
 
-        <form onSubmit={handleSubmit} className="fg-form fg-login-form">
-          <label className="fg-login-label">
-            E-mail
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              required
-              autoComplete="email"
-              className="fg-input"
-            />
-          </label>
+        <section className="fg-login-card">
+          <div className="fg-login-mode-switch" role="tablist" aria-label="Modo de acesso">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "login"}
+              className={`fg-login-mode-btn ${mode === "login" ? "is-active" : ""}`}
+              onClick={() => {
+                setMode("login");
+                setMessage("");
+              }}
+              disabled={isSubmitting}
+            >
+              Entrar
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === "signup"}
+              className={`fg-login-mode-btn ${mode === "signup" ? "is-active" : ""}`}
+              onClick={() => {
+                setMode("signup");
+                setMessage("");
+              }}
+              disabled={isSubmitting}
+            >
+              Criar conta
+            </button>
+          </div>
 
-          <label className="fg-login-label">
-            Senha
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              required
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-              className="fg-input"
-            />
-          </label>
+          <h1 className="fg-login-title">{mode === "login" ? "Acesse sua conta" : "Abra sua conta"}</h1>
+          <p className="fg-login-subtitle">Entre com e-mail e senha para usar o Finance GO com seguranca.</p>
 
-          <button type="submit" className="fg-btn fg-login-submit" disabled={isSubmitting}>
-            {isSubmitting ? "Carregando..." : mode === "login" ? "Entrar" : "Criar conta"}
-          </button>
+          <form onSubmit={handleSubmit} className="fg-form fg-login-form">
+            <label className="fg-login-label">
+              E-mail
+              <span className="fg-login-input-wrap">
+                <span className="fg-login-input-icon" aria-hidden="true">@</span>
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="fg-input fg-login-input"
+                  placeholder="seuemail@exemplo.com"
+                />
+              </span>
+            </label>
 
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === "login" ? "signup" : "login");
-              setMessage("");
-            }}
-            className="fg-login-switch"
-            disabled={isSubmitting}
-          >
-            {mode === "login" ? "Ainda nao tem conta? Criar agora" : "Ja tenho conta"}
-          </button>
-        </form>
+            <label className="fg-login-label">
+              Senha
+              <span className="fg-login-input-wrap">
+                <span className="fg-login-input-icon" aria-hidden="true">*</span>
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  className="fg-input fg-login-input"
+                  placeholder="Digite sua senha"
+                />
+                <button
+                  type="button"
+                  className="fg-login-password-toggle"
+                  onClick={() => setShowPassword((value) => !value)}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? "Ocultar" : "Mostrar"}
+                </button>
+              </span>
+            </label>
 
-        <div className="fg-login-message" role="status" aria-live="polite">{message}</div>
+            <button type="submit" className="fg-btn fg-login-submit" disabled={isSubmitting}>
+              {isSubmitting ? "Carregando..." : mode === "login" ? "Entrar no Finance GO" : "Criar conta no Finance GO"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "login" ? "signup" : "login");
+                setMessage("");
+              }}
+              className="fg-login-switch"
+              disabled={isSubmitting}
+            >
+              {mode === "login" ? "Ainda nao tem conta? Criar agora" : "Ja tenho conta"}
+            </button>
+          </form>
+
+          <div className="fg-login-message" role="status" aria-live="polite">{message}</div>
+        </section>
       </section>
 
       <footer className="fg-login-footer">© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
