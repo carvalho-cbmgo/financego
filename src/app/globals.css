@@ -282,6 +282,128 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   color: #666;
 }
 
+.fg-login-screen {
+  min-height: 100vh;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(155deg, #ecf4ef 0%, #edf3fa 48%, #f6f8fb 100%);
+}
+
+.fg-login-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(460px 220px at 12% 10%, rgba(16, 185, 129, 0.16), transparent 75%),
+    radial-gradient(420px 230px at 88% 88%, rgba(37, 99, 235, 0.14), transparent 75%);
+}
+
+.fg-login-card {
+  width: min(420px, 100%);
+  border: 1px solid #d3dde8;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
+  padding: 24px;
+  display: grid;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.fg-login-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid #bbd7c8;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #0f766e;
+  font-weight: 700;
+  background: #f0faf5;
+}
+
+.fg-login-title {
+  font-size: clamp(26px, 2.6vw, 32px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+
+.fg-login-subtitle {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #4b5563;
+}
+
+.fg-login-form {
+  margin-top: 4px;
+}
+
+.fg-login-label {
+  display: grid;
+  gap: 4px;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fg-login-submit {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.fg-login-submit:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.fg-login-switch {
+  border: none;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.fg-login-switch:hover {
+  text-decoration: underline;
+}
+
+.fg-login-switch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.fg-login-message {
+  min-height: 18px;
+  color: #334155;
+  font-size: 11px;
+}
+
+.fg-login-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  text-align: center;
+  color: #64748b;
+  font-size: 10px;
+  z-index: 1;
+}
+
 .fg-legacy-grid {
   display: grid;
   grid-template-columns: 262px minmax(0, 1fr);

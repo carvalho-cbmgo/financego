@@ -10,106 +10,102 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setMessage("Processando...");
+    if (isSubmitting) return;
 
-    if (mode === "signup") {
-      const { error } = await supabaseBrowser.auth.signUp({ email, password });
-      setMessage(error ? error.message : "Conta criada. Verifique o e-mail, se necessario.");
-      return;
+    setIsSubmitting(true);
+    setMessage("Carregando...");
+
+    try {
+      if (mode === "signup") {
+        const { error } = await supabaseBrowser.auth.signUp({ email, password });
+        setMessage(error ? error.message : "Conta criada. Verifique o e-mail para confirmar o cadastro.");
+        return;
+      }
+
+      const { data, error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      const response = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: data.session?.access_token }),
+      });
+
+      if (!response.ok) {
+        setMessage("Nao foi possivel iniciar sessao no servidor.");
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (err: any) {
+      setMessage(err?.message || "Ocorreu um erro inesperado.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const { data, error } = await supabaseBrowser.auth.signInWithPassword({ email, password });
-    if (error) return setMessage(error.message);
-
-    await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token: data.session?.access_token }),
-    });
-
-    router.push("/dashboard");
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", alignContent: "center", padding: 10, gap: 8 }}>
-      <div style={{ width: "min(1040px, 100%)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 10 }}>
-        <section
-          style={{
-            borderRadius: 12,
-            background: "linear-gradient(145deg, #0f8e60, #1668b3)",
-            color: "#f8fcff",
-            padding: 16,
-            boxShadow: "0 10px 22px rgba(19, 33, 60, 0.22)",
-          }}
-        >
-          <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.84 }}>Bem-vindo</div>
-          <h1 style={{ marginTop: 6, fontSize: 30, lineHeight: 1.05 }}>Finance GO</h1>
-          <p style={{ marginTop: 6, maxWidth: 540, color: "#dbeeff", lineHeight: 1.35, fontSize: 12 }}>
-            Sistema de controle financeiro pessoal com cadastro separado de bancos e contas,
-            transacoes consolidadas ou previstas e analise inteligente por instituicao.
-          </p>
+    <main className="fg-login-screen">
+      <div className="fg-login-backdrop" aria-hidden="true" />
 
-          <div className="fg-grid-2" style={{ marginTop: 10 }}>
-            <Feature title="Visao geral" text="Saldo, entradas e saidas em cards objetivos." />
-            <Feature title="Por banco/conta" text="Analise separada para cada instituicao e conta." />
-            <Feature title="Previsao futura" text="Use NAO CONSOLIDADA para gastos planejados." />
-            <Feature title="Fluxo pratico" text="Cadastro rapido, importacao e ajustes no mesmo painel." />
-          </div>
-        </section>
+      <section className="fg-login-card" aria-label="Acesso ao Finance GO">
+        <div className="fg-login-badge">Finance GO</div>
+        <h1 className="fg-login-title">{mode === "login" ? "Entrar" : "Criar conta"}</h1>
+        <p className="fg-login-subtitle">Use seu e-mail e senha para acessar seu controle financeiro.</p>
 
-        <section className="fg-card" style={{ alignSelf: "center", background: "#fff" }}>
-          <div className="fg-card-head">
-            <h2 style={{ margin: 0, fontSize: 20 }}>{mode === "login" ? "Entrar" : "Criar conta"}</h2>
-          </div>
-          <p className="fg-field-note" style={{ marginBottom: 12 }}>
-            Acesse seu painel pessoal do Finance GO.
-          </p>
+        <form onSubmit={handleSubmit} className="fg-form fg-login-form">
+          <label className="fg-login-label">
+            E-mail
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              required
+              autoComplete="email"
+              className="fg-input"
+            />
+          </label>
 
-          <form onSubmit={handleSubmit} className="fg-form">
-            <label>
-              E-mail
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="fg-input" />
-            </label>
+          <label className="fg-login-label">
+            Senha
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              required
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              className="fg-input"
+            />
+          </label>
 
-            <label>
-              Senha
-              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="fg-input" />
-            </label>
+          <button type="submit" className="fg-btn fg-login-submit" disabled={isSubmitting}>
+            {isSubmitting ? "Carregando..." : mode === "login" ? "Entrar" : "Criar conta"}
+          </button>
 
-            <div className="fg-grid-2" style={{ marginTop: 8 }}>
-              <button type="submit" className="fg-btn">
-                {mode === "login" ? "Entrar" : "Criar conta"}
-              </button>
-              <button type="button" onClick={() => setMode(mode === "login" ? "signup" : "login")} className="fg-btn-secondary">
-                {mode === "login" ? "Nova conta" : "Ja tenho conta"}
-              </button>
-            </div>
-          </form>
+          <button
+            type="button"
+            onClick={() => {
+              setMode(mode === "login" ? "signup" : "login");
+              setMessage("");
+            }}
+            className="fg-login-switch"
+            disabled={isSubmitting}
+          >
+            {mode === "login" ? "Ainda nao tem conta? Criar agora" : "Ja tenho conta"}
+          </button>
+        </form>
 
-          <div style={{ marginTop: 8, minHeight: 20, color: "#334155", fontSize: 11 }}>{message}</div>
-        </section>
-      </div>
-      <footer className="fg-app-footer">© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
+        <div className="fg-login-message" role="status" aria-live="polite">{message}</div>
+      </section>
+
+      <footer className="fg-login-footer">© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
     </main>
   );
 }
-
-function Feature({ title, text }: { title: string; text: string }) {
-  return (
-    <div
-      style={{
-        border: "1px solid rgba(239, 250, 255, 0.32)",
-        borderRadius: 10,
-        padding: 8,
-        background: "rgba(10, 26, 56, 0.18)",
-      }}
-    >
-      <div style={{ fontWeight: 800, fontSize: 11 }}>{title}</div>
-      <div style={{ marginTop: 2, fontSize: 10, color: "#d8eeff" }}>{text}</div>
-    </div>
-  );
-}
-
