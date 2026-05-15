@@ -1,5 +1,6 @@
 ﻿import Link from "next/link";
 import { ReactNode } from "react";
+import { TopNavLinks } from "@/components/top-nav-links";
 
 const navItems = [
   { href: "/dashboard", label: "Inicio" },
@@ -25,11 +26,7 @@ export function PageShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="shell-topnav" aria-label="Navegacao principal">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="shell-topnav-link">
-              {item.label}
-            </Link>
-          ))}
+          <TopNavLinks items={navItems} />
         </nav>
 
         <Link href="/login" className="shell-user-pill">

@@ -88,6 +88,11 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .shell-topnav-link:hover { background: var(--brand-dark); }
+.shell-topnav-link.is-active,
+.shell-topnav-link[aria-current="page"] {
+  background: #5f7f1b;
+  box-shadow: inset 0 -2px 0 #cfe38d;
+}
 
 .shell-user-pill {
   display: inline-flex;
@@ -930,29 +935,46 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-category-tree-top {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .fg-category-search-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 6px;
+  gap: 4px;
 }
 
 .fg-category-tree-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.fg-category-tool-btn {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #a7a7a7;
+  background: #f5f5f5;
+  color: #3f3f3f;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fg-category-tool-btn:hover {
+  background: #e6efd0;
+  border-color: #95af37;
 }
 
 .fg-category-tree-list {
-  border: 1px solid #cecece;
-  background: #fff;
-  max-height: 390px;
+  border: 1px solid #c3c3c3;
+  background: #f4f4f4;
+  max-height: 418px;
   overflow: auto;
-  padding: 4px;
+  padding: 2px 0;
   display: grid;
-  gap: 4px;
+  gap: 0;
 }
 
 .fg-category-group {
@@ -976,6 +998,12 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   font-size: 10px;
   line-height: 1;
   cursor: pointer;
+}
+
+.fg-category-group-toggle:disabled {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
 }
 
 .fg-category-group-label {
@@ -1002,11 +1030,25 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-category-node-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 4px;
-  padding: 2px 4px;
-  border-top: 1px dotted #e2e2e2;
+  gap: 3px;
+  min-height: 22px;
+  padding: 1px 4px;
+  border-top: 1px solid #e7e7e7;
+  cursor: context-menu;
+}
+
+.fg-category-node-row:hover {
+  background: #ecf3d7;
+}
+
+.fg-category-node-row.is-selected {
+  background: #dfebc2;
+}
+
+.fg-category-node-row.is-partial {
+  background: #eef4dc;
 }
 
 .fg-category-leaf-row {
@@ -1021,12 +1063,12 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-category-leaf-label {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
 .fg-category-leaf-name {
-  font-size: 10px;
+  font-size: 11px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1035,7 +1077,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-category-leaf-value {
   font-size: 10px;
   color: #555;
-  min-width: 20px;
+  min-width: 18px;
   text-align: right;
 }
 
@@ -1079,6 +1121,18 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   display: grid;
   gap: 5px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.fg-category-context-menu {
+  position: fixed;
+  z-index: 1400;
+  min-width: 202px;
+  border: 1px solid #b7b7b7;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  display: grid;
+  gap: 5px;
 }
 
 .fg-category-dialog-backdrop {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { brl } from "@/lib/format";
 import { notifyGlobalLoading } from "@/components/global-loading-overlay";
@@ -30,6 +30,12 @@ type DialogState =
   | { mode: "add_subcategory"; categoryName: string }
   | { mode: "delete"; categoryName: string }
   | null;
+
+type ContextMenuState = {
+  categoryName: string;
+  x: number;
+  y: number;
+};
 
 function normalizeValue(input?: string | null) {
   return (input || "")
@@ -99,7 +105,7 @@ export function CategoryTreePanel(input: {
   const [searchText, setSearchText] = useState("");
   const [message, setMessage] = useState("");
   const [isWorking, setIsWorking] = useState(false);
-  const [menuCategory, setMenuCategory] = useState("");
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [nameValue, setNameValue] = useState("");
   const [parentValue, setParentValue] = useState(ROOT_CATEGORY_NAME);
@@ -212,6 +218,30 @@ export function CategoryTreePanel(input: {
       return next;
     });
   }, [tree.nodeMap]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+
+    function closeMenu() {
+      setContextMenu(null);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMenu();
+    }
+
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("resize", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("resize", closeMenu);
+      window.removeEventListener("scroll", closeMenu, true);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [contextMenu]);
 
   const descendantsMap = useMemo(() => {
     const memo = new Map<string, string[]>();
@@ -365,14 +395,25 @@ export function CategoryTreePanel(input: {
     setOpenMap((current) => ({ ...current, ...Object.fromEntries(entries) }));
   }
 
-  function openCategoryMenu(categoryName: string) {
-    setMenuCategory((current) => (current === categoryName ? "" : categoryName));
+  function openContextMenu(event: MouseEvent, categoryName: string) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const menuWidth = 216;
+    const menuHeight = 148;
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const x = Math.max(6, Math.min(event.clientX, viewportWidth - menuWidth));
+    const y = Math.max(6, Math.min(event.clientY, viewportHeight - menuHeight));
+
+    setContextMenu({ categoryName, x, y });
     setMessage("");
   }
 
   function openDialog(mode: "edit" | "add_subcategory" | "delete", categoryName: string) {
     setDialog({ mode, categoryName });
-    setMenuCategory("");
+    setContextMenu(null);
     setMessage("");
 
     if (mode === "edit") {
@@ -546,8 +587,7 @@ export function CategoryTreePanel(input: {
         () => {
           applyLocalEdit(oldName, nextName, nextParent);
           closeDialog();
-          const redirected = renameSelection(oldName, nextName);
-          if (!redirected && oldName !== nextName) setMenuCategory(nextName);
+          renameSelection(oldName, nextName);
         },
       );
       return;
@@ -609,12 +649,14 @@ export function CategoryTreePanel(input: {
     const allSelected = subtree.length > 0 && selectedCount === subtree.length;
     const partialSelected = selectedCount > 0 && !allSelected;
 
-    const menuOpen = menuCategory === categoryName;
-    const disableActions = isWorking || isPending || categoryName === ROOT_CATEGORY_NAME;
-
     return (
       <div key={categoryName} className="fg-category-node-wrap">
-        <div className="fg-category-node-row" style={{ paddingLeft: `${4 + depth * 14}px` }}>
+        <div
+          className={`fg-category-node-row ${allSelected ? "is-selected" : partialSelected ? "is-partial" : ""}`}
+          style={{ paddingLeft: `${4 + depth * 14}px` }}
+          onContextMenu={(event) => openContextMenu(event, categoryName)}
+          title="Clique com o botao direito para editar categoria"
+        >
           <button
             type="button"
             className="fg-category-group-toggle"
@@ -622,7 +664,7 @@ export function CategoryTreePanel(input: {
             disabled={!hasChildren}
             aria-label={hasChildren ? `Expandir ${categoryName}` : `Categoria ${categoryName}`}
           >
-            {hasChildren ? (isOpen ? "-" : "+") : "o"}
+            {hasChildren ? (isOpen ? "-" : "+") : ""}
           </button>
 
           <label className="fg-category-leaf-label">
@@ -636,49 +678,7 @@ export function CategoryTreePanel(input: {
               {partialSelected ? " (parcial)" : ""}
             </span>
           </label>
-
           <span className="fg-category-leaf-value">{node.txCount}</span>
-
-          <div className="fg-category-inline-actions">
-            <button
-              type="button"
-              className="fg-category-edit-btn"
-              onClick={() => openCategoryMenu(categoryName)}
-              disabled={isWorking || isPending}
-              aria-label={`Editar categoria ${categoryName}`}
-            >
-              E
-            </button>
-
-            {menuOpen ? (
-              <div className="fg-category-mini-menu">
-                <button
-                  type="button"
-                  className="fg-btn-secondary"
-                  onClick={() => openDialog("edit", categoryName)}
-                  disabled={disableActions}
-                >
-                  Editar categoria
-                </button>
-                <button
-                  type="button"
-                  className="fg-btn-secondary"
-                  onClick={() => openDialog("add_subcategory", categoryName)}
-                  disabled={isWorking || isPending}
-                >
-                  Adicionar sub-categoria
-                </button>
-                <button
-                  type="button"
-                  className="fg-btn-danger"
-                  onClick={() => openDialog("delete", categoryName)}
-                  disabled={disableActions || categoryName === "Outros"}
-                >
-                  Excluir categoria
-                </button>
-              </div>
-            ) : null}
-          </div>
         </div>
 
         {isOpen ? rawChildren.map((childName) => renderNode(childName, depth + 1)) : null}
@@ -689,7 +689,6 @@ export function CategoryTreePanel(input: {
   return (
     <div className="fg-category-tree-wrap">
       <div className="fg-category-tree-top">
-        <div className="fg-legacy-inline-label">Busca rapida</div>
         <div className="fg-category-search-row">
           <input
             className="fg-input"
@@ -697,24 +696,20 @@ export function CategoryTreePanel(input: {
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
           />
-          <button type="button" className="fg-btn-secondary" onClick={() => setSearchText(searchText)}>
-            Buscar
-          </button>
-        </div>
-
-        <div className="fg-category-tree-actions">
-          <button type="button" className="fg-btn-secondary" onClick={selectVisible} disabled={isPending || isWorking || !visibleCategoryNames.length}>
-            Marcar visiveis
-          </button>
-          <button type="button" className="fg-btn-secondary" onClick={clearSelection} disabled={isPending || isWorking || !selected.length}>
-            Limpar filtro
-          </button>
-          <button type="button" className="fg-btn-secondary" onClick={expandAll} disabled={isPending || isWorking || !visibleCategoryNames.length}>
-            Expandir
-          </button>
-          <button type="button" className="fg-btn-secondary" onClick={collapseAll} disabled={isPending || isWorking || !visibleCategoryNames.length}>
-            Recolher
-          </button>
+          <div className="fg-category-tree-actions">
+            <button type="button" className="fg-category-tool-btn" onClick={expandAll} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Expandir categorias">
+              +
+            </button>
+            <button type="button" className="fg-category-tool-btn" onClick={collapseAll} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Recolher categorias">
+              -
+            </button>
+            <button type="button" className="fg-category-tool-btn" onClick={selectVisible} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Selecionar categorias visiveis">
+              ✓
+            </button>
+            <button type="button" className="fg-category-tool-btn" onClick={clearSelection} disabled={isPending || isWorking || !selected.length} title="Limpar filtro de categorias">
+              x
+            </button>
+          </div>
         </div>
       </div>
 
@@ -726,8 +721,41 @@ export function CategoryTreePanel(input: {
         {tree.rootChildren.length && !visibleCategoryNames.length ? <div className="fg-empty">Nenhuma categoria encontrada.</div> : null}
       </div>
 
-      <div className="fg-field-note">Categorias selecionadas: {selected.length} | Total visivel: {visibleCategoryNames.length}</div>
-      <div className="fg-field-note">Soma de gastos na arvore: {brl(visibleSpent)}</div>
+      <div className="fg-field-note">Selecionadas: {selected.length} | Visiveis: {visibleCategoryNames.length} | Total: {brl(visibleSpent)}</div>
+
+      {contextMenu ? (
+        <div
+          className="fg-category-context-menu"
+          style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
+          onClick={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <button
+            type="button"
+            className="fg-btn-secondary"
+            onClick={() => openDialog("edit", contextMenu.categoryName)}
+            disabled={isWorking || isPending || contextMenu.categoryName === ROOT_CATEGORY_NAME}
+          >
+            Editar categoria
+          </button>
+          <button
+            type="button"
+            className="fg-btn-secondary"
+            onClick={() => openDialog("add_subcategory", contextMenu.categoryName)}
+            disabled={isWorking || isPending}
+          >
+            Adicionar sub-categoria
+          </button>
+          <button
+            type="button"
+            className="fg-btn-danger"
+            onClick={() => openDialog("delete", contextMenu.categoryName)}
+            disabled={isWorking || isPending || contextMenu.categoryName === ROOT_CATEGORY_NAME || contextMenu.categoryName === "Outros"}
+          >
+            Excluir categoria
+          </button>
+        </div>
+      ) : null}
 
       {dialog ? (
         <div className="fg-category-dialog-backdrop" role="dialog" aria-modal="true">
