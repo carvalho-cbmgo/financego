@@ -84,6 +84,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   font-weight: 700;
   line-height: 1;
   min-height: 36px;
+  white-space: nowrap;
 }
 
 .shell-topnav-link:hover { background: var(--brand-dark); }
@@ -217,12 +218,14 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   text-align: left;
   padding: 4px 6px;
   font-size: 10px;
+  white-space: nowrap;
 }
 
 .fg-table td {
   border-bottom: 1px solid #e2e2e2;
   padding: 4px 6px;
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .fg-table tbody tr:hover { background: #f5f8e7; }
@@ -313,6 +316,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   border-bottom: 1px solid #ddd;
   padding: 2px 0;
   font-size: 10px;
+  white-space: nowrap;
 }
 
 .fg-account-item-dot {
@@ -410,6 +414,50 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   align-items: center;
   font-size: 10px;
   color: #555;
+}
+
+.fg-legacy-transactions-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.fg-legacy-transactions-actions .fg-select {
+  width: 170px;
+}
+
+.fg-legacy-transactions-table .fg-legacy-group-row td {
+  background: #f0f0f0;
+  font-weight: 700;
+  color: #404040;
+}
+
+.fg-legacy-tx-row td {
+  vertical-align: middle;
+}
+
+.fg-legacy-desc-link {
+  display: block;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fg-legacy-desc-link:hover {
+  text-decoration: underline;
+}
+
+.fg-legacy-value-neg {
+  color: var(--danger);
+  text-align: right;
+  font-weight: 700;
+}
+
+.fg-legacy-value-pos {
+  color: var(--success);
+  text-align: right;
+  font-weight: 700;
 }
 
 @media (max-width: 1320px) {

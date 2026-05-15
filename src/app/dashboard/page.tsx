@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import { Fragment } from "react";
 import { PageShell, Card } from "@/components/ui";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
@@ -440,104 +441,160 @@ function TransactionsTable(input: {
     );
   }
 
+  const grouped = groupTransactionsByDay(input.txs);
+
   return (
-    <Card title="Transacoes" action={<span className="fg-chip">Clique na transacao para editar</span>}>
-      <div className="fg-tx-list">
-        {input.txs.map((tx: any) => {
-          const txId = String(tx.id);
-          const account = input.accountById.get(String(tx.account_id || ""));
-          const bank = account ? input.bankById.get(String(account.bank_id || "")) : null;
-          const bankName = bank?.name || account?.institution_name || "Sem banco";
-          const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
-          const selectedBankId = String(account?.bank_id || input.banks[0]?.id || "");
-          const editUrl = buildEditUrl(input.returnUrl, txId);
-          const isEditing = input.selectedEditTxId === txId;
+    <Card title="Transacoes" action={<span className="fg-chip">Clique na linha para editar</span>}>
+      <div className="fg-legacy-transactions-actions">
+        <Link href="/dashboard?tab=transactions&new_tx=1" className="fg-btn">+ Adicionar transacao</Link>
+        <button className="fg-btn-secondary" type="button">✖</button>
+        <button className="fg-btn-secondary" type="button">✓</button>
+        <select className="fg-select" defaultValue="">
+          <option value="">Alterar categoria</option>
+          <option value="Outros">Outros</option>
+          <option value="Casa">Casa</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Lazer">Lazer</option>
+        </select>
+        <Link href="/exports" className="fg-btn-secondary">Exportar</Link>
+      </div>
 
-          return (
-            <article key={txId} className="fg-tx-item">
-              {isEditing ? (
-                <div className="fg-tx-head">
-                  <div className="fg-tx-main">
-                    <div className="fg-tx-desc">{tx.description || "Sem descricao"}</div>
-                    <div className="fg-tx-meta">
-                      {shortDate(tx.posted_at)} - {bankName} - {account?.name || "Sem conta"}
-                    </div>
-                  </div>
+      <div className="fg-table-wrap">
+        <table className="fg-table fg-legacy-transactions-table">
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Conta</th>
+              <th>Valor (R$)</th>
+              <th>C</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="fg-legacy-group-row">
+              <td colSpan={5}>Todos</td>
+            </tr>
 
-                  <div className="fg-tx-side">
-                    <div className={`fg-tx-amount ${Number(tx.amount) >= 0 ? "fg-tx-amount-in" : "fg-tx-amount-out"}`}>
-                      {brl(tx.amount)}
-                    </div>
-                    <Link href={input.returnUrl} className="fg-icon-link" title="Fechar edicao">x</Link>
-                  </div>
-                </div>
-              ) : (
-                <Link href={editUrl} className="fg-tx-head-link" title="Editar transacao">
-                  <div className="fg-tx-main">
-                    <div className="fg-tx-desc">{tx.description || "Sem descricao"}</div>
-                    <div className="fg-tx-meta">
-                      {shortDate(tx.posted_at)} - {bankName} - {account?.name || "Sem conta"} - {tx.app_category || "Outros"}
-                    </div>
-                  </div>
+            {grouped.map((group) => (
+              <Fragment key={group.dayKey}>
+                <tr className="fg-legacy-group-row">
+                  <td colSpan={5}>{group.label}</td>
+                </tr>
 
-                  <div className="fg-tx-side">
-                    <div className={`fg-tx-amount ${Number(tx.amount) >= 0 ? "fg-tx-amount-in" : "fg-tx-amount-out"}`}>
-                      {brl(tx.amount)}
-                    </div>
-                    <span className="fg-icon-link" aria-hidden="true">✎</span>
-                  </div>
-                </Link>
-              )}
+                {group.items.map((tx: any) => {
+                  const txId = String(tx.id);
+                  const account = input.accountById.get(String(tx.account_id || ""));
+                  const bank = account ? input.bankById.get(String(account.bank_id || "")) : null;
+                  const bankName = bank?.name || account?.institution_name || "Sem banco";
+                  const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
+                  const selectedBankId = String(account?.bank_id || input.banks[0]?.id || "");
+                  const editUrl = buildEditUrl(input.returnUrl, txId);
+                  const isEditing = input.selectedEditTxId === txId;
 
-              {isEditing ? (
-                <form action="/api/categories/update" method="post" className="fg-form fg-tx-edit-form">
-                  <input type="hidden" name="id" value={txId} />
-                  <input type="hidden" name="return_url" value={input.returnUrl} />
+                  return (
+                    <Fragment key={txId}>
+                      <tr className="fg-legacy-tx-row">
+                        <td>
+                          <Link href={editUrl} className="fg-legacy-desc-link">
+                            {tx.description || "Sem descricao"}
+                          </Link>
+                        </td>
+                        <td>{tx.app_category || "Outros"}</td>
+                        <td>{bankName} {account?.name ? `- ${account.name}` : ""}</td>
+                        <td className={Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}>
+                          {amountOnly(tx.amount)}
+                        </td>
+                        <td>{tx.is_consolidated !== false ? "✓" : "○"}</td>
+                      </tr>
 
-                  <div className="fg-grid-4">
-                    <input name="posted_at" type="date" required defaultValue={toInputDate(tx.posted_at)} className="fg-input" />
-                    <input name="description" required defaultValue={tx.description || ""} placeholder="Descricao" className="fg-input" />
-                    <select name="bank_id" required defaultValue={selectedBankId} className="fg-select">
-                      {input.banks.map((item: any) => (
-                        <option key={item.id} value={item.id}>{item.name} {item.code ? `(${item.code})` : ""}</option>
-                      ))}
-                    </select>
-                    <select name="account_id" required defaultValue={selectedAccountId} className="fg-select">
-                      {input.accounts.map((item: any) => {
-                        const accountBank = input.bankById.get(String(item.bank_id || ""));
-                        const optionBankName = accountBank?.name || item.institution_name || "Sem banco";
-                        return <option key={item.id} value={item.id}>{optionBankName} - {item.name} ({accountTypeLabel(item.type)})</option>;
-                      })}
-                    </select>
-                  </div>
+                      {isEditing ? (
+                        <tr>
+                          <td colSpan={5}>
+                            <form action="/api/categories/update" method="post" className="fg-form fg-tx-edit-form">
+                              <input type="hidden" name="id" value={txId} />
+                              <input type="hidden" name="return_url" value={input.returnUrl} />
 
-                  <div className="fg-grid-3">
-                    <input name="category" required defaultValue={tx.app_category || "Outros"} placeholder="Categoria" className="fg-input" />
-                    <input name="amount" type="number" step="0.01" required defaultValue={Math.abs(Number(tx.amount || 0)).toFixed(2)} placeholder="Valor" className="fg-input" />
-                    <select name="action" required defaultValue={actionFromType(tx.type)} className="fg-select">
-                      <option value="Receita">Receita</option>
-                      <option value="Despesa">Despesa</option>
-                      <option value="Transferência">Transferencia</option>
-                    </select>
-                  </div>
+                              <div className="fg-grid-4">
+                                <input name="posted_at" type="date" required defaultValue={toInputDate(tx.posted_at)} className="fg-input" />
+                                <input name="description" required defaultValue={tx.description || ""} placeholder="Descricao" className="fg-input" />
+                                <select name="bank_id" required defaultValue={selectedBankId} className="fg-select">
+                                  {input.banks.map((item: any) => (
+                                    <option key={item.id} value={item.id}>{item.name} {item.code ? `(${item.code})` : ""}</option>
+                                  ))}
+                                </select>
+                                <select name="account_id" required defaultValue={selectedAccountId} className="fg-select">
+                                  {input.accounts.map((item: any) => {
+                                    const accountBank = input.bankById.get(String(item.bank_id || ""));
+                                    const optionBankName = accountBank?.name || item.institution_name || "Sem banco";
+                                    return <option key={item.id} value={item.id}>{optionBankName} - {item.name} ({accountTypeLabel(item.type)})</option>;
+                                  })}
+                                </select>
+                              </div>
 
-                  <label className="fg-checkbox-row">
-                    <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
-                    Consolidada
-                  </label>
+                              <div className="fg-grid-3">
+                                <input name="category" required defaultValue={tx.app_category || "Outros"} placeholder="Categoria" className="fg-input" />
+                                <input name="amount" type="number" step="0.01" required defaultValue={Math.abs(Number(tx.amount || 0)).toFixed(2)} placeholder="Valor" className="fg-input" />
+                                <select name="action" required defaultValue={actionFromType(tx.type)} className="fg-select">
+                                  <option value="Receita">Receita</option>
+                                  <option value="Despesa">Despesa</option>
+                                  <option value="Transferência">Transferencia</option>
+                                </select>
+                              </div>
 
-                  <div className="fg-tx-edit-actions">
-                    <button className="fg-btn-secondary">Salvar</button>
-                    <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
-                  </div>
-                </form>
-              ) : null}
-            </article>
-          );
-        })}
+                              <label className="fg-checkbox-row">
+                                <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
+                                Consolidada
+                              </label>
+
+                              <div className="fg-tx-edit-actions">
+                                <button className="fg-btn-secondary">Salvar</button>
+                                <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
+                              </div>
+                            </form>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Card>
   );
+}
+
+function groupTransactionsByDay(txs: any[]) {
+  const groups = new Map<string, any[]>();
+
+  for (const tx of txs) {
+    const dayKey = toInputDate(tx.posted_at);
+    const list = groups.get(dayKey) || [];
+    list.push(tx);
+    groups.set(dayKey, list);
+  }
+
+  return Array.from(groups.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([dayKey, items]) => ({
+      dayKey,
+      label: formatLegacyDayLabel(dayKey),
+      items,
+    }));
+}
+
+function formatLegacyDayLabel(dayKey: string) {
+  const date = new Date(`${dayKey}T12:00:00.000Z`);
+  const weekday = new Intl.DateTimeFormat("pt-BR", { weekday: "long", timeZone: "UTC" }).format(date);
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date);
+  return `${dateLabel}, ${capitalize(weekday)}`;
+}
+
+function amountOnly(value: number | string | null | undefined) {
+  const amount = Number(value || 0);
+  return amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function actionFromType(type: string | null | undefined) {

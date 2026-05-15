@@ -34,25 +34,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", alignContent: "center", padding: 16, gap: 10 }}>
-      <div style={{ width: "min(1120px, 100%)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))", gap: 14 }}>
+    <main style={{ minHeight: "100vh", display: "grid", alignContent: "center", padding: 10, gap: 8 }}>
+      <div style={{ width: "min(1040px, 100%)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 10 }}>
         <section
           style={{
-            borderRadius: 24,
+            borderRadius: 12,
             background: "linear-gradient(145deg, #0f8e60, #1668b3)",
             color: "#f8fcff",
-            padding: 28,
-            boxShadow: "0 20px 46px rgba(19, 33, 60, 0.22)",
+            padding: 16,
+            boxShadow: "0 10px 22px rgba(19, 33, 60, 0.22)",
           }}
         >
-          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.84 }}>Bem-vindo</div>
-          <h1 style={{ marginTop: 10, fontSize: 48 }}>Finance GO</h1>
-          <p style={{ marginTop: 10, maxWidth: 540, color: "#dbeeff", lineHeight: 1.65 }}>
+          <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.84 }}>Bem-vindo</div>
+          <h1 style={{ marginTop: 6, fontSize: 30, lineHeight: 1.05 }}>Finance GO</h1>
+          <p style={{ marginTop: 6, maxWidth: 540, color: "#dbeeff", lineHeight: 1.35, fontSize: 12 }}>
             Sistema de controle financeiro pessoal com cadastro separado de bancos e contas,
             transacoes consolidadas ou previstas e analise inteligente por instituicao.
           </p>
 
-          <div className="fg-grid-2" style={{ marginTop: 18 }}>
+          <div className="fg-grid-2" style={{ marginTop: 10 }}>
             <Feature title="Visao geral" text="Saldo, entradas e saidas em cards objetivos." />
             <Feature title="Por banco/conta" text="Analise separada para cada instituicao e conta." />
             <Feature title="Previsao futura" text="Use NAO CONSOLIDADA para gastos planejados." />
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
         <section className="fg-card" style={{ alignSelf: "center", background: "#fff" }}>
           <div className="fg-card-head">
-            <h2 style={{ margin: 0, fontSize: 28 }}>{mode === "login" ? "Entrar" : "Criar conta"}</h2>
+            <h2 style={{ margin: 0, fontSize: 20 }}>{mode === "login" ? "Entrar" : "Criar conta"}</h2>
           </div>
           <p className="fg-field-note" style={{ marginBottom: 12 }}>
             Acesse seu painel pessoal do Finance GO.
@@ -89,10 +89,10 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div style={{ marginTop: 12, minHeight: 24, color: "#334155" }}>{message}</div>
+          <div style={{ marginTop: 8, minHeight: 20, color: "#334155", fontSize: 11 }}>{message}</div>
         </section>
       </div>
-      <footer className="fg-app-footer">Â© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
+      <footer className="fg-app-footer">© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
     </main>
   );
 }
@@ -102,13 +102,13 @@ function Feature({ title, text }: { title: string; text: string }) {
     <div
       style={{
         border: "1px solid rgba(239, 250, 255, 0.32)",
-        borderRadius: 14,
-        padding: 12,
+        borderRadius: 10,
+        padding: 8,
         background: "rgba(10, 26, 56, 0.18)",
       }}
     >
-      <div style={{ fontWeight: 800 }}>{title}</div>
-      <div style={{ marginTop: 4, fontSize: 13, color: "#d8eeff" }}>{text}</div>
+      <div style={{ fontWeight: 800, fontSize: 11 }}>{title}</div>
+      <div style={{ marginTop: 2, fontSize: 10, color: "#d8eeff" }}>{text}</div>
     </div>
   );
 }
