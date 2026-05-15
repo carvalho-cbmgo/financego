@@ -59,23 +59,12 @@ export default function LoginPage() {
       <div className="fg-login-orb fg-login-orb-b" aria-hidden="true" />
 
       <section className="fg-login-shell" aria-label="Acesso ao Finance GO">
-        <aside className="fg-login-brand-panel">
-          <p className="fg-login-brand-kicker">Plataforma financeira inteligente</p>
-          <div className="fg-login-brand-wordmark">
+        <section className="fg-login-card">
+          <div className="fg-login-brand-wordmark fg-login-brand-wordmark-center">
             <span className="fg-login-brand-finance">Finance</span>
             <span className="fg-login-brand-go">GO</span>
           </div>
-          <p className="fg-login-brand-copy">
-            Controle suas contas, transacoes e categorias em uma experiencia moderna, clara e profissional.
-          </p>
-          <div className="fg-login-feature-list">
-            <span className="fg-login-feature-item">Analise por banco e conta</span>
-            <span className="fg-login-feature-item">Planejamento de despesas futuras</span>
-            <span className="fg-login-feature-item">Atualizacao rapida e segura</span>
-          </div>
-        </aside>
 
-        <section className="fg-login-card">
           <div className="fg-login-mode-switch" role="tablist" aria-label="Modo de acesso">
             <button
               type="button"
@@ -106,7 +95,6 @@ export default function LoginPage() {
           </div>
 
           <h1 className="fg-login-title">{mode === "login" ? "Acesse sua conta" : "Abra sua conta"}</h1>
-          <p className="fg-login-subtitle">Entre com e-mail e senha para usar o Finance GO com seguranca.</p>
 
           <form onSubmit={handleSubmit} className="fg-form fg-login-form">
             <label className="fg-login-label">
@@ -151,18 +139,6 @@ export default function LoginPage() {
 
             <button type="submit" className="fg-btn fg-login-submit" disabled={isSubmitting}>
               {isSubmitting ? "Carregando..." : mode === "login" ? "Entrar no Finance GO" : "Criar conta no Finance GO"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "login" ? "signup" : "login");
-                setMessage("");
-              }}
-              className="fg-login-switch"
-              disabled={isSubmitting}
-            >
-              {mode === "login" ? "Ainda nao tem conta? Criar agora" : "Ja tenho conta"}
             </button>
           </form>
 

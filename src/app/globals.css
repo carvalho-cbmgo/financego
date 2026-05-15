@@ -433,14 +433,13 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-login-shell {
-  width: min(1020px, 100%);
-  border: 1px solid #d6dfeb;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.88);
+  width: min(470px, 100%);
+  border: 1px solid #d2dcea;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
-  box-shadow: 0 26px 54px rgba(30, 47, 78, 0.17);
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(320px, 430px);
+  box-shadow: 0 22px 44px rgba(30, 47, 78, 0.14);
+  display: block;
   overflow: hidden;
   position: relative;
   z-index: 1;
@@ -481,24 +480,30 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   gap: 10px;
 }
 
+.fg-login-brand-wordmark-center {
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
 .fg-login-brand-finance {
-  font-size: clamp(34px, 4vw, 52px);
+  font-size: clamp(34px, 5vw, 45px);
   line-height: 0.95;
   font-weight: 800;
   letter-spacing: -0.04em;
+  color: #0f172a;
 }
 
 .fg-login-brand-go {
   padding: 3px 11px;
   border-radius: 999px;
-  background: #ffffff;
-  color: #1d7e2f;
-  font-size: clamp(20px, 2.6vw, 28px);
+  background: linear-gradient(140deg, #a6bf3b 0%, #85ac2d 100%);
+  color: #ffffff;
+  font-size: clamp(20px, 3vw, 25px);
   line-height: 1;
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  box-shadow: 0 8px 20px rgba(12, 53, 20, 0.25);
+  box-shadow: 0 8px 20px rgba(53, 84, 12, 0.26);
 }
 
 .fg-login-brand-copy {
@@ -526,12 +531,12 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-login-card {
-  padding: 24px 22px;
+  padding: 26px 22px 22px;
   display: grid;
   align-content: center;
   gap: 10px;
   position: relative;
-  background: rgba(255, 255, 255, 0.74);
+  background: transparent;
 }
 
 .fg-login-mode-switch {
@@ -580,15 +585,8 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   color: #0f172a;
 }
 
-.fg-login-subtitle {
-  font-size: 12px;
-  line-height: 1.4;
-  color: #475569;
-  max-width: 40ch;
-}
-
 .fg-login-form {
-  margin-top: 2px;
+  margin-top: 4px;
   gap: 8px;
 }
 
@@ -670,27 +668,6 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-login-submit:disabled {
   opacity: 0.75;
   cursor: wait;
-}
-
-.fg-login-switch {
-  border: none;
-  background: transparent;
-  color: #1c58a3;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  padding: 3px 6px;
-  cursor: pointer;
-}
-
-.fg-login-switch:hover {
-  text-decoration: underline;
-}
-
-.fg-login-switch:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  text-decoration: none;
 }
 
 .fg-login-message {
@@ -1187,12 +1164,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   .shell-main { padding: 6px; }
 
   .fg-login-shell {
-    grid-template-columns: 1fr;
-    width: min(520px, 100%);
-  }
-
-  .fg-login-brand-panel {
-    padding: 20px 18px;
+    width: min(460px, 100%);
   }
 
   .fg-login-card {
