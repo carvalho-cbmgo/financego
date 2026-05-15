@@ -7,7 +7,7 @@ const navItems = [
   { href: "/goals", label: "Sonhos" },
   { href: "/budgets", label: "Orcamento" },
   { href: "/charts", label: "Analise" },
-  { href: "/accounts", label: "Configuracoes" },
+  { href: "/accounts", label: "Bancos & Contas" },
   { href: "/statements", label: "Importar" },
   { href: "/notifications", label: "Notificacoes" },
   { href: "/exports", label: "Exportar" },

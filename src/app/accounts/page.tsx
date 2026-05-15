@@ -1,4 +1,5 @@
-﻿import { PageShell, Card, SectionIntro, Stat } from "@/components/ui";
+import Link from "next/link";
+import { PageShell, Card, SectionIntro, Stat } from "@/components/ui";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl } from "@/lib/format";
@@ -6,9 +7,17 @@ import { accountTypeLabel } from "@/lib/accounts";
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountsPage() {
+type AccountsParams = {
+  edit_bank?: string;
+  edit_account?: string;
+  ok?: string;
+  error?: string;
+};
+
+export default async function AccountsPage({ searchParams }: { searchParams: Promise<AccountsParams> }) {
   const { user, accessToken } = await requireServerSession();
   const supabaseAdmin = createUserDb(accessToken);
+  const params = await searchParams;
 
   const [{ data: banks }, { data: accounts }, { data: txs }] = await Promise.all([
     supabaseAdmin
@@ -52,13 +61,35 @@ export default async function AccountsPage() {
     consolidatedIncome: Array.from(statsByAccount.values()).reduce((sum, item) => sum + item.consolidatedIncome, 0),
   };
 
+  const selectedEditBankId = String(params.edit_bank || "").trim();
+  const selectedEditAccountId = String(params.edit_account || "").trim();
+
+  const editingBank = (banks || []).find((bank: any) => String(bank.id) === selectedEditBankId) || null;
+  const editingAccount = (accounts || []).find((account: any) => String(account.id) === selectedEditAccountId) || null;
+  const editingAccountTypeLabel = accountTypeLabel(editingAccount?.type);
+
+  const status = buildStatusMessage(params.ok, params.error);
+
   return (
     <PageShell>
       <div className="fg-stack">
         <SectionIntro
-          title="Bancos e contas"
-          subtitle="Cadastre primeiro o banco e depois as contas vinculadas. Isso habilita analise por instituicao e por conta."
+          title="Bancos & Contas"
+          subtitle="Cadastre primeiro o banco e depois as contas vinculadas. Edite cada registro de forma individual para manter os dados organizados."
         />
+
+        {status ? (
+          <div
+            className="fg-empty"
+            style={
+              status.tone === "error"
+                ? { borderColor: "#cfb0b0", background: "#fff3f3", color: "#7c1d1d" }
+                : { borderColor: "#b8cca0", background: "#f4faec", color: "#345f27" }
+            }
+          >
+            {status.text}
+          </div>
+        ) : null}
 
         <div className="fg-grid-4">
           <Stat label="Bancos cadastrados" value={String((banks || []).length)} />
@@ -80,7 +111,7 @@ export default async function AccountsPage() {
           <Card title="2) Cadastrar conta vinculada">
             <form action="/api/accounts/save" method="post" className="fg-form">
               <div className="fg-grid-3">
-                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "") }>
+                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
                   {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
                   {(banks || []).map((bank: any) => (
                     <option key={bank.id} value={bank.id}>
@@ -101,6 +132,55 @@ export default async function AccountsPage() {
           </Card>
         </div>
 
+        {editingBank ? (
+          <Card title={`Editar banco: ${editingBank.name}`}>
+            <form action="/api/banks/save" method="post" className="fg-form">
+              <input type="hidden" name="id" value={editingBank.id} />
+              <div className="fg-grid-2">
+                <input name="bank_name" required defaultValue={editingBank.name || ""} placeholder="Nome do banco" className="fg-input" />
+                <input name="bank_code" defaultValue={editingBank.code || ""} placeholder="Codigo do banco (opcional)" className="fg-input" />
+              </div>
+              <div className="fg-account-actions">
+                <button className="fg-btn">Salvar alteracoes</button>
+                <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
+              </div>
+            </form>
+          </Card>
+        ) : null}
+
+        {editingAccount ? (
+          <Card title={`Editar conta: ${editingAccount.name || "Sem nome"}`}>
+            <form action="/api/accounts/save" method="post" className="fg-form">
+              <input type="hidden" name="id" value={editingAccount.id} />
+              <div className="fg-grid-3">
+                <select name="bank_id" required className="fg-select" defaultValue={String(editingAccount.bank_id || "")}>
+                  {(banks || []).map((bank: any) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.name} {bank.code ? `(${bank.code})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <input name="account_name" required defaultValue={editingAccount.name || ""} placeholder="Nome da conta" className="fg-input" />
+                <select name="account_type" className="fg-select" defaultValue={editingAccountTypeLabel}>
+                  <option value="CONTA_CORRENTE">CONTA_CORRENTE</option>
+                  <option value="CARTAO_DE_CREDITO">CARTAO_DE_CREDITO</option>
+                </select>
+              </div>
+              <input
+                name="balance"
+                type="number"
+                step="0.01"
+                defaultValue={Number(editingAccount.balance || 0).toFixed(2)}
+                className="fg-input"
+              />
+              <div className="fg-account-actions">
+                <button className="fg-btn">Salvar alteracoes</button>
+                <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
+              </div>
+            </form>
+          </Card>
+        ) : null}
+
         <Card title="Visao por banco">
           <div className="fg-table-wrap">
             <table className="fg-table">
@@ -112,6 +192,7 @@ export default async function AccountsPage() {
                   <th>Saldo das contas</th>
                   <th>Despesas consolidadas</th>
                   <th>Despesas previstas</th>
+                  <th>Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,14 +211,19 @@ export default async function AccountsPage() {
                     bankPlannedExpense += stats.plannedExpense;
                   }
 
+                  const isEditing = selectedEditBankId === String(bank.id);
+
                   return (
-                    <tr key={bank.id}>
+                    <tr key={bank.id} style={isEditing ? { background: "#f3f8df" } : undefined}>
                       <td>{bank.name}</td>
                       <td>{bank.code || "-"}</td>
                       <td>{accountsFromBank.length}</td>
                       <td>{brl(bankBalance)}</td>
                       <td>{brl(bankConsolidatedExpense)}</td>
                       <td>{brl(bankPlannedExpense)}</td>
+                      <td>
+                        <Link href={editLink("edit_bank", String(bank.id))} className="fg-link">Editar</Link>
+                      </td>
                     </tr>
                   );
                 })}
@@ -159,6 +245,7 @@ export default async function AccountsPage() {
                   <th>Despesa consolidada</th>
                   <th>Despesa prevista</th>
                   <th>Receita consolidada</th>
+                  <th>Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,9 +260,10 @@ export default async function AccountsPage() {
                   const bank = bankById.get(String(account.bank_id || ""));
                   const bankName = bank?.name || account.institution_name || "-";
                   const typeLabel = accountTypeLabel(account.type);
+                  const isEditing = selectedEditAccountId === String(account.id);
 
                   return (
-                    <tr key={account.id}>
+                    <tr key={account.id} style={isEditing ? { background: "#f3f8df" } : undefined}>
                       <td>{bankName}</td>
                       <td>{account.name || "-"}</td>
                       <td>
@@ -188,6 +276,9 @@ export default async function AccountsPage() {
                       <td>{brl(stats.consolidatedExpense)}</td>
                       <td>{brl(stats.plannedExpense)}</td>
                       <td>{brl(stats.consolidatedIncome)}</td>
+                      <td>
+                        <Link href={editLink("edit_account", String(account.id))} className="fg-link">Editar</Link>
+                      </td>
                     </tr>
                   );
                 })}
@@ -200,3 +291,25 @@ export default async function AccountsPage() {
   );
 }
 
+function editLink(param: "edit_bank" | "edit_account", value: string) {
+  return `/accounts?${param}=${encodeURIComponent(value)}`;
+}
+
+function buildStatusMessage(okValue?: string, errorValue?: string) {
+  const okMap: Record<string, string> = {
+    "1": "Conta salva com sucesso.",
+    bank_saved: "Banco salvo com sucesso.",
+    bank_updated: "Banco atualizado com sucesso.",
+  };
+
+  const errorMap: Record<string, string> = {
+    missing_fields: "Preencha todos os campos obrigatorios da conta.",
+    missing_bank_name: "Informe o nome do banco.",
+    invalid_bank: "Banco invalido para esta conta.",
+    bank_not_found: "Banco nao encontrado para edicao.",
+  };
+
+  if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
+  if (okValue && okMap[okValue]) return { tone: "ok" as const, text: okMap[okValue] };
+  return null;
+}
