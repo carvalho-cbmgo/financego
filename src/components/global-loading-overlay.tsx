@@ -33,8 +33,42 @@ function requestMethod(input: RequestInfo | URL, init?: RequestInit) {
   return "GET";
 }
 
+function isInternalUrl(input: string) {
+  if (!input) return false;
+
+  try {
+    const current = new URL(window.location.href);
+    const parsed = new URL(input, current.origin);
+    return parsed.origin === current.origin;
+  } catch {
+    return false;
+  }
+}
+
+function shouldTrackAnchorNavigation(anchor: HTMLAnchorElement) {
+  const hrefAttr = anchor.getAttribute("href") || "";
+  const target = (anchor.getAttribute("target") || "").toLowerCase();
+
+  if (!hrefAttr || hrefAttr.startsWith("#") || hrefAttr.startsWith("javascript:")) return false;
+  if (target && target !== "_self") return false;
+  if (anchor.hasAttribute("download")) return false;
+
+  if (!isInternalUrl(anchor.href)) return false;
+
+  try {
+    const current = new URL(window.location.href);
+    const next = new URL(anchor.href, current.origin);
+    if (next.pathname === current.pathname && next.search === current.search) return false;
+  } catch {
+    return false;
+  }
+
+  return true;
+}
+
 export default function GlobalLoadingOverlay() {
   const [visible, setVisible] = useState(false);
+
   const pendingCountRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -94,10 +128,23 @@ export default function GlobalLoadingOverlay() {
     const onSubmit = (event: Event) => {
       if (!(event.target instanceof HTMLFormElement)) return;
       const form = event.target;
-      const action = form.getAttribute("action") || "";
+      const action = form.action || "";
       const method = String(form.getAttribute("method") || "get").toUpperCase();
-      const track = isDbRequestUrl(action) || method !== "GET";
+      const track = method !== "GET" || isDbRequestUrl(action) || isInternalUrl(action);
       if (track) start();
+    };
+
+    const onDocumentClick = (event: MouseEvent) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!(event.target instanceof Element)) return;
+
+      const anchor = event.target.closest("a[href]");
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (!shouldTrackAnchorNavigation(anchor)) return;
+
+      start();
     };
 
     const onGlobalEvent = (event: Event) => {
@@ -126,6 +173,7 @@ export default function GlobalLoadingOverlay() {
     };
 
     document.addEventListener("submit", onSubmit, true);
+    document.addEventListener("click", onDocumentClick, true);
     window.addEventListener("popstate", onUrlMutate);
     window.addEventListener(GLOBAL_LOADING_EVENT, onGlobalEvent as EventListener);
 
@@ -135,6 +183,7 @@ export default function GlobalLoadingOverlay() {
       window.history.replaceState = originalReplaceState;
 
       document.removeEventListener("submit", onSubmit, true);
+      document.removeEventListener("click", onDocumentClick, true);
       window.removeEventListener("popstate", onUrlMutate);
       window.removeEventListener(GLOBAL_LOADING_EVENT, onGlobalEvent as EventListener);
 
