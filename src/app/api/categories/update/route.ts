@@ -37,11 +37,22 @@ export async function POST(req: Request) {
   const accountId = String(form.get("account_id") || "").trim();
   const inputAmount = Number(form.get("amount") || 0);
   const returnUrl = safeReturnUrl(String(form.get("return_url") || ""));
+  const intent = String(form.get("intent") || "save").trim().toLowerCase();
   const isConsolidated = form.has("is_consolidated");
   const txType = typeFromAction(action);
   const amount = computeAmountByAction(txType, inputAmount);
 
   if (!id) {
+    return NextResponse.redirect(new URL(returnUrl, req.url));
+  }
+
+  if (intent === "delete") {
+    await supabaseAdmin
+      .from("transactions")
+      .delete()
+      .eq("id", id)
+      .eq("profile_id", user.id);
+
     return NextResponse.redirect(new URL(returnUrl, req.url));
   }
 

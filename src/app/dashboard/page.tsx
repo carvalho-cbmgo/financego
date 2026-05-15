@@ -2,10 +2,12 @@
 import { Fragment } from "react";
 import { PageShell, Card } from "@/components/ui";
 import { AccountsFilterPanel } from "@/components/accounts-filter-panel";
+import { CategoryTreePanel } from "@/components/category-tree-panel";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, shortDate, monthRef } from "@/lib/format";
 import { accountTypeLabel } from "@/lib/accounts";
+import { buildCategoryGroups } from "@/lib/category-tree";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,8 @@ type DashboardParams = {
   account_id?: string;
   account_ids?: string;
   bank_id?: string;
+  category?: string;
+  categories?: string;
   edit_tx?: string;
 };
 
@@ -26,6 +30,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const selectedAccountIds = parseCsvList(params.account_ids);
   if (!selectedAccountIds.length && selectedAccountId) selectedAccountIds.push(selectedAccountId);
   const selectedBankId = String(params.bank_id || "");
+  const selectedCategoryNames = Array.from(
+    new Set([
+      ...parseCsvList(params.categories),
+      ...parseCsvList(params.category),
+    ]),
+  );
   const selectedEditTxId = String(params.edit_tx || "");
   const currentTab = params.tab === "transactions" ? "transactions" : "overview";
 
@@ -65,7 +75,29 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     else txQuery = txQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
   }
 
+  if (currentTab === "transactions" && selectedCategoryNames.length) {
+    txQuery = txQuery.in("app_category", selectedCategoryNames);
+  }
+
   const { data: txs } = await txQuery;
+
+  let categoryGroups = buildCategoryGroups([]);
+  if (currentTab === "transactions") {
+    let categoryTreeQuery = supabaseAdmin
+      .from("transactions")
+      .select("app_category, amount")
+      .eq("profile_id", user.id);
+
+    if (selectedAccountIds.length) {
+      categoryTreeQuery = categoryTreeQuery.in("account_id", selectedAccountIds);
+    } else if (selectedBankId) {
+      if (bankMatchedAccountIds.length) categoryTreeQuery = categoryTreeQuery.in("account_id", bankMatchedAccountIds);
+      else categoryTreeQuery = categoryTreeQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
+    }
+
+    const { data: categoryTreeTxs } = await categoryTreeQuery;
+    categoryGroups = buildCategoryGroups(categoryTreeTxs || []);
+  }
 
   const ref = monthRef();
   const monthStart = `${ref}-01T00:00:00.000Z`;
@@ -134,6 +166,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (selectedBankId) returnParams.set("bank_id", selectedBankId);
   if (selectedAccountIds.length) returnParams.set("account_ids", selectedAccountIds.join(","));
   else if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
+  if (selectedCategoryNames.length) returnParams.set("categories", selectedCategoryNames.join(","));
   const returnUrl = `/dashboard?${returnParams.toString()}`;
 
   const monthRefLabel = formatMonthRef(ref);
@@ -142,15 +175,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <PageShell>
       <div className="fg-legacy-grid">
-        <aside className="fg-legacy-side">
-          <div className="fg-legacy-side-title">Contas</div>
-          <AccountsSidePanel
-            accounts={accounts || []}
-            bankById={bankById}
-            selectedAccountIds={selectedAccountIds}
-            selectedBankId={selectedBankId}
-            currentTab={currentTab}
-          />
+        <aside className="fg-legacy-side fg-legacy-side-stack">
+          <div className="fg-legacy-side-block">
+            <div className="fg-legacy-side-title">Contas</div>
+            <AccountsSidePanel
+              accounts={accounts || []}
+              bankById={bankById}
+              selectedAccountIds={selectedAccountIds}
+              selectedBankId={selectedBankId}
+              currentTab={currentTab}
+            />
+          </div>
+
+          {currentTab === "transactions" ? (
+            <div className="fg-legacy-side-block">
+              <div className="fg-legacy-side-title">Categorias</div>
+              <CategoryTreePanel
+                groups={categoryGroups}
+                selectedCategories={selectedCategoryNames}
+                selectedBankId={selectedBankId}
+                selectedAccountIds={selectedAccountIds}
+                selectedAccountId={selectedAccountId}
+              />
+            </div>
+          ) : null}
         </aside>
 
         <section className="fg-stack">
@@ -159,6 +207,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             currentTab={currentTab}
             selectedBankId={selectedBankId}
             selectedAccountId={selectedAccountIds[0] || selectedAccountId}
+            selectedCategoriesCsv={selectedCategoryNames.join(",")}
             banks={banks || []}
             accounts={accounts || []}
             dateInfo={dateInfo}
@@ -179,6 +228,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 txs={txs || []}
                 banks={banks || []}
                 accounts={accounts || []}
+                categoryOptions={categoryGroups.flatMap((group) => group.leaves.map((leaf) => leaf.name))}
                 accountById={accountById}
                 bankById={bankById}
                 returnUrl={returnUrl}
@@ -245,6 +295,7 @@ function LegacyToolbar(input: {
   currentTab: "overview" | "transactions";
   selectedBankId: string;
   selectedAccountId: string;
+  selectedCategoriesCsv: string;
   banks: any[];
   accounts: any[];
   dateInfo: { weekdayDate: string; accessText: string };
@@ -253,6 +304,7 @@ function LegacyToolbar(input: {
     <div className="fg-legacy-toolbar">
       <form action="/dashboard" method="get" className="fg-legacy-toolbar-left">
         <input type="hidden" name="tab" value={input.currentTab} />
+        {input.selectedCategoriesCsv ? <input type="hidden" name="categories" value={input.selectedCategoriesCsv} /> : null}
 
         <div className="fg-legacy-month-chip">{input.monthRefLabel}</div>
 
@@ -436,6 +488,7 @@ function TransactionsTable(input: {
   txs: any[];
   banks: any[];
   accounts: any[];
+  categoryOptions: string[];
   accountById: Map<string, any>;
   bankById: Map<string, any>;
   returnUrl: string;
@@ -454,15 +507,16 @@ function TransactionsTable(input: {
   return (
     <Card title="Transacoes" action={<span className="fg-chip">Clique na linha para editar</span>}>
       <div className="fg-legacy-transactions-actions">
-        <Link href="/dashboard?tab=transactions&new_tx=1" className="fg-btn">+ Adicionar transacao</Link>
+        <Link href={appendQueryParam(input.returnUrl, "new_tx", "1")} className="fg-btn">+ Adicionar transacao</Link>
         <button className="fg-btn-secondary" type="button">✖</button>
         <button className="fg-btn-secondary" type="button">✓</button>
         <select className="fg-select" defaultValue="">
           <option value="">Alterar categoria</option>
-          <option value="Outros">Outros</option>
-          <option value="Casa">Casa</option>
-          <option value="Transporte">Transporte</option>
-          <option value="Lazer">Lazer</option>
+          {Array.from(new Set((input.categoryOptions || []).filter(Boolean)))
+            .sort((a, b) => a.localeCompare(b, "pt-BR"))
+            .map((categoryName) => (
+              <option key={categoryName} value={categoryName}>{categoryName}</option>
+            ))}
         </select>
         <Link href="/exports" className="fg-btn-secondary">Exportar</Link>
       </div>
@@ -496,6 +550,10 @@ function TransactionsTable(input: {
                   const bankName = bank?.name || account?.institution_name || "Sem banco";
                   const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
                   const selectedBankId = String(account?.bank_id || input.banks[0]?.id || "");
+                  const currentCategory = String(tx.app_category || "Outros");
+                  const categoryOptions = Array.from(new Set((input.categoryOptions || []).filter(Boolean)))
+                    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+                  if (!categoryOptions.includes(currentCategory)) categoryOptions.unshift(currentCategory);
                   const editUrl = buildEditUrl(input.returnUrl, txId);
                   const isEditing = input.selectedEditTxId === txId;
 
@@ -518,16 +576,31 @@ function TransactionsTable(input: {
                       {isEditing ? (
                         <tr>
                           <td colSpan={5}>
-                            <form action="/api/categories/update" method="post" className="fg-form fg-tx-edit-form">
+                            <form action="/api/categories/update" method="post" className="fg-legacy-inline-editor">
                               <input type="hidden" name="id" value={txId} />
                               <input type="hidden" name="return_url" value={input.returnUrl} />
+                              <input type="hidden" name="bank_id" value={selectedBankId} />
 
-                              <div className="fg-grid-4">
-                                <input name="posted_at" type="date" required defaultValue={toInputDate(tx.posted_at)} className="fg-input" />
-                                <input name="description" required defaultValue={tx.description || ""} placeholder="Descricao" className="fg-input" />
-                                <select name="bank_id" required defaultValue={selectedBankId} className="fg-select">
-                                  {input.banks.map((item: any) => (
-                                    <option key={item.id} value={item.id}>{item.name} {item.code ? `(${item.code})` : ""}</option>
+                              <div className="fg-legacy-inline-top">
+                                <input
+                                  name="posted_at"
+                                  type="date"
+                                  required
+                                  defaultValue={toInputDate(tx.posted_at)}
+                                  className="fg-input"
+                                />
+                                <input
+                                  name="description"
+                                  required
+                                  defaultValue={tx.description || ""}
+                                  placeholder="Descricao"
+                                  className="fg-input"
+                                />
+                                <select name="category" required defaultValue={currentCategory} className="fg-select">
+                                  {categoryOptions.map((categoryName) => (
+                                    <option key={categoryName} value={categoryName}>
+                                      {categoryName}
+                                    </option>
                                   ))}
                                 </select>
                                 <select name="account_id" required defaultValue={selectedAccountId} className="fg-select">
@@ -537,26 +610,55 @@ function TransactionsTable(input: {
                                     return <option key={item.id} value={item.id}>{optionBankName} - {item.name} ({accountTypeLabel(item.type)})</option>;
                                   })}
                                 </select>
+                                <input
+                                  name="amount"
+                                  type="number"
+                                  step="0.01"
+                                  required
+                                  defaultValue={Math.abs(Number(tx.amount || 0)).toFixed(2)}
+                                  placeholder="Valor"
+                                  className="fg-input"
+                                />
                               </div>
 
-                              <div className="fg-grid-3">
-                                <input name="category" required defaultValue={tx.app_category || "Outros"} placeholder="Categoria" className="fg-input" />
-                                <input name="amount" type="number" step="0.01" required defaultValue={Math.abs(Number(tx.amount || 0)).toFixed(2)} placeholder="Valor" className="fg-input" />
-                                <select name="action" required defaultValue={actionFromType(tx.type)} className="fg-select">
-                                  <option value="Receita">Receita</option>
-                                  <option value="Despesa">Despesa</option>
-                                  <option value="Transferência">Transferencia</option>
-                                </select>
+                              <div className="fg-legacy-inline-middle">
+                                <div className="fg-legacy-action-group">
+                                  <label><input type="radio" name="action" value="Despesa" defaultChecked={actionFromType(tx.type) === "Despesa"} /> Despesa</label>
+                                  <label><input type="radio" name="action" value="Receita" defaultChecked={actionFromType(tx.type) === "Receita"} /> Receita</label>
+                                  <label><input type="radio" name="action" value="Transferência" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferencia</label>
+                                </div>
+                                <label className="fg-checkbox-row">
+                                  <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
+                                  Consolidada
+                                </label>
                               </div>
 
-                              <label className="fg-checkbox-row">
-                                <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
-                                Consolidada
-                              </label>
+                              <div className="fg-legacy-inline-bottom">
+                                <div className="fg-legacy-inline-col">
+                                  <div className="fg-legacy-inline-label">Lembrete</div>
+                                  <select name="reminder" defaultValue="none" className="fg-select">
+                                    <option value="none">Nenhum</option>
+                                    <option value="1d">1 dia antes</option>
+                                    <option value="3d">3 dias antes</option>
+                                    <option value="7d">7 dias antes</option>
+                                  </select>
+                                  <div className="fg-legacy-inline-label">Repetir transacao</div>
+                                  <div className="fg-legacy-repeat-options">
+                                    <label><input type="radio" name="repeat_mode" value="none" defaultChecked /> Sem repeticao</label>
+                                    <label><input type="radio" name="repeat_mode" value="installment" /> Parcelamento</label>
+                                    <label><input type="radio" name="repeat_mode" value="advanced" /> Avancado</label>
+                                  </div>
+                                  <button className="fg-btn-danger" name="intent" value="delete">Excluir</button>
+                                </div>
 
-                              <div className="fg-tx-edit-actions">
-                                <button className="fg-btn-secondary">Salvar</button>
-                                <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
+                                <div className="fg-legacy-inline-col">
+                                  <div className="fg-legacy-inline-label">Nota</div>
+                                  <textarea name="note" className="fg-textarea fg-legacy-inline-note" placeholder="Observacoes da transacao" />
+                                  <div className="fg-legacy-inline-actions">
+                                    <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
+                                    <button className="fg-btn" name="intent" value="save">Salvar</button>
+                                  </div>
+                                </div>
                               </div>
                             </form>
                           </td>
@@ -617,8 +719,12 @@ function toInputDate(input?: string | null) {
 }
 
 function buildEditUrl(baseUrl: string, txId: string) {
+  return appendQueryParam(baseUrl, "edit_tx", txId);
+}
+
+function appendQueryParam(baseUrl: string, key: string, value: string) {
   const separator = baseUrl.includes("?") ? "&" : "?";
-  return `${baseUrl}${separator}edit_tx=${txId}`;
+  return `${baseUrl}${separator}${key}=${encodeURIComponent(value)}`;
 }
 
 function formatMonthRef(ref: string) {
@@ -651,5 +757,7 @@ function capitalize(value: string) {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+
 
 

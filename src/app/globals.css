@@ -273,6 +273,85 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-tx-edit-form { margin-top: 4px; padding: 6px; border-top: 1px dashed #cfcfcf; background: #f9f9f9; }
 .fg-tx-edit-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 
+.fg-legacy-inline-editor {
+  display: grid;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 6px;
+  border: 1px solid #cfcfcf;
+  background: #f7f7f7;
+}
+
+.fg-legacy-inline-top {
+  display: grid;
+  grid-template-columns: 124px minmax(220px, 1.2fr) minmax(160px, 1fr) minmax(160px, 1fr) 120px;
+  gap: 5px;
+}
+
+.fg-legacy-inline-middle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #dfdfdf;
+  border-bottom: 1px solid #dfdfdf;
+  padding: 5px 2px;
+}
+
+.fg-legacy-action-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fg-legacy-action-group label {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fg-legacy-inline-bottom {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 8px;
+}
+
+.fg-legacy-inline-col {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+}
+
+.fg-legacy-inline-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #444;
+}
+
+.fg-legacy-repeat-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fg-legacy-repeat-options label {
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fg-legacy-inline-note {
+  min-height: 74px;
+}
+
+.fg-legacy-inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .fg-app-footer {
   margin-top: 4px;
   padding: 8px;
@@ -417,6 +496,21 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   align-self: start;
 }
 
+.fg-legacy-side-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.fg-legacy-side-block {
+  border: 1px solid #cbcbcb;
+  background: #f8f8f8;
+  padding: 6px;
+}
+
+.fg-legacy-side-block .fg-account-list {
+  max-height: 320px;
+}
+
 .fg-legacy-side-title {
   font-size: 13px;
   font-weight: 700;
@@ -474,6 +568,126 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-account-item-balance { font-weight: 700; }
+
+.fg-category-tree-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.fg-category-tree-top {
+  display: grid;
+  gap: 6px;
+}
+
+.fg-category-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.fg-category-tree-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fg-category-tree-list {
+  border: 1px solid #cecece;
+  background: #fff;
+  max-height: 390px;
+  overflow: auto;
+  padding: 4px;
+  display: grid;
+  gap: 4px;
+}
+
+.fg-category-group {
+  border: 1px solid #dfdfdf;
+}
+
+.fg-category-group-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 6px;
+  background: #f0f0f0;
+  padding: 3px 4px;
+}
+
+.fg-category-group-toggle {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #999;
+  background: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fg-category-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.fg-category-group-count {
+  font-size: 10px;
+  color: #444;
+  font-weight: 700;
+}
+
+.fg-category-leaf-list {
+  display: grid;
+}
+
+.fg-category-leaf-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 20px;
+  border-top: 1px dotted #e2e2e2;
+}
+
+.fg-category-leaf-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.fg-category-leaf-name {
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fg-category-leaf-value {
+  font-size: 10px;
+  color: #555;
+  min-width: 20px;
+  text-align: right;
+}
+
+.fg-category-edit-btn {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #b6b6b6;
+  background: #f9f9f9;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.fg-category-edit-inline {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 5px;
+  padding: 3px 0 4px;
+}
 
 .fg-legacy-toolbar {
   border: 1px solid var(--line);
@@ -637,6 +851,11 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   .fg-grid-4,
   .fg-grid-3,
   .fg-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .fg-legacy-inline-top,
+  .fg-legacy-inline-bottom {
     grid-template-columns: 1fr;
   }
 
