@@ -559,18 +559,32 @@ function TransactionsTable(input: {
 
                   return (
                     <Fragment key={txId}>
-                      <tr className="fg-legacy-tx-row">
+                      <tr className={`fg-legacy-tx-row ${isEditing ? "is-active" : ""}`}>
                         <td>
                           <Link href={editUrl} className="fg-legacy-desc-link">
                             {tx.description || "Sem descricao"}
                           </Link>
                         </td>
-                        <td>{tx.app_category || "Outros"}</td>
-                        <td>{bankName} {account?.name ? `- ${account.name}` : ""}</td>
-                        <td className={Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}>
-                          {amountOnly(tx.amount)}
+                        <td>
+                          <Link href={editUrl} className="fg-legacy-cell-link">
+                            {tx.app_category || "Outros"}
+                          </Link>
                         </td>
-                        <td>{tx.is_consolidated !== false ? "✓" : "○"}</td>
+                        <td>
+                          <Link href={editUrl} className="fg-legacy-cell-link">
+                            {bankName} {account?.name ? `- ${account.name}` : ""}
+                          </Link>
+                        </td>
+                        <td className={Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}>
+                          <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-right">
+                            {amountOnly(tx.amount)}
+                          </Link>
+                        </td>
+                        <td>
+                          <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-center">
+                            {tx.is_consolidated !== false ? "✓" : "○"}
+                          </Link>
+                        </td>
                       </tr>
 
                       {isEditing ? (
@@ -627,10 +641,18 @@ function TransactionsTable(input: {
                                   <label><input type="radio" name="action" value="Receita" defaultChecked={actionFromType(tx.type) === "Receita"} /> Receita</label>
                                   <label><input type="radio" name="action" value="Transferência" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferencia</label>
                                 </div>
-                                <label className="fg-checkbox-row">
-                                  <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
-                                  Consolidada
-                                </label>
+                                <div className="fg-legacy-inline-right">
+                                  <label className="fg-checkbox-row">
+                                    <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
+                                    Consolidada
+                                  </label>
+                                  <label className="fg-checkbox-row fg-legacy-rule-check">
+                                    <input type="checkbox" disabled />
+                                    Criar regra
+                                  </label>
+                                  <span className="fg-legacy-mini-icon">?</span>
+                                  <Link href={input.returnUrl} className="fg-legacy-mini-icon">✖</Link>
+                                </div>
                               </div>
 
                               <div className="fg-legacy-inline-bottom">
