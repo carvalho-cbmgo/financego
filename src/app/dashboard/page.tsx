@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { PageShell, Card } from "@/components/ui";
 import { AccountsFilterPanel } from "@/components/accounts-filter-panel";
 import { CategoryTreePanel } from "@/components/category-tree-panel";
+import { MonthRefPicker } from "@/components/month-ref-picker";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, shortDate, monthRef } from "@/lib/format";
@@ -18,6 +19,7 @@ type DashboardParams = {
   bank_id?: string;
   category?: string;
   categories?: string;
+  month_ref?: string;
   edit_tx?: string;
 };
 
@@ -36,8 +38,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ...parseCsvList(params.category),
     ]),
   );
+  const selectedMonthRef = normalizeMonthRef(String(params.month_ref || ""), monthRef());
   const selectedEditTxId = String(params.edit_tx || "");
   const currentTab = params.tab === "transactions" ? "transactions" : "overview";
+  const monthStart = `${selectedMonthRef}-01T00:00:00.000Z`;
+  const monthEnd = `${nextMonthRef(selectedMonthRef)}-01T00:00:00.000Z`;
 
   const [{ data: banks }, { data: accounts }] = await Promise.all([
     supabaseAdmin
@@ -79,6 +84,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     txQuery = txQuery.in("app_category", selectedCategoryNames);
   }
 
+  if (currentTab === "transactions") {
+    txQuery = txQuery.gte("posted_at", monthStart).lt("posted_at", monthEnd);
+  }
+
   const { data: txs } = await txQuery;
 
   let categoryGroups = buildCategoryGroups([]);
@@ -86,7 +95,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     let categoryTreeQuery = supabaseAdmin
       .from("transactions")
       .select("app_category, amount")
-      .eq("profile_id", user.id);
+      .eq("profile_id", user.id)
+      .gte("posted_at", monthStart)
+      .lt("posted_at", monthEnd);
 
     if (selectedAccountIds.length) {
       categoryTreeQuery = categoryTreeQuery.in("account_id", selectedAccountIds);
@@ -99,14 +110,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     categoryGroups = buildCategoryGroups(categoryTreeTxs || []);
   }
 
-  const ref = monthRef();
-  const monthStart = `${ref}-01T00:00:00.000Z`;
-
   let monthTxQuery = supabaseAdmin
     .from("transactions")
     .select("id, amount, app_category, posted_at, is_consolidated, account_id")
     .eq("profile_id", user.id)
-    .gte("posted_at", monthStart);
+    .gte("posted_at", monthStart)
+    .lt("posted_at", monthEnd);
 
   if (selectedAccountIds.length) {
     monthTxQuery = monthTxQuery.in("account_id", selectedAccountIds);
@@ -167,9 +176,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   if (selectedAccountIds.length) returnParams.set("account_ids", selectedAccountIds.join(","));
   else if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
   if (selectedCategoryNames.length) returnParams.set("categories", selectedCategoryNames.join(","));
+  returnParams.set("month_ref", selectedMonthRef);
   const returnUrl = `/dashboard?${returnParams.toString()}`;
 
-  const monthRefLabel = formatMonthRef(ref);
   const dateInfo = formatCurrentDateInfo();
 
   return (
@@ -203,13 +212,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
         <section className="fg-stack">
           <LegacyToolbar
-            monthRefLabel={monthRefLabel}
-            currentTab={currentTab}
-            selectedBankId={selectedBankId}
-            selectedAccountId={selectedAccountIds[0] || selectedAccountId}
-            selectedCategoriesCsv={selectedCategoryNames.join(",")}
-            banks={banks || []}
-            accounts={accounts || []}
+            selectedMonthRef={selectedMonthRef}
             dateInfo={dateInfo}
           />
 
@@ -291,46 +294,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 }
 
 function LegacyToolbar(input: {
-  monthRefLabel: string;
-  currentTab: "overview" | "transactions";
-  selectedBankId: string;
-  selectedAccountId: string;
-  selectedCategoriesCsv: string;
-  banks: any[];
-  accounts: any[];
+  selectedMonthRef: string;
   dateInfo: { weekdayDate: string; accessText: string };
 }) {
   return (
     <div className="fg-legacy-toolbar">
-      <form action="/dashboard" method="get" className="fg-legacy-toolbar-left">
-        <input type="hidden" name="tab" value={input.currentTab} />
-        {input.selectedCategoriesCsv ? <input type="hidden" name="categories" value={input.selectedCategoriesCsv} /> : null}
-
-        <div className="fg-legacy-month-chip">{input.monthRefLabel}</div>
-
-        <select name="bank_id" defaultValue={input.selectedBankId} className="fg-select">
-          <option value="">Todos os bancos</option>
-          {input.banks.map((bank: any) => (
-            <option key={bank.id} value={bank.id}>
-              {bank.name}
-            </option>
-          ))}
-        </select>
-
-        <select name="account_id" defaultValue={input.selectedAccountId} className="fg-select">
-          <option value="">Todas as contas</option>
-          {input.accounts.map((account: any) => (
-            <option key={account.id} value={account.id}>
-              {account.name} ({accountTypeLabel(account.type)})
-            </option>
-          ))}
-        </select>
-
-        <button className="fg-btn-secondary">Aplicar</button>
-      </form>
+      <div className="fg-legacy-toolbar-left">
+        <MonthRefPicker value={input.selectedMonthRef} />
+      </div>
 
       <div className="fg-legacy-toolbar-right">
-        <Link href="/dashboard?tab=transactions" className="fg-btn">+ Adicionar transacao</Link>
         <div className="fg-legacy-date-box">
           <strong>{input.dateInfo.weekdayDate}</strong>
           <span>{input.dateInfo.accessText}</span>
@@ -507,7 +480,6 @@ function TransactionsTable(input: {
   return (
     <Card title="Transacoes" action={<span className="fg-chip">Clique na linha para editar</span>}>
       <div className="fg-legacy-transactions-actions">
-        <Link href={appendQueryParam(input.returnUrl, "new_tx", "1")} className="fg-btn">+ Adicionar transacao</Link>
         <button className="fg-btn-secondary" type="button">✖</button>
         <button className="fg-btn-secondary" type="button">✓</button>
         <select className="fg-select" defaultValue="">
@@ -749,9 +721,23 @@ function appendQueryParam(baseUrl: string, key: string, value: string) {
   return `${baseUrl}${separator}${key}=${encodeURIComponent(value)}`;
 }
 
-function formatMonthRef(ref: string) {
-  const [year, month] = ref.split("-");
-  return `${month}/${year}`;
+function normalizeMonthRef(input: string, fallback: string) {
+  const value = String(input || "").trim();
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return fallback;
+  return value;
+}
+
+function nextMonthRef(ref: string) {
+  const [yearRaw, monthRaw] = ref.split("-");
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return ref;
+
+  const current = new Date(Date.UTC(year, month - 1, 1));
+  current.setUTCMonth(current.getUTCMonth() + 1);
+  const nextYear = current.getUTCFullYear();
+  const nextMonth = String(current.getUTCMonth() + 1).padStart(2, "0");
+  return `${nextYear}-${nextMonth}`;
 }
 
 function formatCurrentDateInfo() {

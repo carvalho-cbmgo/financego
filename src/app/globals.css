@@ -739,6 +739,12 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   font-weight: 700;
 }
 
+.fg-legacy-month-input {
+  width: 148px;
+  min-height: 28px;
+  font-weight: 700;
+}
+
 .fg-legacy-date-box {
   display: grid;
   justify-items: end;
