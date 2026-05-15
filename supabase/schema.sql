@@ -358,3 +358,24 @@ from banks b
 where a.profile_id = b.profile_id
   and coalesce(nullif(trim(a.institution_name), ''), 'BANCO NAO INFORMADO') = b.name
   and a.bank_id is null;
+
+-- v20: catalogo de categorias com hierarquia pai/filho
+create table if not exists categories (
+  id uuid primary key default gen_random_uuid(),
+  profile_id uuid references profiles(id) on delete cascade,
+  name text not null,
+  parent_id uuid references categories(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(profile_id, name)
+);
+
+create index if not exists idx_categories_profile_name on categories(profile_id, name);
+create index if not exists idx_categories_profile_parent on categories(profile_id, parent_id);
+
+alter table categories enable row level security;
+drop policy if exists "categories_own" on categories;
+create policy "categories_own" on categories for all using (profile_id = auth.uid()) with check (profile_id = auth.uid());
+
+drop trigger if exists trg_categories_updated_at on categories;
+create trigger trg_categories_updated_at before update on categories for each row execute function touch_updated_at();

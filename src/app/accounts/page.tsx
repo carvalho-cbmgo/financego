@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { PageShell, Card, SectionIntro, Stat } from "@/components/ui";
+import { AccountsCategoriesPanel } from "@/components/accounts-categories-panel";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl } from "@/lib/format";
 import { accountTypeLabel } from "@/lib/accounts";
+import { normalizeCategoryName, ROOT_CATEGORY_NAME, toCategorySet } from "@/lib/category-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const supabaseAdmin = createUserDb(accessToken);
   const params = await searchParams;
 
-  const [{ data: banks }, { data: accounts }, { data: txs }] = await Promise.all([
+  const [{ data: banks }, { data: accounts }, { data: txs }, { data: budgets }] = await Promise.all([
     supabaseAdmin
       .from("banks")
       .select("id, name, code, created_at")
@@ -32,9 +34,21 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("transactions")
-      .select("account_id, amount, is_consolidated")
+      .select("account_id, amount, is_consolidated, app_category")
+      .eq("profile_id", user.id),
+    supabaseAdmin
+      .from("budgets")
+      .select("category")
       .eq("profile_id", user.id),
   ]);
+
+  const categoriesResponse = await supabaseAdmin
+    .from("categories")
+    .select("id, name, parent_id")
+    .eq("profile_id", user.id);
+
+  const categoriesTableAvailable = !categoriesResponse.error;
+  const categoriesCatalog = categoriesResponse.data || [];
 
   const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
 
@@ -69,6 +83,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const editingAccountTypeLabel = accountTypeLabel(editingAccount?.type);
 
   const status = buildStatusMessage(params.ok, params.error);
+  const categories = buildAccountCategories({
+    categoriesCatalog,
+    txs: txs || [],
+    budgets: budgets || [],
+  });
 
   return (
     <PageShell>
@@ -286,6 +305,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
             </table>
           </div>
         </Card>
+
+        <Card title="Categorias">
+          <AccountsCategoriesPanel categories={categories} catalogEnabled={categoriesTableAvailable} />
+          <p className="fg-field-note">Toda categoria possui categoria pai. Caso nao seja informada, sera usada a categoria pai Raiz.</p>
+        </Card>
       </div>
     </PageShell>
   );
@@ -312,4 +336,60 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
   if (okValue && okMap[okValue]) return { tone: "ok" as const, text: okMap[okValue] };
   return null;
+}
+
+function buildAccountCategories(input: {
+  categoriesCatalog: Array<{ id: string; name: string; parent_id: string | null }>;
+  txs: Array<{ app_category?: string | null }>;
+  budgets: Array<{ category?: string | null }>;
+}) {
+  const usageTxCount = new Map<string, number>();
+  for (const tx of input.txs) {
+    const name = normalizeCategoryName(tx.app_category);
+    usageTxCount.set(name, (usageTxCount.get(name) || 0) + 1);
+  }
+
+  const usageBudgetCount = new Map<string, number>();
+  for (const budget of input.budgets) {
+    const name = normalizeCategoryName(budget.category);
+    usageBudgetCount.set(name, (usageBudgetCount.get(name) || 0) + 1);
+  }
+
+  const byId = new Map<string, { id: string; name: string; parent_id: string | null }>();
+  const byName = new Map<string, { id: string; name: string; parent_id: string | null }>();
+
+  for (const row of input.categoriesCatalog) {
+    byId.set(String(row.id), row);
+    byName.set(normalizeCategoryName(row.name), row);
+  }
+
+  const categoryNames = toCategorySet([
+    ROOT_CATEGORY_NAME,
+    ...input.categoriesCatalog.map((item) => item.name),
+    ...input.txs.map((item) => item.app_category),
+    ...input.budgets.map((item) => item.category),
+  ]);
+
+  const rows = Array.from(categoryNames).map((name) => {
+    const record = byName.get(name);
+    const parentFromId = record?.parent_id ? byId.get(String(record.parent_id))?.name : null;
+    const parentName = name === ROOT_CATEGORY_NAME ? ROOT_CATEGORY_NAME : normalizeCategoryName(parentFromId || ROOT_CATEGORY_NAME);
+
+    return {
+      name,
+      parentName,
+      txCount: usageTxCount.get(name) || 0,
+      budgetCount: usageBudgetCount.get(name) || 0,
+      isRoot: name === ROOT_CATEGORY_NAME,
+    };
+  });
+
+  rows.sort((a, b) => {
+    if (a.isRoot && !b.isRoot) return -1;
+    if (!a.isRoot && b.isRoot) return 1;
+    if (a.parentName !== b.parentName) return a.parentName.localeCompare(b.parentName, "pt-BR");
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+
+  return rows;
 }
