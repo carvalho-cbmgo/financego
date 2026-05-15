@@ -2,16 +2,15 @@
 import { ReactNode } from "react";
 
 const navItems = [
-  { href: "/dashboard", label: "Inicio", code: "IN" },
-  { href: "/dashboard?tab=transactions", label: "Registrar transacao", code: "TX" },
-  { href: "/statements", label: "Extrato e importacoes", code: "EX" },
-  { href: "/accounts", label: "Bancos e contas", code: "BC" },
-  { href: "/budgets", label: "Orcamento", code: "OR" },
-  { href: "/goals", label: "Metas", code: "MT" },
-  { href: "/charts", label: "Graficos", code: "GR" },
-  { href: "/notifications", label: "Notificacoes", code: "NT" },
-  { href: "/exports", label: "Exportacoes", code: "XP" },
-  { href: "/refunds", label: "Estornos", code: "ES" },
+  { href: "/dashboard", label: "Inicio" },
+  { href: "/dashboard?tab=transactions", label: "Transacoes" },
+  { href: "/goals", label: "Sonhos" },
+  { href: "/budgets", label: "Orcamento" },
+  { href: "/charts", label: "Analise" },
+  { href: "/accounts", label: "Configuracoes" },
+  { href: "/statements", label: "Importar" },
+  { href: "/notifications", label: "Notificacoes" },
+  { href: "/exports", label: "Exportar" },
 ];
 
 export function PageShell({ children }: { children: ReactNode }) {
@@ -19,49 +18,30 @@ export function PageShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="shell-wrap">
-      <div className="shell-grid">
-        <aside className="shell-aside">
-          <div className="shell-brand-block">
-            <div className="shell-logo-mark" aria-hidden="true">FG</div>
-            <div>
-              <div className="shell-brand-title">Finance GO</div>
-              <div className="shell-brand-subtitle">Controle financeiro pessoal por banco e conta</div>
-            </div>
-          </div>
+      <header className="shell-topbar">
+        <div className="shell-brand-mark">
+          <span className="shell-brand-main">finance</span>
+          <span className="shell-brand-go">go</span>
+        </div>
 
-          <nav className="shell-nav">
-            {navItems.map((item) => (
-              <NavLink key={item.href} href={item.href} code={item.code}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="shell-aside-foot">
-            <Link href="/login" className="shell-nav-link shell-nav-link-secondary">
-              <span className="shell-nav-icon">LG</span>
-              <span className="shell-nav-label">Trocar usuario</span>
+        <nav className="shell-topnav" aria-label="Navegacao principal">
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} className="shell-topnav-link">
+              {item.label}
             </Link>
-          </div>
-        </aside>
+          ))}
+        </nav>
 
-        <main className="shell-main">
-          {children}
-          <footer className="fg-app-footer">
-            {`Â© ${currentYear} Mayko Araujo de Carvalho. Todos os direitos reservados.`}
-          </footer>
-        </main>
-      </div>
+        <Link href="/login" className="shell-user-pill">
+          Trocar usuario
+        </Link>
+      </header>
+
+      <main className="shell-main">
+        {children}
+        <footer className="fg-app-footer">{`© ${currentYear} Mayko Araujo de Carvalho. Todos os direitos reservados.`}</footer>
+      </main>
     </div>
-  );
-}
-
-function NavLink({ href, code, children }: { href: string; code: string; children: ReactNode }) {
-  return (
-    <Link href={href} className="shell-nav-link">
-      <span className="shell-nav-icon">{code}</span>
-      <span className="shell-nav-label">{children}</span>
-    </Link>
   );
 }
 
@@ -116,11 +96,10 @@ export function Stat({
 
 export const primaryBtn = {
   padding: "12px 16px",
-  borderRadius: 12,
-  border: "none",
-  background: "var(--brand)",
+  borderRadius: 4,
+  border: "1px solid #7f9c2b",
+  background: "#a4be39",
   color: "#fff",
   fontWeight: 700,
   cursor: "pointer",
 };
-

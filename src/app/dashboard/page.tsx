@@ -139,113 +139,157 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <PageShell>
       <div className="fg-stack">
         <SectionIntro
-          title="Painel Finance GO"
-          subtitle="Visao geral das suas financas por banco e por conta, com despesas consolidadas e previsoes futuras."
+          title="Finance GO - Painel Principal"
+          subtitle="Visual de controle financeiro classico com lista de contas no painel lateral e extrato detalhado."
           action={<Link href="/accounts" className="fg-link">Gerenciar bancos e contas</Link>}
         />
 
-        <FilterForm
-          currentTab={params.tab === "transactions" ? "transactions" : "overview"}
-          selectedBankId={selectedBankId}
-          selectedAccountId={selectedAccountId}
-          banks={banks || []}
-          accounts={accounts || []}
-        />
+        <div className="fg-legacy-grid">
+          <aside className="fg-legacy-side">
+            <div className="fg-legacy-side-title">Contas</div>
+            <AccountsSidePanel
+              accounts={accounts || []}
+              bankById={bankById}
+              selectedAccountId={selectedAccountId}
+            />
+          </aside>
 
-        {!accounts?.length ? (
-          <Card title="Primeiro passo">
-            <div className="fg-empty">
-              Nenhuma conta cadastrada ainda. Crie seu banco e sua conta para registrar transacoes.
-              <div style={{ marginTop: 10 }}>
-                <Link href="/accounts" className="fg-link">Ir para bancos e contas</Link>
-              </div>
-            </div>
-          </Card>
-        ) : null}
-
-        <div className="fg-grid-4">
-          <Stat label="Saldo atual" value={brl(saldo)} tone={saldo >= 0 ? "positive" : "negative"} />
-          <Stat label="Entradas consolidadas" value={brl(receitas)} tone="positive" />
-          <Stat label="Saidas consolidadas" value={brl(gastos)} tone="negative" />
-          <Stat label="Saidas previstas" value={brl(gastosPrevistos)} tone="negative" />
-        </div>
-
-        {params.tab === "transactions" ? (
-          <>
-            <Card title="Registrar transacao" action={<span className="fg-chip">Acoes: Receita, Despesa ou Transferencia</span>}>
-              <ManualTransactionForm
-                accounts={accounts || []}
-                bankById={bankById}
-                returnUrl={returnUrl}
-                selectedAccountId={selectedAccountId}
-              />
-            </Card>
-
-            <TransactionsTable
-              txs={txs || []}
+          <div className="fg-stack">
+            <FilterForm
+              currentTab={params.tab === "transactions" ? "transactions" : "overview"}
+              selectedBankId={selectedBankId}
+              selectedAccountId={selectedAccountId}
               banks={banks || []}
               accounts={accounts || []}
-              accountById={accountById}
-              bankById={bankById}
-              returnUrl={returnUrl}
-              selectedEditTxId={selectedEditTxId}
             />
-          </>
-        ) : (
-          <>
-            <div className="fg-split">
-              <div className="fg-stack">
-                <Card title="Saldo">
-                  <div style={{ fontSize: 42, fontWeight: 800, fontFamily: "var(--font-heading)" }}>{brl(saldo)}</div>
-                </Card>
 
-                <Card title="Gastos por categoria">
-                  <CategoryCard rows={categoryRows} totalCategorySpent={totalCategorySpent} monthRefValue={ref} />
-                </Card>
+            {!accounts?.length ? (
+              <Card title="Primeiro passo">
+                <div className="fg-empty">
+                  Nenhuma conta cadastrada ainda. Crie seu banco e sua conta para registrar transacoes.
+                  <div style={{ marginTop: 10 }}>
+                    <Link href="/accounts" className="fg-link">Ir para bancos e contas</Link>
+                  </div>
+                </div>
+              </Card>
+            ) : null}
 
-                <Card title="Ultimas transacoes" action={<Link href="/dashboard?tab=transactions" className="fg-link">Ver extrato completo</Link>}>
-                  <TransactionsMini txs={txs || []} accountById={accountById} bankById={bankById} />
-                </Card>
-              </div>
+            <div className="fg-grid-4">
+              <Stat label="Saldo atual" value={brl(saldo)} tone={saldo >= 0 ? "positive" : "negative"} />
+              <Stat label="Entradas consolidadas" value={brl(receitas)} tone="positive" />
+              <Stat label="Saidas consolidadas" value={brl(gastos)} tone="negative" />
+              <Stat label="Saidas previstas" value={brl(gastosPrevistos)} tone="negative" />
+            </div>
 
-              <div className="fg-stack">
-                <Card title="Desempenho">
-                  <PerformanceCard
-                    resultMonth={resultMonth}
-                    projectedResult={projectedResult}
-                    receitas={receitas}
-                    gastos={gastos}
-                    gastosPrevistos={gastosPrevistos}
+            {params.tab === "transactions" ? (
+              <>
+                <Card title="Adicionar transacao" action={<span className="fg-chip">Clique na transacao para editar</span>}>
+                  <ManualTransactionForm
+                    accounts={accounts || []}
+                    bankById={bankById}
+                    returnUrl={returnUrl}
+                    selectedAccountId={selectedAccountId}
                   />
                 </Card>
 
-                <Card title="Orcamento e metas">
-                  <div className="fg-stack" style={{ gap: 10 }}>
-                    <div className="fg-category-row">
-                      <span>Orcamento planejado</span>
-                      <strong>{brl(totalBudget)}</strong>
-                    </div>
-                    <div className="fg-category-row">
-                      <span>Meta acumulada</span>
-                      <strong>{brl(totalGoalsCurrent)}</strong>
-                    </div>
-                    <div className="fg-category-row">
-                      <span>Meta total</span>
-                      <strong>{brl(totalGoalsTarget)}</strong>
-                    </div>
-                    <Link href="/goals" className="fg-link">Gerenciar metas</Link>
-                  </div>
-                </Card>
-              </div>
-            </div>
+                <TransactionsTable
+                  txs={txs || []}
+                  banks={banks || []}
+                  accounts={accounts || []}
+                  accountById={accountById}
+                  bankById={bankById}
+                  returnUrl={returnUrl}
+                  selectedEditTxId={selectedEditTxId}
+                />
+              </>
+            ) : (
+              <>
+                <div className="fg-split">
+                  <div className="fg-stack">
+                    <Card title="Saldo">
+                      <div style={{ fontSize: 42, fontWeight: 800, fontFamily: "var(--font-heading)" }}>{brl(saldo)}</div>
+                    </Card>
 
-            <Card title="Lista de metas">
-              <GoalsMini goals={goals || []} />
-            </Card>
-          </>
-        )}
+                    <Card title="Gastos por categoria">
+                      <CategoryCard rows={categoryRows} totalCategorySpent={totalCategorySpent} monthRefValue={ref} />
+                    </Card>
+
+                    <Card title="Ultimas transacoes" action={<Link href="/dashboard?tab=transactions" className="fg-link">Ver extrato completo</Link>}>
+                      <TransactionsMini txs={txs || []} accountById={accountById} bankById={bankById} />
+                    </Card>
+                  </div>
+
+                  <div className="fg-stack">
+                    <Card title="Desempenho">
+                      <PerformanceCard
+                        resultMonth={resultMonth}
+                        projectedResult={projectedResult}
+                        receitas={receitas}
+                        gastos={gastos}
+                        gastosPrevistos={gastosPrevistos}
+                      />
+                    </Card>
+
+                    <Card title="Orcamento e metas">
+                      <div className="fg-stack" style={{ gap: 10 }}>
+                        <div className="fg-category-row">
+                          <span>Orcamento planejado</span>
+                          <strong>{brl(totalBudget)}</strong>
+                        </div>
+                        <div className="fg-category-row">
+                          <span>Meta acumulada</span>
+                          <strong>{brl(totalGoalsCurrent)}</strong>
+                        </div>
+                        <div className="fg-category-row">
+                          <span>Meta total</span>
+                          <strong>{brl(totalGoalsTarget)}</strong>
+                        </div>
+                        <Link href="/goals" className="fg-link">Gerenciar metas</Link>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+
+                <Card title="Lista de metas">
+                  <GoalsMini goals={goals || []} />
+                </Card>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </PageShell>
+  );
+}
+
+function AccountsSidePanel(input: {
+  accounts: any[];
+  bankById: Map<string, any>;
+  selectedAccountId: string;
+}) {
+  if (!input.accounts.length) return <div className="fg-empty">Sem contas cadastradas.</div>;
+
+  return (
+    <div className="fg-account-list">
+      {input.accounts.map((account: any) => {
+        const bank = input.bankById.get(String(account.bank_id || ""));
+        const bankName = bank?.name || account.institution_name || "Sem banco";
+        const isActive = input.selectedAccountId === String(account.id);
+
+        return (
+          <Link
+            key={account.id}
+            href={`/dashboard?tab=transactions&account_id=${account.id}`}
+            className="fg-account-item"
+            style={{ background: isActive ? "#e7f1cc" : "transparent" }}
+          >
+            <span className="fg-account-item-dot" aria-hidden="true" />
+            <span>{bankName} - {account.name}</span>
+            <span className="fg-account-item-balance">{brl(account.balance || 0)}</span>
+          </Link>
+        );
+      })}
+    </div>
   );
 }
 
@@ -510,7 +554,7 @@ function TransactionsTable(input: {
   }
 
   return (
-    <Card title="Transacoes por banco e conta" action={<span className="fg-chip">Use o icone de lapis para editar</span>}>
+    <Card title="Transacoes por banco e conta" action={<span className="fg-chip">Clique na transacao para editar</span>}>
       <div className="fg-tx-list">
         {input.txs.map((tx: any) => {
           const txId = String(tx.id);
@@ -524,30 +568,55 @@ function TransactionsTable(input: {
 
           return (
             <article key={txId} className="fg-tx-item">
-              <div className="fg-tx-head">
-                <div className="fg-tx-main">
-                  <div className="fg-tx-desc">{tx.description || "Sem descricao"}</div>
-                  <div className="fg-tx-meta">
-                    {shortDate(tx.posted_at)} • {bankName} • {account?.name || "Sem conta"}
+              {isEditing ? (
+                <div className="fg-tx-head">
+                  <div className="fg-tx-main">
+                    <div className="fg-tx-desc">{tx.description || "Sem descricao"}</div>
+                    <div className="fg-tx-meta">
+                      {shortDate(tx.posted_at)} • {bankName} • {account?.name || "Sem conta"}
+                    </div>
+                    <div className="fg-tx-tags">
+                      <span className="fg-chip">{tx.app_category || "Outros"}</span>
+                      <span className="fg-chip">{actionFromType(tx.type)}</span>
+                      <span className={`fg-chip ${tx.is_consolidated !== false ? "fg-chip-positive" : "fg-chip-negative"}`}>
+                        {tx.is_consolidated !== false ? "Consolidada" : "Nao consolidada"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="fg-tx-tags">
-                    <span className="fg-chip">{tx.app_category || "Outros"}</span>
-                    <span className="fg-chip">{actionFromType(tx.type)}</span>
-                    <span className={`fg-chip ${tx.is_consolidated !== false ? "fg-chip-positive" : "fg-chip-negative"}`}>
-                      {tx.is_consolidated !== false ? "Consolidada" : "Nao consolidada"}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="fg-tx-side">
-                  <div className={`fg-tx-amount ${Number(tx.amount) >= 0 ? "fg-tx-amount-in" : "fg-tx-amount-out"}`}>
-                    {brl(tx.amount)}
+                  <div className="fg-tx-side">
+                    <div className={`fg-tx-amount ${Number(tx.amount) >= 0 ? "fg-tx-amount-in" : "fg-tx-amount-out"}`}>
+                      {brl(tx.amount)}
+                    </div>
+                    <Link href={input.returnUrl} className="fg-icon-link" title="Fechar edicao">
+                      ×
+                    </Link>
                   </div>
-                  <Link href={isEditing ? input.returnUrl : editUrl} className="fg-icon-link" title="Editar transacao">
-                    ✎
-                  </Link>
                 </div>
-              </div>
+              ) : (
+                <Link href={editUrl} className="fg-tx-head-link" title="Editar transacao">
+                  <div className="fg-tx-main">
+                    <div className="fg-tx-desc">{tx.description || "Sem descricao"}</div>
+                    <div className="fg-tx-meta">
+                      {shortDate(tx.posted_at)} • {bankName} • {account?.name || "Sem conta"}
+                    </div>
+                    <div className="fg-tx-tags">
+                      <span className="fg-chip">{tx.app_category || "Outros"}</span>
+                      <span className="fg-chip">{actionFromType(tx.type)}</span>
+                      <span className={`fg-chip ${tx.is_consolidated !== false ? "fg-chip-positive" : "fg-chip-negative"}`}>
+                        {tx.is_consolidated !== false ? "Consolidada" : "Nao consolidada"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="fg-tx-side">
+                    <div className={`fg-tx-amount ${Number(tx.amount) >= 0 ? "fg-tx-amount-in" : "fg-tx-amount-out"}`}>
+                      {brl(tx.amount)}
+                    </div>
+                    <span className="fg-icon-link" aria-hidden="true">✎</span>
+                  </div>
+                </Link>
+              )}
 
               {isEditing ? (
                 <form action="/api/categories/update" method="post" className="fg-form fg-tx-edit-form">
