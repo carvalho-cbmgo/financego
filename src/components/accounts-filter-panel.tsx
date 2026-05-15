@@ -99,6 +99,9 @@ export function AccountsFilterPanel(input: {
       <div className="fg-account-list">
         {input.accounts.map((account) => {
           const checked = selectedIds.includes(account.id);
+          const typeLabel = accountTypeLabel(account.type);
+          const isCreditCard = typeLabel === "CARTAO_DE_CREDITO";
+          const displayName = `${account.bankName} + CONTA${account.name ? ` (${account.name})` : ""}`;
 
           return (
             <label key={account.id} className={`fg-account-item ${checked ? "is-checked" : ""}`}>
@@ -108,9 +111,13 @@ export function AccountsFilterPanel(input: {
                 onChange={() => toggleOne(account.id)}
                 disabled={isPending}
               />
-              <span className="fg-account-item-text" title={`${accountTypeLabel(account.type)} ${account.bankName}`}>
-                {accountTypeLabel(account.type)} {account.bankName}
-                {account.name ? ` - ${account.name}` : ""}
+              <span className="fg-account-item-main">
+                <span className="fg-account-item-text" title={displayName}>
+                  {displayName}
+                </span>
+                <span className={`fg-account-item-kind ${isCreditCard ? "is-credit" : "is-checking"}`}>
+                  {isCreditCard ? "Cartao de Credito" : "Conta Corrente"}
+                </span>
               </span>
               <span className="fg-account-item-balance">{brl(account.balance || 0)}</span>
             </label>

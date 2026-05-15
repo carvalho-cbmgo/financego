@@ -760,11 +760,10 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 6px;
-  align-items: center;
+  align-items: start;
   border-bottom: 1px solid #ddd;
   padding: 3px 4px;
   font-size: 10px;
-  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -783,12 +782,47 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   accent-color: #88a932;
 }
 
+.fg-account-item-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
 .fg-account-item-text {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.fg-account-item-balance { font-weight: 700; }
+.fg-account-item-kind {
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid #ccd7e4;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.fg-account-item-kind.is-credit {
+  background: #fff4f4;
+  border-color: #e1b9bc;
+  color: #9f2f3b;
+}
+
+.fg-account-item-kind.is-checking {
+  background: #f0f8f0;
+  border-color: #b8d2bb;
+  color: #2c6c36;
+}
+
+.fg-account-item-balance {
+  font-weight: 700;
+  white-space: nowrap;
+  padding-top: 1px;
+}
 
 .fg-category-tree-wrap {
   display: grid;
