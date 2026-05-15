@@ -863,6 +863,19 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   display: grid;
 }
 
+.fg-category-node-wrap {
+  display: grid;
+}
+
+.fg-category-node-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-top: 1px dotted #e2e2e2;
+}
+
 .fg-category-leaf-row {
   display: grid;
   grid-template-columns: 1fr auto auto;

@@ -5,11 +5,24 @@ import { useRouter } from "next/navigation";
 import { brl } from "@/lib/format";
 import { notifyGlobalLoading } from "@/components/global-loading-overlay";
 import { ROOT_CATEGORY_NAME, normalizeCategoryName } from "@/lib/category-catalog";
-import type { CategoryGroupStats, CategoryLeafStats } from "@/lib/category-tree";
+import type { CategoryGroupStats } from "@/lib/category-tree";
 
 type CategoryCatalogItem = {
   name: string;
   parentName: string;
+};
+
+type CategoryUsage = {
+  txCount: number;
+  totalAbs: number;
+};
+
+type TreeNode = {
+  name: string;
+  parentName: string;
+  txCount: number;
+  totalAbs: number;
+  children: string[];
 };
 
 type DialogState =
@@ -32,8 +45,44 @@ function stableCsv(values: string[]) {
   return [...values].sort((a, b) => a.localeCompare(b, "pt-BR")).join("|");
 }
 
-function sortedUnique(values: string[]) {
-  return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "pt-BR"));
+function sortNames(values: string[]) {
+  return [...values].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function usageFromGroups(groups: CategoryGroupStats[]) {
+  const usage: Record<string, CategoryUsage> = {};
+  for (const group of groups || []) {
+    for (const leaf of group.leaves || []) {
+      const key = normalizeCategoryName(leaf.name);
+      if (!key) continue;
+      if (!usage[key]) usage[key] = { txCount: 0, totalAbs: 0 };
+      usage[key].txCount += Number(leaf.txCount || 0);
+      usage[key].totalAbs += Number(leaf.totalAbs || 0);
+    }
+  }
+  return usage;
+}
+
+function dedupeCatalog(rows: CategoryCatalogItem[]) {
+  const map = new Map<string, string>();
+  for (const row of rows || []) {
+    const name = normalizeCategoryName(row.name);
+    if (!name) continue;
+    const parentName = normalizeCategoryName(row.parentName || ROOT_CATEGORY_NAME);
+    map.set(name, name === ROOT_CATEGORY_NAME ? ROOT_CATEGORY_NAME : parentName || ROOT_CATEGORY_NAME);
+  }
+
+  if (!map.has(ROOT_CATEGORY_NAME)) map.set(ROOT_CATEGORY_NAME, ROOT_CATEGORY_NAME);
+
+  const names = Array.from(map.keys());
+  for (const name of names) {
+    if (name === ROOT_CATEGORY_NAME) continue;
+    const parentName = map.get(name) || ROOT_CATEGORY_NAME;
+    if (!map.has(parentName)) map.set(parentName, ROOT_CATEGORY_NAME);
+    if (name === parentName) map.set(name, ROOT_CATEGORY_NAME);
+  }
+
+  return Array.from(map.entries()).map(([name, parentName]) => ({ name, parentName }));
 }
 
 export function CategoryTreePanel(input: {
@@ -54,9 +103,9 @@ export function CategoryTreePanel(input: {
   const [dialog, setDialog] = useState<DialogState>(null);
   const [nameValue, setNameValue] = useState("");
   const [parentValue, setParentValue] = useState(ROOT_CATEGORY_NAME);
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>(() => {
-    return Object.fromEntries(input.groups.map((group) => [group.name, false]));
-  });
+  const [catalog, setCatalog] = useState<CategoryCatalogItem[]>(() => dedupeCatalog(input.categoriesCatalog || []));
+  const [usage, setUsage] = useState<Record<string, CategoryUsage>>(() => usageFromGroups(input.groups || []));
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
   const selectedSignature = useMemo(() => stableCsv(input.selectedCategories), [input.selectedCategories]);
 
@@ -65,58 +114,185 @@ export function CategoryTreePanel(input: {
   }, [selectedSignature, input.selectedCategories]);
 
   useEffect(() => {
+    const nextCatalog = dedupeCatalog(input.categoriesCatalog || []);
+    setCatalog(nextCatalog);
+  }, [input.categoriesCatalog]);
+
+  const usageSignature = useMemo(
+    () =>
+      (input.groups || [])
+        .flatMap((group) => group.leaves.map((leaf) => `${leaf.name}:${leaf.txCount}:${leaf.totalAbs}`))
+        .sort((a, b) => a.localeCompare(b, "pt-BR"))
+        .join("|"),
+    [input.groups],
+  );
+
+  useEffect(() => {
+    setUsage(usageFromGroups(input.groups || []));
+  }, [usageSignature, input.groups]);
+
+  const normalizedCatalog = useMemo(() => {
+    const fromCatalog = dedupeCatalog(catalog);
+    const map = new Map<string, string>();
+
+    for (const row of fromCatalog) {
+      map.set(row.name, row.parentName || ROOT_CATEGORY_NAME);
+    }
+
+    for (const key of Object.keys(usage || {})) {
+      const name = normalizeCategoryName(key);
+      if (!map.has(name)) map.set(name, ROOT_CATEGORY_NAME);
+    }
+
+    if (!map.has(ROOT_CATEGORY_NAME)) map.set(ROOT_CATEGORY_NAME, ROOT_CATEGORY_NAME);
+
+    const rows = Array.from(map.entries()).map(([name, parentName]) => ({ name, parentName }));
+    return dedupeCatalog(rows);
+  }, [catalog, usage]);
+
+  const tree = useMemo(() => {
+    const nodeMap = new Map<string, TreeNode>();
+
+    for (const row of normalizedCatalog) {
+      const name = normalizeCategoryName(row.name);
+      const parentName = name === ROOT_CATEGORY_NAME ? ROOT_CATEGORY_NAME : normalizeCategoryName(row.parentName || ROOT_CATEGORY_NAME);
+      const metrics = usage[name] || { txCount: 0, totalAbs: 0 };
+
+      nodeMap.set(name, {
+        name,
+        parentName,
+        txCount: Number(metrics.txCount || 0),
+        totalAbs: Number(metrics.totalAbs || 0),
+        children: [],
+      });
+    }
+
+    if (!nodeMap.has(ROOT_CATEGORY_NAME)) {
+      nodeMap.set(ROOT_CATEGORY_NAME, {
+        name: ROOT_CATEGORY_NAME,
+        parentName: ROOT_CATEGORY_NAME,
+        txCount: 0,
+        totalAbs: 0,
+        children: [],
+      });
+    }
+
+    for (const node of Array.from(nodeMap.values())) {
+      if (node.name === ROOT_CATEGORY_NAME) continue;
+      const parentName = node.parentName && node.parentName !== node.name ? node.parentName : ROOT_CATEGORY_NAME;
+      if (!nodeMap.has(parentName)) {
+        nodeMap.set(parentName, {
+          name: parentName,
+          parentName: ROOT_CATEGORY_NAME,
+          txCount: 0,
+          totalAbs: 0,
+          children: [],
+        });
+      }
+      const parent = nodeMap.get(parentName)!;
+      if (!parent.children.includes(node.name)) parent.children.push(node.name);
+    }
+
+    for (const node of Array.from(nodeMap.values())) {
+      node.children = sortNames(node.children);
+    }
+
+    const rootChildren = sortNames((nodeMap.get(ROOT_CATEGORY_NAME)?.children || []).filter((name) => name !== ROOT_CATEGORY_NAME));
+
+    return { nodeMap, rootChildren };
+  }, [normalizedCatalog, usage]);
+
+  useEffect(() => {
     setOpenMap((current) => {
-      const next = { ...current };
-      for (const group of input.groups) {
-        if (typeof next[group.name] !== "boolean") next[group.name] = false;
+      const next: Record<string, boolean> = {};
+      for (const name of tree.nodeMap.keys()) {
+        if (name === ROOT_CATEGORY_NAME) continue;
+        next[name] = typeof current[name] === "boolean" ? current[name] : false;
       }
       return next;
     });
-  }, [input.groups]);
+  }, [tree.nodeMap]);
 
-  const filteredGroups = useMemo(() => {
-    const query = normalizeValue(searchText);
-    if (!query) return input.groups;
+  const descendantsMap = useMemo(() => {
+    const memo = new Map<string, string[]>();
 
-    return input.groups
-      .map((group) => {
-        const groupMatches = normalizeValue(group.name).includes(query);
-        const leaves = groupMatches
-          ? group.leaves
-          : group.leaves.filter((leaf) => normalizeValue(leaf.name).includes(query));
+    function collect(name: string, trail: Set<string>) {
+      if (memo.has(name)) return memo.get(name)!;
+      if (trail.has(name)) return [name];
 
-        return { ...group, leaves };
-      })
-      .filter((group) => group.leaves.length > 0);
-  }, [input.groups, searchText]);
+      const node = tree.nodeMap.get(name);
+      if (!node) return [name];
 
-  const visibleLeaves = filteredGroups.flatMap((group) => group.leaves.map((leaf) => leaf.name));
+      const nextTrail = new Set(trail);
+      nextTrail.add(name);
 
-  const categoryParentMap = useMemo(() => {
-    const map = new Map<string, string>();
+      const result = [name];
+      for (const child of node.children) {
+        for (const desc of collect(child, nextTrail)) result.push(desc);
+      }
 
-    for (const group of input.groups) {
-      for (const leaf of group.leaves) map.set(leaf.name, ROOT_CATEGORY_NAME);
+      const unique = Array.from(new Set(result));
+      memo.set(name, unique);
+      return unique;
     }
 
-    for (const item of input.categoriesCatalog || []) {
-      const name = normalizeCategoryName(item.name);
-      const parentName = normalizeCategoryName(item.parentName || ROOT_CATEGORY_NAME);
-      map.set(name, parentName);
+    for (const name of tree.nodeMap.keys()) collect(name, new Set());
+    return memo;
+  }, [tree.nodeMap]);
+
+  const query = normalizeValue(searchText);
+
+  const visibleSet = useMemo(() => {
+    const names = Array.from(tree.nodeMap.keys()).filter((name) => name !== ROOT_CATEGORY_NAME);
+    if (!query) return new Set(names);
+
+    const set = new Set<string>();
+    const parentByName = new Map<string, string>();
+    for (const node of tree.nodeMap.values()) parentByName.set(node.name, node.parentName);
+
+    function includeAncestors(name: string) {
+      let cursor = name;
+      const protection = new Set<string>();
+      while (cursor && !protection.has(cursor)) {
+        protection.add(cursor);
+        if (cursor !== ROOT_CATEGORY_NAME) set.add(cursor);
+        const parent = parentByName.get(cursor);
+        if (!parent || parent === cursor) break;
+        cursor = parent;
+      }
     }
 
-    map.set(ROOT_CATEGORY_NAME, ROOT_CATEGORY_NAME);
-    return map;
-  }, [input.groups, input.categoriesCatalog]);
+    for (const name of names) {
+      if (!normalizeValue(name).includes(query)) continue;
+      includeAncestors(name);
+      const descendants = descendantsMap.get(name) || [name];
+      for (const desc of descendants) {
+        if (desc !== ROOT_CATEGORY_NAME) set.add(desc);
+      }
+    }
+
+    return set;
+  }, [tree.nodeMap, descendantsMap, query]);
 
   const parentOptions = useMemo(() => {
-    const names = [ROOT_CATEGORY_NAME];
-    for (const group of input.groups) {
-      for (const leaf of group.leaves) names.push(leaf.name);
+    const names = Array.from(tree.nodeMap.keys());
+    const sorted = sortNames(names.filter((name) => name !== ROOT_CATEGORY_NAME));
+    return [ROOT_CATEGORY_NAME, ...sorted];
+  }, [tree.nodeMap]);
+
+  const visibleCategoryNames = useMemo(() => {
+    return sortNames(Array.from(visibleSet));
+  }, [visibleSet]);
+
+  const selectedLookup = useMemo(() => new Set(selected), [selected]);
+
+  const visibleSpent = useMemo(() => {
+    let total = 0;
+    for (const name of visibleSet) {
+      total += Number(usage[name]?.totalAbs || 0);
     }
-    for (const item of input.categoriesCatalog || []) names.push(normalizeCategoryName(item.name));
-    return sortedUnique(names.map((name) => normalizeCategoryName(name)));
-  }, [input.groups, input.categoriesCatalog]);
+    return total;
+  }, [visibleSet, usage]);
 
   function navigateWith(nextSelected: string[]) {
     const params = new URLSearchParams(window.location.search);
@@ -148,30 +324,16 @@ export function CategoryTreePanel(input: {
     return true;
   }
 
-  function refreshPanel() {
-    notifyGlobalLoading(true);
-    startTransition(() => {
-      router.refresh();
-    });
-  }
-
-  function toggleLeaf(leafName: string) {
-    const has = selected.includes(leafName);
-    const next = has ? selected.filter((item) => item !== leafName) : [...selected, leafName];
-    setSelected(next);
-    navigateWith(next);
-  }
-
-  function toggleGroup(leaves: CategoryLeafStats[]) {
-    const names = leaves.map((leaf) => leaf.name);
-    const everySelected = names.every((name) => selected.includes(name));
+  function toggleNodeSelection(categoryName: string) {
+    const targets = (descendantsMap.get(categoryName) || [categoryName]).filter((name) => name !== ROOT_CATEGORY_NAME);
+    const allSelected = targets.length > 0 && targets.every((name) => selectedLookup.has(name));
 
     let next: string[];
-    if (everySelected) {
-      const set = new Set(names);
-      next = selected.filter((name) => !set.has(name));
+    if (allSelected) {
+      const toRemove = new Set(targets);
+      next = selected.filter((name) => !toRemove.has(name));
     } else {
-      next = Array.from(new Set([...selected, ...names]));
+      next = Array.from(new Set([...selected, ...targets]));
     }
 
     setSelected(next);
@@ -184,21 +346,23 @@ export function CategoryTreePanel(input: {
   }
 
   function selectVisible() {
-    const next = Array.from(new Set([...selected, ...visibleLeaves]));
+    const next = Array.from(new Set([...selected, ...visibleCategoryNames]));
     setSelected(next);
     navigateWith(next);
   }
 
-  function toggleOpen(groupName: string) {
-    setOpenMap((current) => ({ ...current, [groupName]: !current[groupName] }));
+  function toggleOpen(categoryName: string) {
+    setOpenMap((current) => ({ ...current, [categoryName]: !current[categoryName] }));
   }
 
   function expandAll() {
-    setOpenMap(Object.fromEntries(filteredGroups.map((group) => [group.name, true])));
+    const entries = visibleCategoryNames.map((name) => [name, true] as const);
+    setOpenMap((current) => ({ ...current, ...Object.fromEntries(entries) }));
   }
 
   function collapseAll() {
-    setOpenMap(Object.fromEntries(filteredGroups.map((group) => [group.name, false])));
+    const entries = visibleCategoryNames.map((name) => [name, false] as const);
+    setOpenMap((current) => ({ ...current, ...Object.fromEntries(entries) }));
   }
 
   function openCategoryMenu(categoryName: string) {
@@ -212,8 +376,9 @@ export function CategoryTreePanel(input: {
     setMessage("");
 
     if (mode === "edit") {
+      const node = tree.nodeMap.get(categoryName);
       setNameValue(categoryName);
-      setParentValue(categoryParentMap.get(categoryName) || ROOT_CATEGORY_NAME);
+      setParentValue(node?.parentName || ROOT_CATEGORY_NAME);
       return;
     }
 
@@ -233,18 +398,99 @@ export function CategoryTreePanel(input: {
     setParentValue(ROOT_CATEGORY_NAME);
   }
 
-  function applySelectionRename(oldName: string, newName: string) {
+  function renameSelection(oldName: string, newName: string) {
     if (!selected.includes(oldName)) return false;
-    const next = Array.from(new Set(selected.map((item) => (item === oldName ? newName : item))));
+    const next = Array.from(new Set(selected.map((name) => (name === oldName ? newName : name))));
     setSelected(next);
     return navigateWith(next);
   }
 
-  function applySelectionDelete(oldName: string) {
-    if (!selected.includes(oldName)) return false;
-    const next = selected.filter((item) => item !== oldName);
+  function removeSelection(categoryName: string) {
+    if (!selected.includes(categoryName)) return false;
+    const next = selected.filter((name) => name !== categoryName);
     setSelected(next);
     return navigateWith(next);
+  }
+
+  function applyLocalEdit(oldName: string, newName: string, newParent: string) {
+    setCatalog((current) => {
+      const nextRows = current.map((row) => {
+        const rowName = normalizeCategoryName(row.name);
+        const rowParent = normalizeCategoryName(row.parentName || ROOT_CATEGORY_NAME);
+
+        if (rowName === oldName) {
+          return {
+            name: newName,
+            parentName: newName === ROOT_CATEGORY_NAME ? ROOT_CATEGORY_NAME : newParent || ROOT_CATEGORY_NAME,
+          };
+        }
+
+        if (rowParent === oldName) {
+          return {
+            name: row.name,
+            parentName: newName,
+          };
+        }
+
+        return {
+          name: row.name,
+          parentName: row.parentName || ROOT_CATEGORY_NAME,
+        };
+      });
+
+      if (!nextRows.some((row) => normalizeCategoryName(row.name) === newName)) {
+        nextRows.push({ name: newName, parentName: newParent || ROOT_CATEGORY_NAME });
+      }
+
+      return dedupeCatalog(nextRows);
+    });
+
+    setUsage((current) => {
+      const next = { ...current };
+      const metrics = next[oldName];
+      if (metrics) {
+        if (!next[newName]) next[newName] = { txCount: 0, totalAbs: 0 };
+        next[newName] = {
+          txCount: Number(next[newName].txCount || 0) + Number(metrics.txCount || 0),
+          totalAbs: Number(next[newName].totalAbs || 0) + Number(metrics.totalAbs || 0),
+        };
+        delete next[oldName];
+      }
+      return next;
+    });
+  }
+
+  function applyLocalAdd(categoryName: string, parentName: string) {
+    setCatalog((current) => {
+      const nextRows = [...current, { name: categoryName, parentName: parentName || ROOT_CATEGORY_NAME }];
+      return dedupeCatalog(nextRows);
+    });
+  }
+
+  function applyLocalDelete(categoryName: string) {
+    setCatalog((current) => {
+      const nextRows = current
+        .filter((row) => normalizeCategoryName(row.name) !== categoryName)
+        .map((row) => ({
+          name: row.name,
+          parentName: normalizeCategoryName(row.parentName || ROOT_CATEGORY_NAME) === categoryName ? ROOT_CATEGORY_NAME : row.parentName,
+        }));
+      return dedupeCatalog(nextRows);
+    });
+
+    setUsage((current) => {
+      const next = { ...current };
+      const metrics = next[categoryName];
+      if (metrics) {
+        const target = next.Outros || { txCount: 0, totalAbs: 0 };
+        next.Outros = {
+          txCount: Number(target.txCount || 0) + Number(metrics.txCount || 0),
+          totalAbs: Number(target.totalAbs || 0) + Number(metrics.totalAbs || 0),
+        };
+        delete next[categoryName];
+      }
+      return next;
+    });
   }
 
   async function runCategoryAction(payload: Record<string, string>, onSuccess: () => void) {
@@ -265,7 +511,7 @@ export function CategoryTreePanel(input: {
         return;
       }
 
-      setMessage("Categorias atualizadas com sucesso.");
+      setMessage("Categorias atualizadas em tempo real.");
       onSuccess();
     } catch {
       setMessage("Erro inesperado ao atualizar categoria.");
@@ -280,64 +526,163 @@ export function CategoryTreePanel(input: {
     if (isWorking || isPending) return;
 
     if (dialog.mode === "edit") {
-      const nextName = nameValue.trim();
-      if (!nextName) {
+      const nextNameRaw = nameValue.trim();
+      if (!nextNameRaw) {
         setMessage("Informe um nome valido para categoria.");
         return;
       }
 
-      const selectedOldName = dialog.categoryName;
-      const selectedNewName = normalizeCategoryName(nextName);
-      const selectedParent = normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME);
+      const oldName = normalizeCategoryName(dialog.categoryName);
+      const nextName = normalizeCategoryName(nextNameRaw);
+      const nextParent = normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME);
 
       runCategoryAction(
         {
           action: "edit",
-          category_name: selectedOldName,
-          new_name: selectedNewName,
-          parent_name: selectedParent || ROOT_CATEGORY_NAME,
+          category_name: oldName,
+          new_name: nextName,
+          parent_name: nextParent || ROOT_CATEGORY_NAME,
         },
         () => {
+          applyLocalEdit(oldName, nextName, nextParent);
           closeDialog();
-          const redirected = applySelectionRename(selectedOldName, selectedNewName);
-          if (!redirected) refreshPanel();
+          const redirected = renameSelection(oldName, nextName);
+          if (!redirected && oldName !== nextName) setMenuCategory(nextName);
         },
       );
       return;
     }
 
     if (dialog.mode === "add_subcategory") {
-      const nextName = nameValue.trim();
-      if (!nextName) {
+      const nextNameRaw = nameValue.trim();
+      if (!nextNameRaw) {
         setMessage("Informe o nome da sub-categoria.");
         return;
       }
+
+      const nextName = normalizeCategoryName(nextNameRaw);
+      const nextParent = normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME);
 
       runCategoryAction(
         {
           action: "add_subcategory",
           category_name: dialog.categoryName,
-          new_name: normalizeCategoryName(nextName),
-          parent_name: normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME),
+          new_name: nextName,
+          parent_name: nextParent,
         },
         () => {
+          applyLocalAdd(nextName, nextParent);
           closeDialog();
-          refreshPanel();
+          setOpenMap((current) => ({ ...current, [nextParent]: true }));
         },
       );
       return;
     }
 
+    const targetName = normalizeCategoryName(dialog.categoryName);
     runCategoryAction(
       {
         action: "delete",
-        category_name: dialog.categoryName,
+        category_name: targetName,
       },
       () => {
+        applyLocalDelete(targetName);
         closeDialog();
-        const redirected = applySelectionDelete(dialog.categoryName);
-        if (!redirected) refreshPanel();
+        removeSelection(targetName);
       },
+    );
+  }
+
+  function renderNode(categoryName: string, depth: number) {
+    if (!visibleSet.has(categoryName)) return null;
+
+    const node = tree.nodeMap.get(categoryName);
+    if (!node) return null;
+
+    const rawChildren = node.children.filter((name) => visibleSet.has(name));
+    const hasChildren = rawChildren.length > 0;
+    const queryActive = !!query;
+    const isOpen = queryActive ? true : !!openMap[categoryName];
+
+    const subtree = (descendantsMap.get(categoryName) || [categoryName]).filter((name) => name !== ROOT_CATEGORY_NAME);
+    const selectedCount = subtree.filter((name) => selectedLookup.has(name)).length;
+    const allSelected = subtree.length > 0 && selectedCount === subtree.length;
+    const partialSelected = selectedCount > 0 && !allSelected;
+
+    const menuOpen = menuCategory === categoryName;
+    const disableActions = isWorking || isPending || categoryName === ROOT_CATEGORY_NAME;
+
+    return (
+      <div key={categoryName} className="fg-category-node-wrap">
+        <div className="fg-category-node-row" style={{ paddingLeft: `${4 + depth * 14}px` }}>
+          <button
+            type="button"
+            className="fg-category-group-toggle"
+            onClick={() => (hasChildren ? toggleOpen(categoryName) : undefined)}
+            disabled={!hasChildren}
+            aria-label={hasChildren ? `Expandir ${categoryName}` : `Categoria ${categoryName}`}
+          >
+            {hasChildren ? (isOpen ? "-" : "+") : "o"}
+          </button>
+
+          <label className="fg-category-leaf-label">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={() => toggleNodeSelection(categoryName)}
+            />
+            <span className="fg-category-leaf-name" title={categoryName}>
+              {categoryName}
+              {partialSelected ? " (parcial)" : ""}
+            </span>
+          </label>
+
+          <span className="fg-category-leaf-value">{node.txCount}</span>
+
+          <div className="fg-category-inline-actions">
+            <button
+              type="button"
+              className="fg-category-edit-btn"
+              onClick={() => openCategoryMenu(categoryName)}
+              disabled={isWorking || isPending}
+              aria-label={`Editar categoria ${categoryName}`}
+            >
+              E
+            </button>
+
+            {menuOpen ? (
+              <div className="fg-category-mini-menu">
+                <button
+                  type="button"
+                  className="fg-btn-secondary"
+                  onClick={() => openDialog("edit", categoryName)}
+                  disabled={disableActions}
+                >
+                  Editar categoria
+                </button>
+                <button
+                  type="button"
+                  className="fg-btn-secondary"
+                  onClick={() => openDialog("add_subcategory", categoryName)}
+                  disabled={isWorking || isPending}
+                >
+                  Adicionar sub-categoria
+                </button>
+                <button
+                  type="button"
+                  className="fg-btn-danger"
+                  onClick={() => openDialog("delete", categoryName)}
+                  disabled={disableActions || categoryName === "Outros"}
+                >
+                  Excluir categoria
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {isOpen ? rawChildren.map((childName) => renderNode(childName, depth + 1)) : null}
+      </div>
     );
   }
 
@@ -358,16 +703,16 @@ export function CategoryTreePanel(input: {
         </div>
 
         <div className="fg-category-tree-actions">
-          <button type="button" className="fg-btn-secondary" onClick={selectVisible} disabled={isPending || isWorking || !visibleLeaves.length}>
+          <button type="button" className="fg-btn-secondary" onClick={selectVisible} disabled={isPending || isWorking || !visibleCategoryNames.length}>
             Marcar visiveis
           </button>
           <button type="button" className="fg-btn-secondary" onClick={clearSelection} disabled={isPending || isWorking || !selected.length}>
             Limpar filtro
           </button>
-          <button type="button" className="fg-btn-secondary" onClick={expandAll} disabled={isPending || isWorking || !filteredGroups.length}>
+          <button type="button" className="fg-btn-secondary" onClick={expandAll} disabled={isPending || isWorking || !visibleCategoryNames.length}>
             Expandir
           </button>
-          <button type="button" className="fg-btn-secondary" onClick={collapseAll} disabled={isPending || isWorking || !filteredGroups.length}>
+          <button type="button" className="fg-btn-secondary" onClick={collapseAll} disabled={isPending || isWorking || !visibleCategoryNames.length}>
             Recolher
           </button>
         </div>
@@ -376,107 +721,13 @@ export function CategoryTreePanel(input: {
       {message ? <div className="fg-field-note">{message}</div> : null}
 
       <div className="fg-category-tree-list">
-        {filteredGroups.map((group) => {
-          const groupLeaves = group.leaves;
-          const checkedCount = groupLeaves.filter((leaf) => selected.includes(leaf.name)).length;
-          const allChecked = groupLeaves.length > 0 && checkedCount === groupLeaves.length;
-          const partial = checkedCount > 0 && checkedCount < groupLeaves.length;
-
-          return (
-            <div key={group.name} className="fg-category-group">
-              <div className="fg-category-group-head">
-                <button type="button" className="fg-category-group-toggle" onClick={() => toggleOpen(group.name)}>
-                  {openMap[group.name] ? "-" : "+"}
-                </button>
-
-                <label className="fg-category-group-label">
-                  <input
-                    type="checkbox"
-                    checked={allChecked}
-                    onChange={() => toggleGroup(groupLeaves)}
-                  />
-                  <span>
-                    {group.name}
-                    {partial ? " (parcial)" : ""}
-                  </span>
-                </label>
-
-                <span className="fg-category-group-count">{group.txCount}</span>
-              </div>
-
-              {openMap[group.name] ? (
-                <div className="fg-category-leaf-list">
-                  {groupLeaves.map((leaf) => {
-                    const menuOpen = menuCategory === leaf.name;
-                    const disableActions = isWorking || isPending || leaf.name === ROOT_CATEGORY_NAME;
-
-                    return (
-                      <div key={`${group.name}:${leaf.name}`} className="fg-category-leaf-row">
-                        <label className="fg-category-leaf-label">
-                          <input
-                            type="checkbox"
-                            checked={selected.includes(leaf.name)}
-                            onChange={() => toggleLeaf(leaf.name)}
-                          />
-                          <span className="fg-category-leaf-name" title={leaf.name}>{leaf.name}</span>
-                        </label>
-
-                        <span className="fg-category-leaf-value">{leaf.txCount}</span>
-
-                        <div className="fg-category-inline-actions">
-                          <button
-                            type="button"
-                            className="fg-category-edit-btn"
-                            onClick={() => openCategoryMenu(leaf.name)}
-                            disabled={isWorking || isPending}
-                            aria-label={`Editar categoria ${leaf.name}`}
-                          >
-                            E
-                          </button>
-
-                          {menuOpen ? (
-                            <div className="fg-category-mini-menu">
-                              <button
-                                type="button"
-                                className="fg-btn-secondary"
-                                onClick={() => openDialog("edit", leaf.name)}
-                                disabled={disableActions}
-                              >
-                                Editar categoria
-                              </button>
-                              <button
-                                type="button"
-                                className="fg-btn-secondary"
-                                onClick={() => openDialog("add_subcategory", leaf.name)}
-                                disabled={isWorking || isPending}
-                              >
-                                Adicionar sub-categoria
-                              </button>
-                              <button
-                                type="button"
-                                className="fg-btn-danger"
-                                onClick={() => openDialog("delete", leaf.name)}
-                                disabled={disableActions || leaf.name === "Outros"}
-                              >
-                                Excluir categoria
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-
-        {!filteredGroups.length ? <div className="fg-empty">Nenhuma categoria encontrada.</div> : null}
+        {tree.rootChildren.length ? tree.rootChildren.map((name) => renderNode(name, 0)) : null}
+        {!tree.rootChildren.length ? <div className="fg-empty">Nenhuma categoria encontrada.</div> : null}
+        {tree.rootChildren.length && !visibleCategoryNames.length ? <div className="fg-empty">Nenhuma categoria encontrada.</div> : null}
       </div>
 
-      <div className="fg-field-note">Categorias selecionadas: {selected.length} | Total visivel: {visibleLeaves.length}</div>
-      <div className="fg-field-note">Soma de gastos na arvore: {brl(filteredGroups.reduce((sum, group) => sum + group.totalAbs, 0))}</div>
+      <div className="fg-field-note">Categorias selecionadas: {selected.length} | Total visivel: {visibleCategoryNames.length}</div>
+      <div className="fg-field-note">Soma de gastos na arvore: {brl(visibleSpent)}</div>
 
       {dialog ? (
         <div className="fg-category-dialog-backdrop" role="dialog" aria-modal="true">
@@ -548,4 +799,3 @@ export function CategoryTreePanel(input: {
     </div>
   );
 }
-
