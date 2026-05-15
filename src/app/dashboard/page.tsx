@@ -218,15 +218,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
           {currentTab === "transactions" ? (
             <>
-              <Card title="Adicionar transacao" action={<span className="fg-chip">Clique na linha para editar</span>}>
-                <ManualTransactionForm
-                  accounts={accounts || []}
-                  bankById={bankById}
-                  returnUrl={returnUrl}
-                  selectedAccountId={selectedAccountIds[0] || selectedAccountId}
-                />
-              </Card>
-
               <TransactionsTable
                 txs={txs || []}
                 banks={banks || []}
