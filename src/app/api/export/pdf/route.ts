@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase";
 import { auditLog } from "@/lib/audit-log";
 import { getApiUserFromCookiesOrRequest, unauthorized } from "@/lib/auth-server";
-
 
 function brl(value: any) {
   return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -19,37 +18,41 @@ export async function GET(req: NextRequest) {
     const ip = req.headers.get("x-forwarded-for") || "unknown";
     const rl = rateLimit(`${ip}:critical`, 30, 60_000);
     if (!rl.ok) return rateLimitResponse();
-  const user = await getApiUserFromCookiesOrRequest(req);
-  if (!user) return unauthorized();
-  await auditLog({ profileId: user.id, action: "api_call", resource: req.url });
-    const profileId = user.id;
+
+    const user = await getApiUserFromCookiesOrRequest(req);
+    if (!user) return unauthorized();
+
+    await auditLog({ profileId: user.id, action: "api_call", resource: req.url });
 
     const { data: txs } = await supabaseAdmin
       .from("transactions")
       .select("*")
-      .eq("profile_id", profileId)
+      .eq("profile_id", user.id)
       .order("posted_at", { ascending: false })
       .limit(500);
 
     const income = (txs || []).filter((t: any) => Number(t.amount) > 0).reduce((s: number, t: any) => s + Number(t.amount), 0);
     const expense = (txs || []).filter((t: any) => Number(t.amount) < 0).reduce((s: number, t: any) => s + Math.abs(Number(t.amount)), 0);
 
-    const rows = (txs || []).map((tx: any) => `
+    const rows = (txs || [])
+      .map(
+        (tx: any) => `
       <tr>
         <td>${d(tx.posted_at)}</td>
         <td>${tx.bank_key || "-"}</td>
         <td>${tx.description || "-"}</td>
         <td>${tx.app_category || "-"}</td>
-        <td>${tx.app_subcategory || "-"}</td>
         <td class="money">${brl(tx.amount)}</td>
       </tr>
-    `).join("");
+    `
+      )
+      .join("");
 
     const html = `<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
-<title>Relatório Financeiro</title>
+<title>Relatorio Financeiro</title>
 <style>
   body { font-family: Arial, sans-serif; padding: 32px; color: #111827; }
   h1 { margin-bottom: 4px; }
@@ -66,7 +69,7 @@ export async function GET(req: NextRequest) {
 </style>
 </head>
 <body>
-  <h1>Relatório Financeiro</h1>
+  <h1>Relatorio Financeiro</h1>
   <div class="muted">Gerado em ${d(new Date().toISOString())}</div>
 
   <div class="cards">
@@ -75,15 +78,14 @@ export async function GET(req: NextRequest) {
     <div class="card"><div class="label">Saldo</div><div class="value">${brl(income - expense)}</div></div>
   </div>
 
-  <h2>Transações</h2>
+  <h2>Transacoes</h2>
   <table>
     <thead>
       <tr>
         <th>Data</th>
         <th>Banco</th>
-        <th>Descrição</th>
+        <th>Descricao</th>
         <th>Categoria</th>
-        <th>Subcategoria</th>
         <th>Valor</th>
       </tr>
     </thead>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { ensureDemoProfile, seedBudgetsAndGoals } from "@/lib/demo";
 import { getApiUserFromCookiesOrRequest, unauthorized } from "@/lib/auth-server";
@@ -6,7 +6,7 @@ import { ensureBankByName } from "@/lib/accounts";
 
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_SEED !== "true") {
-    return NextResponse.json({ error: "Seed demo desabilitado em produção" }, { status: 403 });
+    return NextResponse.json({ error: "Seed demo desabilitado em producao" }, { status: 403 });
   }
 
   try {
@@ -75,16 +75,16 @@ export async function POST(req: NextRequest) {
     }
 
     const txs = [
-      ["Salário recebido", 8500.0, "Receitas", "Entrada", "2026-03-05T12:00:00Z"],
-      ["Supermercado Central", -420.55, "Casa", "Supermercado", "2026-03-07T12:00:00Z"],
-      ["Uber", -38.9, "Transporte", "Mobilidade", "2026-03-08T12:00:00Z"],
-      ["iFood", -72.1, "Alimentação", "Refeições", "2026-03-09T12:00:00Z"],
-      ["Posto Shell", -250.0, "Transporte", "Combustível", "2026-03-12T12:00:00Z"],
-      ["Cinema", -85.0, "Lazer", "Entretenimento", "2026-03-15T12:00:00Z"],
+      ["Salario recebido", 8500.0, "Receitas", "2026-03-05T12:00:00Z"],
+      ["Supermercado Central", -420.55, "Casa", "2026-03-07T12:00:00Z"],
+      ["Uber", -38.9, "Transporte", "2026-03-08T12:00:00Z"],
+      ["iFood", -72.1, "Alimentacao", "2026-03-09T12:00:00Z"],
+      ["Posto Shell", -250.0, "Transporte", "2026-03-12T12:00:00Z"],
+      ["Cinema", -85.0, "Lazer", "2026-03-15T12:00:00Z"],
     ];
 
     for (let i = 0; i < txs.length; i++) {
-      const [description, amount, app_category, app_subcategory, posted_at] = txs[i];
+      const [description, amount, app_category, posted_at] = txs[i];
       const type = Number(amount) > 0 ? "credit" : "debit";
 
       const { error: txUpsertError } = await supabaseAdmin.from("transactions").upsert(
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
           posted_at,
           type,
           app_category,
-          app_subcategory,
+          app_subcategory: null,
           source_category: "demo",
           is_consolidated: true,
           status: "posted",

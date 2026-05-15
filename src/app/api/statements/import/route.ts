@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
           type: tx.type,
           source_category: "statement",
           app_category: tx.category,
-          app_subcategory: tx.subcategory,
+          app_subcategory: null,
           confidence_score: tx.confidence,
           installment_current: tx.installmentCurrent || null,
           installment_total: tx.installmentTotal || null,

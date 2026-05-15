@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         type: parsed.type,
         source_category: "notification",
         app_category: parsed.category,
-        app_subcategory: parsed.subcategory,
+        app_subcategory: null,
         confidence_score: parsed.confidence,
         installment_current: parsed.installmentCurrent || null,
         installment_total: parsed.installmentTotal || null,
@@ -103,7 +103,6 @@ export async function POST(req: NextRequest) {
       transaction_id: tx?.id,
       amount: parsed.amount,
       category: parsed.category,
-      subcategory: parsed.subcategory,
       confidence: parsed.confidence,
       installment: {
         current: parsed.installmentCurrent,

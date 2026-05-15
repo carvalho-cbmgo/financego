@@ -35,7 +35,6 @@ export async function POST(req: Request) {
   const description = String(form.get("description") || "").trim();
   const postedAtDate = String(form.get("posted_at") || "").trim();
   const category = String(form.get("category") || "").trim() || "Outros";
-  const subcategory = String(form.get("subcategory") || "").trim() || "Nao classificado";
   const action = String(form.get("action") || "Despesa");
   const type = parseAction(action);
   const inputAmount = Number(form.get("amount") || 0);
@@ -82,7 +81,7 @@ export async function POST(req: Request) {
     type,
     source_category: "manual",
     app_category: category,
-    app_subcategory: subcategory,
+    app_subcategory: null,
     is_transfer: type === "transfer",
     is_consolidated: isConsolidated,
     raw: { source: "manual_form" },

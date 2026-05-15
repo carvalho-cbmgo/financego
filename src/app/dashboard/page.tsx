@@ -11,6 +11,7 @@ type DashboardParams = {
   tab?: string;
   account_id?: string;
   bank_id?: string;
+  edit_tx?: string;
 };
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<DashboardParams> }) {
@@ -20,6 +21,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const selectedAccountId = String(params.account_id || "");
   const selectedBankId = String(params.bank_id || "");
+  const selectedEditTxId = String(params.edit_tx || "");
 
   const [{ data: banks }, { data: accounts }] = await Promise.all([
     supabaseAdmin
@@ -45,7 +47,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   let txQuery = supabaseAdmin
     .from("transactions")
-    .select("id, description, amount, posted_at, app_category, app_subcategory, type, account_id, is_consolidated")
+    .select("id, description, amount, posted_at, app_category, type, account_id, is_consolidated")
     .eq("profile_id", user.id)
     .order("posted_at", { ascending: false })
     .limit(80);
@@ -181,10 +183,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
             <TransactionsTable
               txs={txs || []}
+              banks={banks || []}
               accounts={accounts || []}
               accountById={accountById}
               bankById={bankById}
               returnUrl={returnUrl}
+              selectedEditTxId={selectedEditTxId}
             />
           </>
         ) : (
@@ -304,7 +308,7 @@ function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, a
         <input name="posted_at" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required className="fg-input" />
       </div>
 
-      <div className="fg-grid-4">
+      <div className="fg-grid-3">
         <input name="amount" type="number" step="0.01" required placeholder="Valor" className="fg-input" />
         <select name="action" defaultValue="Despesa" required className="fg-select">
           <option value="Receita">Receita</option>
@@ -312,7 +316,6 @@ function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, a
           <option value="Transferência">Transferencia</option>
         </select>
         <input name="category" placeholder="Categoria" defaultValue="Outros" className="fg-input" />
-        <input name="subcategory" placeholder="Subcategoria" defaultValue="Nao classificado" className="fg-input" />
       </div>
 
       <label className="fg-checkbox-row">
@@ -491,80 +494,144 @@ function GoalsMini({ goals }: { goals: any[] }) {
 
 function TransactionsTable(input: {
   txs: any[];
+  banks: any[];
   accounts: any[];
   accountById: Map<string, any>;
   bankById: Map<string, any>;
   returnUrl: string;
+  selectedEditTxId: string;
 }) {
-  return (
-    <Card title="Transacoes por banco e conta" action={<span className="fg-chip">Edite categoria, acao e consolidacao</span>}>
-      <div className="fg-table-wrap">
-        <table className="fg-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Descricao</th>
-              <th>Banco</th>
-              <th>Conta</th>
-              <th>Categoria</th>
-              <th>Subcategoria</th>
-              <th>Valor</th>
-              <th>Acao</th>
-              <th>Consolidada</th>
-              <th>Salvar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {input.txs.map((tx: any) => {
-              const formId = `tx-form-${tx.id}`;
-              const account = input.accountById.get(String(tx.account_id || ""));
-              const bank = account ? input.bankById.get(String(account.bank_id || "")) : null;
-              const bankName = bank?.name || account?.institution_name || "-";
-              const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
+  if (!input.txs.length) {
+    return (
+      <Card title="Transacoes por banco e conta">
+        <div className="fg-empty">Nenhuma transacao encontrada para os filtros atuais.</div>
+      </Card>
+    );
+  }
 
-              return (
-                <tr key={tx.id}>
-                  <td>{shortDate(tx.posted_at)}</td>
-                  <td>{tx.description || "-"}</td>
-                  <td>{bankName}</td>
-                  <td>
-                    <select form={formId} name="account_id" required defaultValue={selectedAccountId} className="fg-select" style={{ minWidth: 220 }}>
-                      {input.accounts.map((a: any) => (
-                        <option key={a.id} value={a.id}>
-                          {a.institution_name} - {a.name} ({accountTypeLabel(a.type)})
+  return (
+    <Card title="Transacoes por banco e conta" action={<span className="fg-chip">Use o icone de lapis para editar</span>}>
+      <div className="fg-tx-list">
+        {input.txs.map((tx: any) => {
+          const txId = String(tx.id);
+          const account = input.accountById.get(String(tx.account_id || ""));
+          const bank = account ? input.bankById.get(String(account.bank_id || "")) : null;
+          const bankName = bank?.name || account?.institution_name || "Sem banco";
+          const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
+          const selectedBankId = String(account?.bank_id || input.banks[0]?.id || "");
+          const editUrl = buildEditUrl(input.returnUrl, txId);
+          const isEditing = input.selectedEditTxId === txId;
+
+          return (
+            <article key={txId} className="fg-tx-item">
+              <div className="fg-tx-head">
+                <div className="fg-tx-main">
+                  <div className="fg-tx-desc">{tx.description || "Sem descricao"}</div>
+                  <div className="fg-tx-meta">
+                    {shortDate(tx.posted_at)} • {bankName} • {account?.name || "Sem conta"}
+                  </div>
+                  <div className="fg-tx-tags">
+                    <span className="fg-chip">{tx.app_category || "Outros"}</span>
+                    <span className="fg-chip">{actionFromType(tx.type)}</span>
+                    <span className={`fg-chip ${tx.is_consolidated !== false ? "fg-chip-positive" : "fg-chip-negative"}`}>
+                      {tx.is_consolidated !== false ? "Consolidada" : "Nao consolidada"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="fg-tx-side">
+                  <div className={`fg-tx-amount ${Number(tx.amount) >= 0 ? "fg-tx-amount-in" : "fg-tx-amount-out"}`}>
+                    {brl(tx.amount)}
+                  </div>
+                  <Link href={isEditing ? input.returnUrl : editUrl} className="fg-icon-link" title="Editar transacao">
+                    ✎
+                  </Link>
+                </div>
+              </div>
+
+              {isEditing ? (
+                <form action="/api/categories/update" method="post" className="fg-form fg-tx-edit-form">
+                  <input type="hidden" name="id" value={txId} />
+                  <input type="hidden" name="return_url" value={input.returnUrl} />
+
+                  <div className="fg-grid-4">
+                    <input
+                      name="posted_at"
+                      type="date"
+                      required
+                      defaultValue={toInputDate(tx.posted_at)}
+                      className="fg-input"
+                    />
+                    <input
+                      name="description"
+                      required
+                      defaultValue={tx.description || ""}
+                      placeholder="Descricao"
+                      className="fg-input"
+                    />
+                    <select name="bank_id" required defaultValue={selectedBankId} className="fg-select">
+                      {input.banks.map((item: any) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} {item.code ? `(${item.code})` : ""}
                         </option>
                       ))}
                     </select>
-                  </td>
-                  <td>
-                    <input form={formId} name="category" defaultValue={tx.app_category || ""} className="fg-input" />
-                  </td>
-                  <td>
-                    <input form={formId} name="subcategory" defaultValue={tx.app_subcategory || ""} className="fg-input" />
-                  </td>
-                  <td style={{ fontWeight: 800, color: Number(tx.amount) >= 0 ? "#12895d" : "var(--danger)" }}>{brl(tx.amount)}</td>
-                  <td>
-                    <select form={formId} name="action" required defaultValue={actionFromType(tx.type)} className="fg-select">
+                    <select name="account_id" required defaultValue={selectedAccountId} className="fg-select">
+                      {input.accounts.map((item: any) => {
+                        const accountBank = input.bankById.get(String(item.bank_id || ""));
+                        const optionBankName = accountBank?.name || item.institution_name || "Sem banco";
+
+                        return (
+                          <option key={item.id} value={item.id}>
+                            {optionBankName} - {item.name} ({accountTypeLabel(item.type)})
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="fg-grid-3">
+                    <input
+                      name="category"
+                      required
+                      defaultValue={tx.app_category || "Outros"}
+                      placeholder="Categoria"
+                      className="fg-input"
+                    />
+                    <input
+                      name="amount"
+                      type="number"
+                      step="0.01"
+                      required
+                      defaultValue={Math.abs(Number(tx.amount || 0)).toFixed(2)}
+                      placeholder="Valor"
+                      className="fg-input"
+                    />
+                    <select name="action" required defaultValue={actionFromType(tx.type)} className="fg-select">
                       <option value="Receita">Receita</option>
                       <option value="Despesa">Despesa</option>
                       <option value="Transferência">Transferencia</option>
                     </select>
-                  </td>
-                  <td>
-                    <input form={formId} name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
-                  </td>
-                  <td>
-                    <form id={formId} action="/api/categories/update" method="post" style={{ display: "inline-flex" }}>
-                      <input type="hidden" name="id" value={tx.id} />
-                      <input type="hidden" name="return_url" value={input.returnUrl} />
-                    </form>
-                    <button form={formId} className="fg-btn-secondary">Salvar</button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </div>
+
+                  <label className="fg-checkbox-row">
+                    <input name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
+                    Consolidada (desmarque para manter como NAO CONSOLIDADA)
+                  </label>
+
+                  <p className="fg-field-note">
+                    Ao alterar banco e conta, selecione uma conta que pertença ao banco escolhido.
+                  </p>
+
+                  <div className="fg-tx-edit-actions">
+                    <button className="fg-btn-secondary">Salvar alteracoes</button>
+                    <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
+                  </div>
+                </form>
+              ) : null}
+            </article>
+          );
+        })}
       </div>
     </Card>
   );
@@ -574,5 +641,15 @@ function actionFromType(type: string | null | undefined) {
   if (type === "credit") return "Receita";
   if (type === "transfer") return "Transferência";
   return "Despesa";
+}
+
+function toInputDate(input?: string | null) {
+  if (!input) return new Date().toISOString().slice(0, 10);
+  return new Date(input).toISOString().slice(0, 10);
+}
+
+function buildEditUrl(baseUrl: string, txId: string) {
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${separator}edit_tx=${txId}`;
 }
 
