@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { PageShell, Card, Stat } from "@/components/ui";
+import { PageShell, Card, Stat, SectionIntro } from "@/components/ui";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, shortDate, monthRef } from "@/lib/format";
@@ -45,7 +45,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   let txQuery = supabaseAdmin
     .from("transactions")
-    .select("id, description, amount, posted_at, app_category, app_subcategory, type, account_id, bank_key, is_consolidated")
+    .select("id, description, amount, posted_at, app_category, app_subcategory, type, account_id, is_consolidated")
     .eq("profile_id", user.id)
     .order("posted_at", { ascending: false })
     .limit(80);
@@ -108,76 +108,156 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const totalGoalsTarget = (goals || []).reduce((s: number, g: any) => s + Number(g.target_amount || 0), 0);
   const totalGoalsCurrent = (goals || []).reduce((s: number, g: any) => s + Number(g.current_amount || 0), 0);
 
+  const categorySpentMap = new Map<string, number>();
+  for (const tx of consolidatedMonthTxs) {
+    const amount = Number(tx.amount || 0);
+    if (amount < 0) {
+      const key = tx.app_category || "Outros";
+      categorySpentMap.set(key, (categorySpentMap.get(key) || 0) + Math.abs(amount));
+    }
+  }
+
+  const categoryRows = Array.from(categorySpentMap.entries())
+    .map(([category, value]) => ({ category, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
+
+  const totalCategorySpent = categoryRows.reduce((sum, row) => sum + row.value, 0);
+
   const returnParams = new URLSearchParams();
   returnParams.set("tab", "transactions");
   if (selectedBankId) returnParams.set("bank_id", selectedBankId);
   if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
   const returnUrl = `/dashboard?${returnParams.toString()}`;
 
+  const resultMonth = receitas - gastos;
+  const projectedResult = receitas - gastos - gastosPrevistos;
+
   return (
     <PageShell>
-      <div style={{ display: "grid", gap: 18 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Visao financeira</h1>
-          <p style={{ color: "var(--muted)" }}>
-            Analise geral ou segmentada por banco e conta.
-          </p>
-        </div>
+      <div className="fg-stack">
+        <SectionIntro
+          title="Painel Finance GO"
+          subtitle="Visao geral das suas financas por banco e por conta, com despesas consolidadas e previsoes futuras."
+          action={<Link href="/accounts" className="fg-link">Gerenciar bancos e contas</Link>}
+        />
 
         <FilterForm
+          currentTab={params.tab === "transactions" ? "transactions" : "overview"}
           selectedBankId={selectedBankId}
           selectedAccountId={selectedAccountId}
           banks={banks || []}
           accounts={accounts || []}
         />
 
-        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
-          <Stat label="Saldo das contas no filtro" value={brl(saldo)} />
-          <Stat label="Receitas consolidadas" value={brl(receitas)} />
-          <Stat label="Despesas consolidadas" value={brl(gastos)} />
-          <Stat label="Despesas previstas" value={brl(gastosPrevistos)} />
-          <Stat label="Orcamento do mes" value={brl(totalBudget)} />
-          <Stat label="Patrimonio nas metas" value={brl(totalGoalsCurrent)} />
-          <Stat label="Objetivo total" value={brl(totalGoalsTarget)} />
+        {!accounts?.length ? (
+          <Card title="Primeiro passo">
+            <div className="fg-empty">
+              Nenhuma conta cadastrada ainda. Crie seu banco e sua conta para registrar transacoes.
+              <div style={{ marginTop: 10 }}>
+                <Link href="/accounts" className="fg-link">Ir para bancos e contas</Link>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+
+        <div className="fg-grid-4">
+          <Stat label="Saldo atual" value={brl(saldo)} tone={saldo >= 0 ? "positive" : "negative"} />
+          <Stat label="Entradas consolidadas" value={brl(receitas)} tone="positive" />
+          <Stat label="Saidas consolidadas" value={brl(gastos)} tone="negative" />
+          <Stat label="Saidas previstas" value={brl(gastosPrevistos)} tone="negative" />
         </div>
 
         {params.tab === "transactions" ? (
           <>
-            {(accounts || []).length ? (
-              <Card title="Lancar transacao (inclusive futura e nao consolidada)">
-                <ManualTransactionForm accounts={accounts || []} bankById={bankById} returnUrl={returnUrl} selectedAccountId={selectedAccountId} />
-              </Card>
-            ) : (
-              <Card title="Cadastre uma conta para registrar transacoes">
-                <p style={{ marginTop: 0 }}>Nenhuma conta encontrada para este usuario.</p>
-                <Link href="/accounts">Ir para bancos e contas</Link>
-              </Card>
-            )}
+            <Card title="Registrar transacao" action={<span className="fg-chip">Acoes: Receita, Despesa ou Transferencia</span>}>
+              <ManualTransactionForm
+                accounts={accounts || []}
+                bankById={bankById}
+                returnUrl={returnUrl}
+                selectedAccountId={selectedAccountId}
+              />
+            </Card>
 
-            <TransactionsTable txs={txs || []} accounts={accounts || []} accountById={accountById} bankById={bankById} returnUrl={returnUrl} />
+            <TransactionsTable
+              txs={txs || []}
+              accounts={accounts || []}
+              accountById={accountById}
+              bankById={bankById}
+              returnUrl={returnUrl}
+            />
           </>
         ) : (
-          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1.2fr .8fr" }}>
-            <Card title="Ultimas transacoes">
-              <TransactionsMini txs={txs || []} accountById={accountById} bankById={bankById} />
-            </Card>
-            <Card title="Resumo das metas">
+          <>
+            <div className="fg-split">
+              <div className="fg-stack">
+                <Card title="Saldo">
+                  <div style={{ fontSize: 42, fontWeight: 800, fontFamily: "var(--font-heading)" }}>{brl(saldo)}</div>
+                </Card>
+
+                <Card title="Gastos por categoria">
+                  <CategoryCard rows={categoryRows} totalCategorySpent={totalCategorySpent} monthRefValue={ref} />
+                </Card>
+
+                <Card title="Ultimas transacoes" action={<Link href="/dashboard?tab=transactions" className="fg-link">Ver extrato completo</Link>}>
+                  <TransactionsMini txs={txs || []} accountById={accountById} bankById={bankById} />
+                </Card>
+              </div>
+
+              <div className="fg-stack">
+                <Card title="Desempenho">
+                  <PerformanceCard
+                    resultMonth={resultMonth}
+                    projectedResult={projectedResult}
+                    receitas={receitas}
+                    gastos={gastos}
+                    gastosPrevistos={gastosPrevistos}
+                  />
+                </Card>
+
+                <Card title="Orcamento e metas">
+                  <div className="fg-stack" style={{ gap: 10 }}>
+                    <div className="fg-category-row">
+                      <span>Orcamento planejado</span>
+                      <strong>{brl(totalBudget)}</strong>
+                    </div>
+                    <div className="fg-category-row">
+                      <span>Meta acumulada</span>
+                      <strong>{brl(totalGoalsCurrent)}</strong>
+                    </div>
+                    <div className="fg-category-row">
+                      <span>Meta total</span>
+                      <strong>{brl(totalGoalsTarget)}</strong>
+                    </div>
+                    <Link href="/goals" className="fg-link">Gerenciar metas</Link>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            <Card title="Lista de metas">
               <GoalsMini goals={goals || []} />
             </Card>
-          </div>
+          </>
         )}
       </div>
     </PageShell>
   );
 }
 
-function FilterForm(input: { selectedBankId: string; selectedAccountId: string; banks: any[]; accounts: any[] }) {
+function FilterForm(input: {
+  currentTab: "transactions" | "overview";
+  selectedBankId: string;
+  selectedAccountId: string;
+  banks: any[];
+  accounts: any[];
+}) {
   return (
-    <Card title="Filtros de analise">
-      <form action="/dashboard" method="get" style={{ display: "grid", gap: 10 }}>
-        <input type="hidden" name="tab" value="transactions" />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10 }}>
-          <select name="bank_id" defaultValue={input.selectedBankId} style={inputStyle}>
+    <Card title="Filtro de visao">
+      <form action="/dashboard" method="get" className="fg-form">
+        <input type="hidden" name="tab" value={input.currentTab} />
+        <div className="fg-grid-3">
+          <select name="bank_id" defaultValue={input.selectedBankId} className="fg-select">
             <option value="">Todos os bancos</option>
             {input.banks.map((bank: any) => (
               <option key={bank.id} value={bank.id}>
@@ -186,7 +266,7 @@ function FilterForm(input: { selectedBankId: string; selectedAccountId: string; 
             ))}
           </select>
 
-          <select name="account_id" defaultValue={input.selectedAccountId} style={inputStyle}>
+          <select name="account_id" defaultValue={input.selectedAccountId} className="fg-select">
             <option value="">Todas as contas</option>
             {input.accounts.map((account: any) => (
               <option key={account.id} value={account.id}>
@@ -195,7 +275,7 @@ function FilterForm(input: { selectedBankId: string; selectedAccountId: string; 
             ))}
           </select>
 
-          <button style={buttonLight}>Aplicar</button>
+          <button className="fg-btn-secondary">Aplicar filtro</button>
         </div>
       </form>
     </Card>
@@ -204,11 +284,11 @@ function FilterForm(input: { selectedBankId: string; selectedAccountId: string; 
 
 function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, any>; returnUrl: string; selectedAccountId: string }) {
   return (
-    <form action="/api/transactions/save" method="post" style={{ display: "grid", gap: 10 }}>
+    <form action="/api/transactions/save" method="post" className="fg-form">
       <input type="hidden" name="return_url" value={input.returnUrl} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1fr", gap: 10 }}>
-        <select name="account_id" required defaultValue={input.selectedAccountId || String(input.accounts[0]?.id || "")} style={inputStyle}>
+      <div className="fg-grid-3">
+        <select name="account_id" required defaultValue={input.selectedAccountId || String(input.accounts[0]?.id || "")} className="fg-select">
           {input.accounts.map((account: any) => {
             const bank = input.bankById.get(String(account.bank_id || ""));
             const bankName = bank?.name || account.institution_name || "Sem banco";
@@ -220,50 +300,161 @@ function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, a
             );
           })}
         </select>
-        <input name="description" required placeholder="Descricao da transacao" style={inputStyle} />
-        <input name="posted_at" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required style={inputStyle} />
+        <input name="description" required placeholder="Descricao da transacao" className="fg-input" />
+        <input name="posted_at" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required className="fg-input" />
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "180px 180px 1fr 1fr", gap: 10 }}>
-        <input name="amount" type="number" step="0.01" required placeholder="Valor" style={inputStyle} />
-        <select name="action" defaultValue="Despesa" style={inputStyle}>
+      <div className="fg-grid-4">
+        <input name="amount" type="number" step="0.01" required placeholder="Valor" className="fg-input" />
+        <select name="action" defaultValue="Despesa" required className="fg-select">
           <option value="Receita">Receita</option>
           <option value="Despesa">Despesa</option>
-          <option value="Transferência">Transferência</option>
+          <option value="Transferência">Transferencia</option>
         </select>
-        <input name="category" placeholder="Categoria" defaultValue="Outros" style={inputStyle} />
-        <input name="subcategory" placeholder="Subcategoria" defaultValue="Nao classificado" style={inputStyle} />
+        <input name="category" placeholder="Categoria" defaultValue="Outros" className="fg-input" />
+        <input name="subcategory" placeholder="Subcategoria" defaultValue="Nao classificado" className="fg-input" />
       </div>
 
-      <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <label className="fg-checkbox-row">
         <input name="is_consolidated" type="checkbox" defaultChecked />
         Consolidada (desmarque para registrar como NAO CONSOLIDADA)
       </label>
 
-      <button style={buttonDark}>Salvar transacao</button>
+      <button className="fg-btn">Salvar transacao</button>
     </form>
   );
 }
 
-function TransactionsMini({ txs, accountById, bankById }: { txs: any[]; accountById: Map<string, any>; bankById: Map<string, any> }) {
-  if (!txs.length) return <div>Nenhuma transacao ainda.</div>;
+function CategoryCard({ rows, totalCategorySpent, monthRefValue }: { rows: Array<{ category: string; value: number }>; totalCategorySpent: number; monthRefValue: string }) {
+  if (!rows.length) {
+    return <div className="fg-empty">Ainda nao existem despesas consolidadas neste mes.</div>;
+  }
+
+  const palette = ["#16a36f", "#f97316", "#6b7280", "#2d6cdf", "#c21f73", "#7c3aed"];
+  let cursor = 0;
+  const segments = rows.map((row, index) => {
+    const pct = totalCategorySpent > 0 ? (row.value / totalCategorySpent) * 100 : 0;
+    const start = cursor;
+    const end = cursor + pct;
+    cursor = end;
+    return `${palette[index % palette.length]} ${start}% ${end}%`;
+  });
+
+  const donutBackground = `conic-gradient(${segments.join(",")})`;
 
   return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {txs.map((tx: any) => {
+    <div className="fg-split" style={{ gridTemplateColumns: "1fr 210px", alignItems: "center" }}>
+      <div className="fg-stack" style={{ gap: 8 }}>
+        <div style={{ color: "var(--muted)", fontSize: 13 }}>Total de gastos do mes</div>
+        <div style={{ fontSize: 34, fontWeight: 800, color: "var(--danger)", fontFamily: "var(--font-heading)" }}>{brl(totalCategorySpent)}</div>
+
+        {rows.map((row) => {
+          const pct = totalCategorySpent > 0 ? (row.value / totalCategorySpent) * 100 : 0;
+          return (
+            <div key={row.category} className="fg-stack" style={{ gap: 6 }}>
+              <div className="fg-category-row">
+                <span>{row.category}</span>
+                <strong>{pct.toFixed(1)}%</strong>
+              </div>
+              <div className="fg-category-bar">
+                <span style={{ width: `${Math.min(pct, 100)}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          width: 184,
+          height: 184,
+          borderRadius: "50%",
+          background: donutBackground,
+          display: "grid",
+          placeItems: "center",
+          justifySelf: "center",
+        }}
+      >
+        <div
+          style={{
+            width: 122,
+            height: 122,
+            borderRadius: "50%",
+            background: "var(--panel-soft)",
+            border: "1px solid var(--line)",
+            display: "grid",
+            placeItems: "center",
+            textAlign: "center",
+            fontWeight: 700,
+            color: "#384153",
+          }}
+        >
+          {monthRefValue}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PerformanceCard(input: { resultMonth: number; projectedResult: number; receitas: number; gastos: number; gastosPrevistos: number }) {
+  const totalOut = input.gastos + input.gastosPrevistos;
+  const maxBar = Math.max(input.receitas, totalOut, 1);
+  const inHeight = Math.max(16, (input.receitas / maxBar) * 170);
+  const outHeight = Math.max(16, (totalOut / maxBar) * 170);
+
+  return (
+    <div className="fg-stack" style={{ gap: 12 }}>
+      <div style={{ fontSize: 15, color: "var(--muted)" }}>Resultado do mes</div>
+      <div style={{ fontSize: 42, fontWeight: 800, fontFamily: "var(--font-heading)", color: input.resultMonth >= 0 ? "#129464" : "var(--danger)" }}>
+        {brl(input.resultMonth)}
+      </div>
+
+      <div className="fg-category-row">
+        <span>Entradas</span>
+        <strong style={{ color: "#129464" }}>{brl(input.receitas)}</strong>
+      </div>
+      <div className="fg-category-row">
+        <span>Saidas + previsao</span>
+        <strong style={{ color: "var(--danger)" }}>{brl(totalOut)}</strong>
+      </div>
+      <div className="fg-category-row">
+        <span>Resultado projetado</span>
+        <strong>{brl(input.projectedResult)}</strong>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 16, height: 190, paddingTop: 6 }}>
+        <div style={{ display: "grid", justifyItems: "center", gap: 6 }}>
+          <div style={{ width: 52, height: inHeight, borderRadius: 10, background: "#16a36f" }} />
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Entradas</span>
+        </div>
+        <div style={{ display: "grid", justifyItems: "center", gap: 6 }}>
+          <div style={{ width: 52, height: outHeight, borderRadius: 10, background: "#c21f73" }} />
+          <span style={{ fontSize: 12, fontWeight: 700 }}>Saidas</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransactionsMini({ txs, accountById, bankById }: { txs: any[]; accountById: Map<string, any>; bankById: Map<string, any> }) {
+  if (!txs.length) return <div className="fg-empty">Nenhuma transacao encontrada neste filtro.</div>;
+
+  return (
+    <div className="fg-stack" style={{ gap: 8 }}>
+      {txs.slice(0, 8).map((tx: any) => {
         const account = accountById.get(String(tx.account_id || ""));
         const bank = account ? bankById.get(String(account.bank_id || "")) : null;
         const bankName = bank?.name || account?.institution_name || "Sem banco";
 
         return (
-          <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", paddingBottom: 10, borderBottom: "1px solid #eee" }}>
+          <div key={tx.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, paddingBottom: 10, borderBottom: "1px solid #dce2ed" }}>
             <div>
               <div style={{ fontWeight: 700 }}>{tx.description || "Sem descricao"}</div>
               <div style={{ color: "var(--muted)", fontSize: 13 }}>
                 {bankName} - {account?.name || "Sem conta"} - {shortDate(tx.posted_at)}
               </div>
             </div>
-            <div style={{ fontWeight: 700 }}>{brl(tx.amount)}</div>
+            <div style={{ fontWeight: 800, color: Number(tx.amount) >= 0 ? "#12895d" : "var(--danger)" }}>{brl(tx.amount)}</div>
           </div>
         );
       })}
@@ -272,23 +463,23 @@ function TransactionsMini({ txs, accountById, bankById }: { txs: any[]; accountB
 }
 
 function GoalsMini({ goals }: { goals: any[] }) {
-  if (!goals.length) return <div>Nenhuma meta cadastrada.</div>;
+  if (!goals.length) return <div className="fg-empty">Nenhuma meta cadastrada.</div>;
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div className="fg-stack" style={{ gap: 10 }}>
       {goals.map((goal: any) => {
         const pct = Number(goal.target_amount) > 0 ? (Number(goal.current_amount) / Number(goal.target_amount)) * 100 : 0;
 
         return (
-          <div key={goal.id}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+          <div key={goal.id} style={{ background: "#fff", border: "1px solid #dce3ef", borderRadius: 14, padding: 12 }}>
+            <div className="fg-category-row" style={{ marginBottom: 6 }}>
               <strong>{goal.name}</strong>
               <span>{pct.toFixed(1)}%</span>
             </div>
-            <div style={{ height: 10, background: "#e5e7eb", borderRadius: 999 }}>
-              <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: "#111827", borderRadius: 999 }} />
+            <div className="fg-category-bar" style={{ height: 10 }}>
+              <span style={{ width: `${Math.min(pct, 100)}%` }} />
             </div>
-            <div style={{ marginTop: 6, color: "var(--muted)", fontSize: 13 }}>
+            <div style={{ marginTop: 7, color: "#455064", fontSize: 13 }}>
               {brl(goal.current_amount)} de {brl(goal.target_amount)}
             </div>
           </div>
@@ -306,21 +497,21 @@ function TransactionsTable(input: {
   returnUrl: string;
 }) {
   return (
-    <Card title="Transacoes por banco e conta">
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <Card title="Transacoes por banco e conta" action={<span className="fg-chip">Edite categoria, acao e consolidacao</span>}>
+      <div className="fg-table-wrap">
+        <table className="fg-table">
           <thead>
             <tr>
-              <Th>Data</Th>
-              <Th>Descricao</Th>
-              <Th>Banco</Th>
-              <Th>Conta</Th>
-              <Th>Categoria</Th>
-              <Th>Subcategoria</Th>
-              <Th>Valor</Th>
-              <Th>Acao</Th>
-              <Th>Consolidada</Th>
-              <Th>Salvar</Th>
+              <th>Data</th>
+              <th>Descricao</th>
+              <th>Banco</th>
+              <th>Conta</th>
+              <th>Categoria</th>
+              <th>Subcategoria</th>
+              <th>Valor</th>
+              <th>Acao</th>
+              <th>Consolidada</th>
+              <th>Salvar</th>
             </tr>
           </thead>
           <tbody>
@@ -333,42 +524,42 @@ function TransactionsTable(input: {
 
               return (
                 <tr key={tx.id}>
-                  <Td>{shortDate(tx.posted_at)}</Td>
-                  <Td>{tx.description || "-"}</Td>
-                  <Td>{bankName}</Td>
-                  <Td>
-                    <select form={formId} name="account_id" required defaultValue={selectedAccountId} style={{ width: 240, ...compactInput }}>
+                  <td>{shortDate(tx.posted_at)}</td>
+                  <td>{tx.description || "-"}</td>
+                  <td>{bankName}</td>
+                  <td>
+                    <select form={formId} name="account_id" required defaultValue={selectedAccountId} className="fg-select" style={{ minWidth: 220 }}>
                       {input.accounts.map((a: any) => (
                         <option key={a.id} value={a.id}>
                           {a.institution_name} - {a.name} ({accountTypeLabel(a.type)})
                         </option>
                       ))}
                     </select>
-                  </Td>
-                  <Td>
-                    <input form={formId} name="category" defaultValue={tx.app_category || ""} style={{ width: 120, ...compactInput }} />
-                  </Td>
-                  <Td>
-                    <input form={formId} name="subcategory" defaultValue={tx.app_subcategory || ""} style={{ width: 130, ...compactInput }} />
-                  </Td>
-                  <Td>{brl(tx.amount)}</Td>
-                  <Td>
-                    <select form={formId} name="action" required defaultValue={actionFromType(tx.type)} style={{ width: 140, ...compactInput }}>
+                  </td>
+                  <td>
+                    <input form={formId} name="category" defaultValue={tx.app_category || ""} className="fg-input" />
+                  </td>
+                  <td>
+                    <input form={formId} name="subcategory" defaultValue={tx.app_subcategory || ""} className="fg-input" />
+                  </td>
+                  <td style={{ fontWeight: 800, color: Number(tx.amount) >= 0 ? "#12895d" : "var(--danger)" }}>{brl(tx.amount)}</td>
+                  <td>
+                    <select form={formId} name="action" required defaultValue={actionFromType(tx.type)} className="fg-select">
                       <option value="Receita">Receita</option>
                       <option value="Despesa">Despesa</option>
-                      <option value="Transferência">Transferência</option>
+                      <option value="Transferência">Transferencia</option>
                     </select>
-                  </Td>
-                  <Td>
+                  </td>
+                  <td>
                     <input form={formId} name="is_consolidated" type="checkbox" defaultChecked={tx.is_consolidated !== false} />
-                  </Td>
-                  <Td>
+                  </td>
+                  <td>
                     <form id={formId} action="/api/categories/update" method="post" style={{ display: "inline-flex" }}>
                       <input type="hidden" name="id" value={tx.id} />
                       <input type="hidden" name="return_url" value={input.returnUrl} />
                     </form>
-                    <button form={formId} style={buttonLight}>Salvar</button>
-                  </Td>
+                    <button form={formId} className="fg-btn-secondary">Salvar</button>
+                  </td>
                 </tr>
               );
             })}
@@ -385,40 +576,3 @@ function actionFromType(type: string | null | undefined) {
   return "Despesa";
 }
 
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  padding: "10px",
-  borderRadius: 10,
-  border: "1px solid #d1d5db",
-};
-
-const compactInput = {
-  padding: 6,
-  borderRadius: 8,
-  border: "1px solid #ddd",
-};
-
-const buttonDark = {
-  padding: "10px 14px",
-  borderRadius: 10,
-  border: "none",
-  background: "#111827",
-  color: "#fff",
-  fontWeight: 700,
-};
-
-const buttonLight = {
-  padding: "7px 10px",
-  borderRadius: 8,
-  border: "1px solid #ddd",
-  background: "#fff",
-};
-
-function Th({ children }: any) {
-  return <th style={{ textAlign: "left", padding: "10px 8px", borderBottom: "1px solid #ddd" }}>{children}</th>;
-}
-
-function Td({ children }: any) {
-  return <td style={{ padding: "10px 8px", borderBottom: "1px solid #eee", verticalAlign: "top" }}>{children}</td>;
-}

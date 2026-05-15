@@ -1,25 +1,28 @@
-import { requireServerUser } from "@/lib/auth-server";
-import { PageShell, Card } from "@/components/ui";
+﻿import { requireServerUser } from "@/lib/auth-server";
+import { PageShell, Card, SectionIntro } from "@/components/ui";
 
 export default async function ExportsPage() {
   await requireServerUser();
+
   return (
     <PageShell>
-      <div style={{ display: "grid", gap: 16, maxWidth: 900 }}>
-        <h1 style={{ margin: 0 }}>Exportações</h1>
+      <div className="fg-stack" style={{ maxWidth: 980 }}>
+        <SectionIntro
+          title="Exportacoes"
+          subtitle="Baixe seus dados em formatos estruturados para auditoria, analise externa e backup."
+        />
 
-        <Card title="Excel estruturado">
-          <p>Exporta transações, orçamento e metas em abas separadas.</p>
-          <code>GET /api/export/excel</code>
-          <p>Requer login ativo. O navegador usará o cookie seguro da sessão.</p>
+        <Card title="Excel estruturado" action={<span className="fg-chip">GET /api/export/excel</span>}>
+          <p>Exporta transacoes, orcamento e metas em abas separadas.</p>
+          <p className="fg-field-note">Requer login ativo e utiliza cookie seguro de sessao.</p>
         </Card>
 
-        <Card title="PDF estruturado">
-          <p>Gera um relatório HTML pronto para imprimir/salvar em PDF pelo navegador.</p>
-          <code>GET /api/export/pdf</code>
-          <p>Requer login ativo. O navegador usará o cookie seguro da sessão.</p>
+        <Card title="PDF estruturado" action={<span className="fg-chip">GET /api/export/pdf</span>}>
+          <p>Gera um relatorio pronto para imprimir ou salvar em PDF no navegador.</p>
+          <p className="fg-field-note">Requer login ativo e utiliza cookie seguro de sessao.</p>
         </Card>
       </div>
     </PageShell>
   );
 }
+

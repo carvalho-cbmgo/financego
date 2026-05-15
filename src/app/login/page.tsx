@@ -34,127 +34,82 @@ export default function LoginPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        placeItems: "center",
-        padding: 20,
-      }}
-    >
-      <div
-        style={{
-          width: "min(1040px, 100%)",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: 14,
-        }}
-      >
-        <section
-          style={{
-            borderRadius: 26,
-            padding: 26,
-            background: "linear-gradient(165deg, #0f2a33 0%, #14556a 100%)",
-            color: "#ebfbff",
-            boxShadow: "0 28px 50px rgba(11, 34, 43, 0.35)",
-          }}
-        >
-          <div style={{ fontSize: 12, opacity: .78, letterSpacing: ".14em", textTransform: "uppercase" }}>Plataforma</div>
-          <h1 style={{ fontSize: 48, margin: "6px 0 10px" }}>Finance GO</h1>
-          <p style={{ color: "#b9d6e0", maxWidth: 520, lineHeight: 1.7 }}>
-            Controle financeiro moderno e intuitivo com cadastro de bancos, contas individualizadas,
-            consolidacao de gastos e previsao de despesas futuras.
-          </p>
-
-          <div style={{ marginTop: 22, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <Feature title="Visao por Banco" text="Analise consolidada por instituicao." />
-            <Feature title="Visao por Conta" text="Acompanhe cartao e conta corrente separadamente." />
-            <Feature title="Transacoes Futuras" text="Marque como nao consolidada para previsao." />
-            <Feature title="Dashboard Inteligente" text="Filtros dinamicos e indicadores claros." />
-          </div>
-        </section>
-
+    <main style={{ minHeight: "100vh", display: "grid", alignContent: "center", padding: 16, gap: 10 }}>
+      <div style={{ width: "min(1120px, 100%)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(330px, 1fr))", gap: 14 }}>
         <section
           style={{
             borderRadius: 24,
-            background: "#fff",
-            border: "1px solid var(--line)",
-            padding: 24,
-            boxShadow: "var(--shadow)",
-            alignSelf: "center",
+            background: "linear-gradient(145deg, #0f8e60, #1668b3)",
+            color: "#f8fcff",
+            padding: 28,
+            boxShadow: "0 20px 46px rgba(19, 33, 60, 0.22)",
           }}
         >
-          <h2 style={{ marginTop: 0, marginBottom: 4 }}>{mode === "login" ? "Entrar" : "Criar conta"}</h2>
-          <p style={{ color: "var(--muted)", marginTop: 0 }}>
-            Acesse sua area no Finance GO.
+          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", opacity: 0.84 }}>Bem-vindo</div>
+          <h1 style={{ marginTop: 10, fontSize: 48 }}>Finance GO</h1>
+          <p style={{ marginTop: 10, maxWidth: 540, color: "#dbeeff", lineHeight: 1.65 }}>
+            Sistema de controle financeiro pessoal com cadastro separado de bancos e contas,
+            transacoes consolidadas ou previstas e analise inteligente por instituicao.
           </p>
 
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
+          <div className="fg-grid-2" style={{ marginTop: 18 }}>
+            <Feature title="Visao geral" text="Saldo, entradas e saidas em cards objetivos." />
+            <Feature title="Por banco/conta" text="Analise separada para cada instituicao e conta." />
+            <Feature title="Previsao futura" text="Use NAO CONSOLIDADA para gastos planejados." />
+            <Feature title="Fluxo pratico" text="Cadastro rapido, importacao e ajustes no mesmo painel." />
+          </div>
+        </section>
+
+        <section className="fg-card" style={{ alignSelf: "center", background: "#fff" }}>
+          <div className="fg-card-head">
+            <h2 style={{ margin: 0, fontSize: 28 }}>{mode === "login" ? "Entrar" : "Criar conta"}</h2>
+          </div>
+          <p className="fg-field-note" style={{ marginBottom: 12 }}>
+            Acesse seu painel pessoal do Finance GO.
+          </p>
+
+          <form onSubmit={handleSubmit} className="fg-form">
             <label>
               E-mail
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required style={input} />
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="fg-input" />
             </label>
 
             <label>
               Senha
-              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required style={input} />
+              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="fg-input" />
             </label>
 
-            <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr", marginTop: 8 }}>
-              <button type="submit" style={primary}>
+            <div className="fg-grid-2" style={{ marginTop: 8 }}>
+              <button type="submit" className="fg-btn">
                 {mode === "login" ? "Entrar" : "Criar conta"}
               </button>
-              <button
-                type="button"
-                onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                style={secondary}
-              >
+              <button type="button" onClick={() => setMode(mode === "login" ? "signup" : "login")} className="fg-btn-secondary">
                 {mode === "login" ? "Nova conta" : "Ja tenho conta"}
               </button>
             </div>
           </form>
 
-          <div style={{ marginTop: 12, color: "#30424d", minHeight: 24 }}>{message}</div>
+          <div style={{ marginTop: 12, minHeight: 24, color: "#334155" }}>{message}</div>
         </section>
       </div>
+      <footer className="fg-app-footer">Â© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
     </main>
   );
 }
 
 function Feature({ title, text }: { title: string; text: string }) {
   return (
-    <div style={{ border: "1px solid rgba(171, 224, 242, 0.2)", background: "rgba(11, 28, 35, 0.2)", borderRadius: 14, padding: 12 }}>
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>{title}</div>
-      <div style={{ fontSize: 13, color: "#bfdce8" }}>{text}</div>
+    <div
+      style={{
+        border: "1px solid rgba(239, 250, 255, 0.32)",
+        borderRadius: 14,
+        padding: 12,
+        background: "rgba(10, 26, 56, 0.18)",
+      }}
+    >
+      <div style={{ fontWeight: 800 }}>{title}</div>
+      <div style={{ marginTop: 4, fontSize: 13, color: "#d8eeff" }}>{text}</div>
     </div>
   );
 }
 
-const input = {
-  width: "100%",
-  marginTop: 6,
-  padding: "12px 10px",
-  borderRadius: 12,
-  border: "1px solid #c8d9df",
-  boxSizing: "border-box" as const,
-};
-
-const primary = {
-  padding: "12px 14px",
-  borderRadius: 12,
-  border: "none",
-  background: "var(--brand)",
-  color: "#fff",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const secondary = {
-  padding: "12px 14px",
-  borderRadius: 12,
-  border: "1px solid #cedce2",
-  background: "#fff",
-  color: "#17252f",
-  fontWeight: 700,
-  cursor: "pointer",
-};

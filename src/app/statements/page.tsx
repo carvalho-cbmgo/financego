@@ -1,5 +1,5 @@
 ﻿import Link from "next/link";
-import { PageShell, Card } from "@/components/ui";
+import { PageShell, Card, SectionIntro, Stat } from "@/components/ui";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { shortDate } from "@/lib/format";
@@ -35,133 +35,145 @@ export default async function StatementsPage() {
 
   return (
     <PageShell>
-      <div style={{ display: "grid", gap: 16, maxWidth: 1100 }}>
-        <h1 style={{ margin: 0 }}>Importar fatura/extrato</h1>
+      <div className="fg-stack" style={{ maxWidth: 1200 }}>
+        <SectionIntro
+          title="Extrato e importacao"
+          subtitle="Importe PDF, CSV ou texto de fatura/extrato, sempre vinculando cada item a uma conta especifica."
+          action={<Link href="/accounts" className="fg-link">Gerenciar contas</Link>}
+        />
+
+        <div className="fg-grid-4">
+          <Stat label="Bancos cadastrados" value={String((banks || []).length)} />
+          <Stat label="Contas disponiveis" value={String((accounts || []).length)} />
+          <Stat label="Importacoes listadas" value={String((imports || []).length)} />
+          <Stat
+            label="Ultima importacao"
+            value={imports?.[0]?.created_at ? shortDate(imports[0].created_at) : "-"}
+          />
+        </div>
 
         {!accounts?.length ? (
           <Card title="Sem contas cadastradas">
-            <p style={{ marginTop: 0 }}>
+            <div className="fg-empty">
               Para importar transacoes, primeiro cadastre bancos e contas.
-            </p>
-            <Link href="/accounts">Ir para bancos e contas</Link>
+              <div style={{ marginTop: 10 }}>
+                <Link href="/accounts" className="fg-link">Ir para bancos e contas</Link>
+              </div>
+            </div>
           </Card>
         ) : null}
 
-        <Card title="Importacao estruturada">
-          <form action="/api/statements/import" method="post" encType="multipart/form-data" style={{ display: "grid", gap: 12 }}>
-            <label>Conta de destino</label>
-            <select name="account_id" required style={input}>
-              {(accounts || []).map((account: any) => {
-                const bank = bankById.get(String(account.bank_id || ""));
-                const bankName = bank?.name || account.institution_name || "Sem banco";
+        <Card title="Importacao estruturada" action={<span className="fg-chip">PDF, CSV, TXT e OFX</span>}>
+          <form action="/api/statements/import" method="post" encType="multipart/form-data" className="fg-form">
+            <div className="fg-grid-2">
+              <div className="fg-form">
+                <label>Conta de destino</label>
+                <select name="account_id" required className="fg-select">
+                  {(accounts || []).map((account: any) => {
+                    const bank = bankById.get(String(account.bank_id || ""));
+                    const bankName = bank?.name || account.institution_name || "Sem banco";
 
-                return (
-                  <option key={account.id} value={account.id}>
-                    {bankName} - {account.name} ({accountTypeLabel(account.type)})
-                  </option>
-                );
-              })}
-            </select>
+                    return (
+                      <option key={account.id} value={account.id}>
+                        {bankName} - {account.name} ({accountTypeLabel(account.type)})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
 
-            <label>Tipo de arquivo</label>
-            <select name="source_type" style={input}>
-              <option value="pdf">PDF de fatura/extrato</option>
-              <option value="csv">CSV</option>
-              <option value="manual_text">Texto colado</option>
-            </select>
+              <div className="fg-form">
+                <label>Tipo de arquivo</label>
+                <select name="source_type" className="fg-select">
+                  <option value="pdf">PDF de fatura/extrato</option>
+                  <option value="csv">CSV</option>
+                  <option value="manual_text">Texto colado</option>
+                </select>
+              </div>
+            </div>
 
-            <label>Banco</label>
-            <select name="bank_key" style={input}>
-              <option value="nubank">Nubank</option>
-              <option value="itau">Itau</option>
-              <option value="bradesco">Bradesco</option>
-              <option value="santander">Santander</option>
-              <option value="banco_do_brasil">Banco do Brasil</option>
-              <option value="caixa">Caixa</option>
-              <option value="c6">C6</option>
-              <option value="inter">Inter</option>
-              <option value="mercado_pago">Mercado Pago</option>
-              <option value="picpay">PicPay</option>
-              <option value="generic">Generico</option>
-            </select>
+            <div className="fg-form">
+              <label>Banco (parser)</label>
+              <select name="bank_key" className="fg-select">
+                <option value="nubank">Nubank</option>
+                <option value="itau">Itau</option>
+                <option value="bradesco">Bradesco</option>
+                <option value="santander">Santander</option>
+                <option value="banco_do_brasil">Banco do Brasil</option>
+                <option value="caixa">Caixa</option>
+                <option value="c6">C6</option>
+                <option value="inter">Inter</option>
+                <option value="mercado_pago">Mercado Pago</option>
+                <option value="picpay">PicPay</option>
+                <option value="generic">Generico</option>
+              </select>
+            </div>
 
-            <label>Arquivo PDF/CSV/TXT exportado da fatura ou extrato</label>
-            <input name="file" type="file" accept=".pdf,.csv,.txt,.ofx" style={input} />
+            <div className="fg-grid-2">
+              <div className="fg-form">
+                <label>Arquivo PDF/CSV/TXT/OFX</label>
+                <input name="file" type="file" accept=".pdf,.csv,.txt,.ofx" className="fg-input" />
+              </div>
 
-            <label>Ou cole o texto da fatura</label>
-            <textarea name="raw_text" placeholder="Cole aqui as linhas da fatura/extrato, caso nao envie arquivo..." style={{ ...input, minHeight: 160 }} />
+              <div className="fg-form">
+                <label>Texto da fatura (alternativa)</label>
+                <textarea
+                  name="raw_text"
+                  placeholder="Cole aqui as linhas da fatura/extrato, caso nao envie arquivo"
+                  className="fg-textarea"
+                />
+              </div>
+            </div>
 
-            <p style={{ color: "var(--muted)", margin: 0 }}>
-              A importacao ficara vinculada ao usuario autenticado e a conta selecionada.
+            <p className="fg-field-note">
+              A importacao sempre fica vinculada ao usuario autenticado e a conta selecionada.
             </p>
 
-            <button style={button} disabled={!accounts?.length}>Importar transacoes</button>
+            <button className="fg-btn" disabled={!accounts?.length}>Importar transacoes</button>
           </form>
         </Card>
 
-        <Card title="Ultimas importacoes">
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <Th>Data</Th>
-                <Th>Banco (parser)</Th>
-                <Th>Conta destino</Th>
-                <Th>Arquivo</Th>
-                <Th>Status</Th>
-                <Th>Detectadas</Th>
-                <Th>Importadas</Th>
-                <Th>Duplicadas</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {(imports || []).map((item: any) => {
-                const account = accountById.get(String(item.account_id));
-                const bank = account ? bankById.get(String(account.bank_id || "")) : null;
-                const bankName = bank?.name || account?.institution_name || "-";
-                const accountLabel = account ? `${bankName} - ${account.name}` : "-";
+        <Card title="Historico de importacoes">
+          <div className="fg-table-wrap">
+            <table className="fg-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Banco (parser)</th>
+                  <th>Conta destino</th>
+                  <th>Arquivo</th>
+                  <th>Status</th>
+                  <th>Detectadas</th>
+                  <th>Importadas</th>
+                  <th>Duplicadas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(imports || []).map((item: any) => {
+                  const account = accountById.get(String(item.account_id));
+                  const bank = account ? bankById.get(String(account.bank_id || "")) : null;
+                  const bankName = bank?.name || account?.institution_name || "-";
+                  const accountLabel = account ? `${bankName} - ${account.name}` : "-";
 
-                return (
-                  <tr key={item.id}>
-                    <Td>{shortDate(item.created_at)}</Td>
-                    <Td>{item.bank_key}</Td>
-                    <Td>{accountLabel}</Td>
-                    <Td>{item.file_name || "-"}</Td>
-                    <Td>{item.status}</Td>
-                    <Td>{item.total_detected}</Td>
-                    <Td>{item.total_imported}</Td>
-                    <Td>{item.total_duplicates}</Td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  return (
+                    <tr key={item.id}>
+                      <td>{shortDate(item.created_at)}</td>
+                      <td>{item.bank_key}</td>
+                      <td>{accountLabel}</td>
+                      <td>{item.file_name || "-"}</td>
+                      <td>{item.status}</td>
+                      <td>{item.total_detected}</td>
+                      <td>{item.total_imported}</td>
+                      <td>{item.total_duplicates}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </div>
     </PageShell>
   );
 }
 
-const input = {
-  padding: "12px 10px",
-  borderRadius: 10,
-  border: "1px solid #d1d5db",
-  width: "100%",
-  boxSizing: "border-box" as const,
-};
-
-const button = {
-  padding: "12px 16px",
-  borderRadius: 12,
-  border: "none",
-  background: "#111827",
-  color: "#fff",
-  fontWeight: 700,
-};
-
-function Th({ children }: any) {
-  return <th style={{ textAlign: "left", padding: "10px 8px", borderBottom: "1px solid #ddd" }}>{children}</th>;
-}
-
-function Td({ children }: any) {
-  return <td style={{ padding: "10px 8px", borderBottom: "1px solid #eee" }}>{children}</td>;
-}
