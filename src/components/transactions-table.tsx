@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
-import { shortDate } from "@/lib/format";
 import { accountTypeLabel } from "@/lib/accounts";
 import { notifyGlobalLoading } from "@/components/global-loading-overlay";
 
@@ -12,6 +11,20 @@ type CategorySelectOption = {
   value: string;
   label: string;
   depth?: number;
+};
+
+type RepeatMode = "none" | "installment" | "advanced";
+type RepeatEvery = "week" | "month" | "year";
+
+type RecurrenceInfo = {
+  isRecurring: boolean;
+  defaultMode: RepeatMode;
+  repeatEvery: RepeatEvery;
+  repeatForever: boolean;
+  installmentCurrent: number;
+  installmentTotal: number;
+  totalAmountValue: string;
+  badgeLabel: string;
 };
 
 export function TransactionsTable(input: {
@@ -147,8 +160,8 @@ export function TransactionsTable(input: {
         <select className="fg-select" defaultValue="">
           <option value="">Alterar categoria</option>
           {categoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
         </select>
         <Link href="/exports" className="fg-btn-secondary">Exportar</Link>
       </div>
@@ -197,6 +210,7 @@ export function TransactionsTable(input: {
                   const editUrl = buildEditUrl(input.returnUrl, txId);
                   const isEditing = input.selectedEditTxId === txId;
                   const checked = selectedTxIds.includes(txId);
+                  const recurrenceInfo = getRecurrenceInfo(tx);
 
                   return (
                     <Fragment key={txId}>
@@ -211,7 +225,10 @@ export function TransactionsTable(input: {
                         </td>
                         <td>
                           <Link href={editUrl} className="fg-legacy-desc-link">
-                            {tx.description || "Sem descrição"}
+                            <span className="fg-legacy-desc-main">{tx.description || "Sem descrição"}</span>
+                            {recurrenceInfo.isRecurring ? (
+                              <span className="fg-chip fg-chip-recurring">{recurrenceInfo.badgeLabel}</span>
+                            ) : null}
                           </Link>
                         </td>
                         <td>
@@ -270,7 +287,11 @@ export function TransactionsTable(input: {
                                   {input.accounts.map((item: any) => {
                                     const accountBank = bankById.get(String(item.bank_id || ""));
                                     const optionBankName = accountBank?.name || item.institution_name || "Sem banco";
-                                    return <option key={item.id} value={item.id}>{optionBankName} - {item.name} ({accountTypeLabel(item.type)})</option>;
+                                    return (
+                                      <option key={item.id} value={item.id}>
+                                        {optionBankName} - {item.name} ({accountTypeLabel(item.type)})
+                                      </option>
+                                    );
                                   })}
                                 </select>
                                 <input
@@ -313,12 +334,18 @@ export function TransactionsTable(input: {
                                     <option value="3d">3 dias antes</option>
                                     <option value="7d">7 dias antes</option>
                                   </select>
-                                  <div className="fg-legacy-inline-label">Repetir transação</div>
-                                  <div className="fg-legacy-repeat-options">
-                                    <label><input type="radio" name="repeat_mode" value="none" defaultChecked /> Sem repetição</label>
-                                    <label><input type="radio" name="repeat_mode" value="installment" /> Parcelamento</label>
-                                    <label><input type="radio" name="repeat_mode" value="advanced" /> Avançado</label>
-                                  </div>
+                                  <RecurringControls tx={tx} />
+                                  <div className="fg-legacy-inline-label">Escopo ao excluir</div>
+                                  <select
+                                    name="delete_scope"
+                                    defaultValue="single"
+                                    className="fg-select"
+                                    disabled={!recurrenceInfo.isRecurring}
+                                  >
+                                    <option value="single">Somente esta transação</option>
+                                    <option value="up_to_current">Esta e anteriores vinculadas</option>
+                                    <option value="from_current">Esta e posteriores vinculadas</option>
+                                  </select>
                                   <button className="fg-btn-danger" name="intent" value="delete">Excluir</button>
                                 </div>
 
@@ -344,6 +371,162 @@ export function TransactionsTable(input: {
         </table>
       </div>
     </Card>
+  );
+}
+
+function RecurringControls({ tx }: { tx: any }) {
+  const recurrenceInfo = useMemo(() => getRecurrenceInfo(tx), [tx]);
+  const [mode, setMode] = useState<RepeatMode>(recurrenceInfo.defaultMode);
+  const [repeatEvery, setRepeatEvery] = useState<RepeatEvery>(recurrenceInfo.repeatEvery);
+  const [repeatForever, setRepeatForever] = useState<boolean>(recurrenceInfo.repeatForever);
+  const [installmentCurrent, setInstallmentCurrent] = useState<number>(recurrenceInfo.installmentCurrent);
+  const [installmentTotal, setInstallmentTotal] = useState<number>(recurrenceInfo.installmentTotal);
+  const [installmentTotalAmount, setInstallmentTotalAmount] = useState<string>(recurrenceInfo.totalAmountValue);
+
+  const showInstallment = mode === "installment";
+  const showAdvanced = mode === "advanced";
+
+  function updateCurrent(value: string) {
+    const nextCurrent = Math.max(1, Math.trunc(Number(value) || 1));
+    setInstallmentCurrent(nextCurrent);
+    setInstallmentTotal((current) => Math.max(nextCurrent, Math.trunc(Number(current) || nextCurrent)));
+  }
+
+  function updateTotal(value: string) {
+    const nextTotal = Math.max(installmentCurrent, Math.trunc(Number(value) || installmentCurrent));
+    setInstallmentTotal(nextTotal);
+  }
+
+  return (
+    <>
+      <div className="fg-legacy-inline-label">Repetir transação</div>
+      <div className="fg-legacy-repeat-options">
+        <label>
+          <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />
+          Sem repetição
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="repeat_mode"
+            value="installment"
+            checked={mode === "installment"}
+            onChange={() => setMode("installment")}
+          />
+          Parcelamento (mensal)
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="repeat_mode"
+            value="advanced"
+            checked={mode === "advanced"}
+            onChange={() => setMode("advanced")}
+          />
+          Avançado
+        </label>
+      </div>
+
+      {showInstallment ? (
+        <div className="fg-legacy-repeat-grid">
+          <label className="fg-field-label">
+            Nº da parcela atual
+            <input
+              type="number"
+              name="installment_current"
+              min={1}
+              required
+              className="fg-input"
+              value={installmentCurrent}
+              onChange={(event) => updateCurrent(event.target.value)}
+            />
+          </label>
+          <label className="fg-field-label">
+            Quantidade total de parcelas
+            <input
+              type="number"
+              name="installment_total"
+              min={installmentCurrent}
+              required
+              className="fg-input"
+              value={installmentTotal}
+              onChange={(event) => updateTotal(event.target.value)}
+            />
+          </label>
+          <label className="fg-field-label">
+            R$ Total
+            <input
+              type="number"
+              name="installment_total_amount"
+              min="0.01"
+              step="0.01"
+              className="fg-input"
+              value={installmentTotalAmount}
+              onChange={(event) => setInstallmentTotalAmount(event.target.value)}
+            />
+          </label>
+          <input type="hidden" name="repeat_every" value="month" />
+        </div>
+      ) : null}
+
+      {showAdvanced ? (
+        <div className="fg-legacy-repeat-grid">
+          <label className="fg-field-label">
+            Repetir a cada
+            <select
+              name="repeat_every"
+              className="fg-select"
+              value={repeatEvery}
+              onChange={(event) => setRepeatEvery(parseRepeatEvery(event.target.value))}
+            >
+              <option value="week">Semana</option>
+              <option value="month">Mês</option>
+              <option value="year">Ano</option>
+            </select>
+          </label>
+
+          <label className="fg-checkbox-row fg-legacy-repeat-check">
+            <input
+              type="checkbox"
+              name="repeat_forever"
+              checked={repeatForever}
+              onChange={(event) => setRepeatForever(event.target.checked)}
+            />
+            Repetir infinitamente
+          </label>
+
+          <label className="fg-field-label">
+            Nº da parcela atual
+            <input
+              type="number"
+              name="installment_current"
+              min={1}
+              required
+              className="fg-input"
+              value={installmentCurrent}
+              onChange={(event) => updateCurrent(event.target.value)}
+            />
+          </label>
+
+          <label className="fg-field-label">
+            Quantidade total de parcelas
+            <input
+              type="number"
+              name="installment_total"
+              min={installmentCurrent}
+              className="fg-input"
+              disabled={repeatForever}
+              value={installmentTotal}
+              onChange={(event) => updateTotal(event.target.value)}
+            />
+          </label>
+
+          <div className="fg-field-note">
+            As recorrentes serão vinculadas e exibidas com indicador visual na lista.
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -420,4 +603,91 @@ function dedupeCategoryOptions(options: CategorySelectOption[]) {
   }
 
   return list;
+}
+
+function parseRepeatEvery(input: string): RepeatEvery {
+  const value = String(input || "").trim().toLowerCase();
+  if (value === "week" || value === "semana") return "week";
+  if (value === "year" || value === "ano") return "year";
+  return "month";
+}
+
+function formatRepeatEveryLabel(value: RepeatEvery) {
+  if (value === "week") return "Semanal";
+  if (value === "year") return "Anual";
+  return "Mensal";
+}
+
+function getRecurrenceInfo(tx: any): RecurrenceInfo {
+  const rawRecurrence = extractRawRecurrence(tx?.raw);
+  const metadataModeRaw = String(rawRecurrence?.mode || "").trim().toLowerCase();
+
+  let defaultMode: RepeatMode = "none";
+  if (metadataModeRaw === "installment") defaultMode = "installment";
+  else if (metadataModeRaw === "advanced") defaultMode = "advanced";
+
+  const installmentCurrent = Math.max(1, Number(tx?.installment_current || 1));
+  const rawInstallmentTotal = Number(tx?.installment_total || 0);
+  const inferredTotal = Number.isFinite(rawInstallmentTotal) && rawInstallmentTotal >= installmentCurrent
+    ? rawInstallmentTotal
+    : Math.max(installmentCurrent, 12);
+
+  const hasGroup = Boolean(String(tx?.installment_group_key || "").trim());
+  const metadataRepeatForever = Boolean(rawRecurrence?.repeatForever);
+  const metadataRepeatEvery = parseRepeatEvery(String(rawRecurrence?.repeatEvery || "month"));
+
+  const hasInstallmentNumbers = Boolean(tx?.installment_current) || Boolean(tx?.installment_total);
+  const isRecurring = hasGroup || defaultMode !== "none" || hasInstallmentNumbers;
+
+  if (defaultMode === "none" && isRecurring) {
+    defaultMode = rawInstallmentTotal > 0 ? "installment" : "advanced";
+  }
+
+  const repeatForever = defaultMode === "advanced"
+    ? (metadataRepeatForever || (!tx?.installment_total && hasGroup))
+    : false;
+
+  const repeatEvery = defaultMode === "advanced" ? metadataRepeatEvery : "month";
+
+  let badgeLabel = "Recorrente";
+  if (defaultMode === "installment") {
+    badgeLabel = `Parcela ${installmentCurrent} de ${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)}`;
+  } else if (defaultMode === "advanced") {
+    if (repeatForever) badgeLabel = `Recorrente • ${formatRepeatEveryLabel(repeatEvery)}`;
+    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} • ${formatRepeatEveryLabel(repeatEvery)}`;
+  }
+
+  const amountAbs = Math.abs(Number(tx?.amount || 0));
+  const totalAmountValue = (amountAbs * Math.max(1, inferredTotal)).toFixed(2);
+
+  return {
+    isRecurring,
+    defaultMode,
+    repeatEvery,
+    repeatForever,
+    installmentCurrent,
+    installmentTotal: inferredTotal,
+    totalAmountValue,
+    badgeLabel,
+  };
+}
+
+function extractRawRecurrence(raw: any) {
+  if (!raw) return null;
+
+  const payload = typeof raw === "string" ? safeJsonParse(raw) : raw;
+  if (!payload || typeof payload !== "object") return null;
+
+  const recurrence = (payload as any).recurrence;
+  if (!recurrence || typeof recurrence !== "object") return null;
+
+  return recurrence as Record<string, any>;
+}
+
+function safeJsonParse(input: string) {
+  try {
+    return JSON.parse(input);
+  } catch {
+    return null;
+  }
 }

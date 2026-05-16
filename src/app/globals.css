@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --font-body: "Arial", "Helvetica Neue", sans-serif;
   --font-heading: "Arial", "Helvetica Neue", sans-serif;
   --bg: #ececec;
@@ -210,6 +210,15 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   border: 1px solid #c3c3c3;
   background: #f7f7f7;
   font-size: 10px;
+}
+
+.fg-chip-recurring {
+  width: fit-content;
+  margin-top: 1px;
+  border-color: #9fb95a;
+  background: #eff7db;
+  color: #36551f;
+  font-size: 9px;
 }
 
 .fg-chip-positive { color: #1d7c29; background: #e9f7ea; }
@@ -580,6 +589,22 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-inline-note {
   min-height: 74px;
+}
+
+.fg-legacy-repeat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 2px 0 3px;
+}
+
+.fg-legacy-repeat-grid .fg-field-note {
+  grid-column: 1 / -1;
+}
+
+.fg-legacy-repeat-check {
+  align-self: end;
+  min-height: 28px;
 }
 
 .fg-legacy-inline-actions {
@@ -1490,10 +1515,15 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-legacy-desc-link {
-  display: block;
+  display: grid;
+  gap: 2px;
   max-width: 520px;
+}
+
+.fg-legacy-desc-main {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fg-legacy-desc-link:hover {
@@ -1566,6 +1596,10 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
   .fg-legacy-inline-top,
   .fg-legacy-inline-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .fg-legacy-repeat-grid {
     grid-template-columns: 1fr;
   }
 

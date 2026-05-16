@@ -1,4 +1,4 @@
-﻿import { PageShell, Card } from "@/components/ui";
+import { PageShell, Card } from "@/components/ui";
 import { AccountsFilterPanel } from "@/components/accounts-filter-panel";
 import { CategoryTreePanel } from "@/components/category-tree-panel";
 import { TransactionsTable } from "@/components/transactions-table";
@@ -123,7 +123,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   let txQuery = supabaseAdmin
     .from("transactions")
-    .select("id, description, amount, posted_at, app_category, type, account_id, is_consolidated")
+    .select("id, description, amount, posted_at, app_category, type, account_id, is_consolidated, installment_current, installment_total, installment_group_key, raw")
     .eq("profile_id", user.id)
     .order("posted_at", { ascending: false })
     .limit(240);
