@@ -227,7 +227,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <div className="fg-legacy-grid">
         <aside className="fg-legacy-side fg-legacy-side-stack">
           <div className="fg-legacy-side-block">
-            <div className="fg-legacy-side-title">Contas</div>
             <AccountsSidePanel
               accounts={accounts || []}
               bankById={bankById}
@@ -377,6 +376,7 @@ function AccountsSidePanel(input: {
 
   return (
     <AccountsFilterPanel
+      title="Contas"
       accounts={rows}
       selectedAccountIds={input.selectedAccountIds}
       selectedBankId={input.selectedBankId}

@@ -23,6 +23,7 @@ export function AccountsFilterPanel(input: {
   selectedAccountIds: string[];
   selectedBankId: string;
   currentTab: "overview" | "transactions";
+  title?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -87,13 +88,16 @@ export function AccountsFilterPanel(input: {
 
   return (
     <div className="fg-account-list-wrap">
-      <div className="fg-account-actions">
-        <button type="button" className="fg-btn-secondary" onClick={selectAll} disabled={isPending}>
-          Marcar todas
-        </button>
-        <button type="button" className="fg-btn-secondary" onClick={clearAll} disabled={isPending}>
-          Limpar
-        </button>
+      <div className="fg-account-panel-head">
+        <div className="fg-legacy-side-title fg-account-panel-title">{input.title || "Contas"}</div>
+        <div className="fg-account-actions">
+          <button type="button" className="fg-btn-secondary" onClick={selectAll} disabled={isPending}>
+            Marcar todas
+          </button>
+          <button type="button" className="fg-btn-secondary" onClick={clearAll} disabled={isPending}>
+            Limpar
+          </button>
+        </div>
       </div>
 
       <div className="fg-account-list">
