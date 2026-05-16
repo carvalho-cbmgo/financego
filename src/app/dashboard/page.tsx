@@ -3,6 +3,7 @@ import { AccountsFilterPanel } from "@/components/accounts-filter-panel";
 import { CategoryTreePanel } from "@/components/category-tree-panel";
 import { TransactionsTable } from "@/components/transactions-table";
 import { MonthRefPicker } from "@/components/month-ref-picker";
+import { PreviousBalanceToggle } from "@/components/previous-balance-toggle";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, shortDate, monthRef } from "@/lib/format";
@@ -20,6 +21,7 @@ type DashboardParams = {
   category?: string;
   categories?: string;
   month_ref?: string;
+  include_previous_balance?: string;
   edit_tx?: string;
 };
 
@@ -54,6 +56,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     ]),
   );
   const selectedMonthRef = normalizeMonthRef(String(params.month_ref || ""), monthRef());
+  const includePreviousBalance = String(params.include_previous_balance || "1") !== "0";
   const selectedEditTxId = String(params.edit_tx || "");
   const currentTab = params.tab === "transactions" ? "transactions" : "overview";
   const applyBankFilterInTransactions = false;
@@ -102,6 +105,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .map((acc: any) => String(acc.id))
     : [];
 
+  let previousBalanceQuery = supabaseAdmin
+    .from("transactions")
+    .select("amount")
+    .eq("profile_id", user.id)
+    .lt("posted_at", monthStart);
+
+  if (selectedAccountIds.length) {
+    previousBalanceQuery = previousBalanceQuery.in("account_id", selectedAccountIds);
+  } else if (selectedBankId) {
+    if (bankMatchedAccountIds.length) previousBalanceQuery = previousBalanceQuery.in("account_id", bankMatchedAccountIds);
+    else previousBalanceQuery = previousBalanceQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
+  }
+
+  const { data: previousBalanceRows } = await previousBalanceQuery;
+  const previousBalance = (previousBalanceRows || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+
   let txQuery = supabaseAdmin
     .from("transactions")
     .select("id, description, amount, posted_at, app_category, type, account_id, is_consolidated")
@@ -148,7 +167,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   let monthTxQuery = supabaseAdmin
     .from("transactions")
-    .select("id, amount, app_category, posted_at, is_consolidated, account_id")
+    .select("id, amount, app_category, posted_at, is_consolidated, account_id, type")
     .eq("profile_id", user.id)
     .gte("posted_at", monthStart)
     .lt("posted_at", monthEnd);
@@ -177,14 +196,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       ? (accounts || []).filter((a: any) => String(a.bank_id || "") === selectedBankId)
       : (accounts || []);
 
-  const saldo = selectedAccounts.reduce((sum: number, acc: any) => sum + Number(acc.balance || 0), 0);
-
   const consolidatedMonthTxs = (monthTxs || []).filter((t: any) => t.is_consolidated !== false);
   const plannedMonthTxs = (monthTxs || []).filter((t: any) => t.is_consolidated === false);
 
-  const entradas = consolidatedMonthTxs.filter((t: any) => Number(t.amount) > 0).reduce((s: number, t: any) => s + Number(t.amount), 0);
-  const saidas = consolidatedMonthTxs.filter((t: any) => Number(t.amount) < 0).reduce((s: number, t: any) => s + Math.abs(Number(t.amount)), 0);
-  const saldoAnterior = saldo - (entradas - saidas);
+  const entradas = consolidatedMonthTxs
+    .filter((tx: any) => isRevenueTx(tx))
+    .reduce((sum: number, tx: any) => sum + Math.abs(Number(tx.amount || 0)), 0);
+  const saidas = consolidatedMonthTxs
+    .filter((tx: any) => isExpenseTx(tx))
+    .reduce((sum: number, tx: any) => sum - Math.abs(Number(tx.amount || 0)), 0);
+  const saldoAnterior = previousBalance;
+  const saldo = (includePreviousBalance ? saldoAnterior : 0) + entradas + saidas;
 
   const categorySpentMap = new Map<string, number>();
   for (const tx of consolidatedMonthTxs) {
@@ -277,10 +299,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <div className="fg-overview-grid">
               <div className="fg-stack">
                 <Card title="Entradas e saídas">
-                  <div className="fg-checkbox-row"><input type="checkbox" checked readOnly /> Incluir saldo anterior</div>
-                  <SummaryRow label="Saldo anterior" value={brl(saldoAnterior)} />
+                  <PreviousBalanceToggle checked={includePreviousBalance} label="Incluir saldo anterior" />
+                  {includePreviousBalance ? <SummaryRow label="Saldo anterior" value={brl(saldoAnterior)} /> : null}
                   <SummaryRow label="Entradas" value={brl(entradas)} />
-                  <SummaryRow label="Saídas" value={brl(-saidas)} tone="negative" />
+                  <SummaryRow label="Saídas" value={brl(saidas)} tone="negative" />
                   <div className="fg-legacy-balance-total">{brl(saldo)}</div>
                 </Card>
 
@@ -551,6 +573,24 @@ function buildCategoryCatalog(rows: Array<{ id: string; name: string; parent_id:
       parentName: row.parent_id ? idToName.get(String(row.parent_id)) || ROOT_CATEGORY_NAME : ROOT_CATEGORY_NAME,
     }))
     .filter((row) => row.name.length > 0);
+}
+
+function normalizeTxType(input?: string | null) {
+  return String(input || "").trim().toLowerCase();
+}
+
+function isRevenueTx(tx: any) {
+  const type = normalizeTxType(tx?.type);
+  if (type === "credit") return true;
+  if (type === "transfer") return false;
+  return Number(tx?.amount || 0) > 0;
+}
+
+function isExpenseTx(tx: any) {
+  const type = normalizeTxType(tx?.type);
+  if (type === "debit") return true;
+  if (type === "transfer") return false;
+  return Number(tx?.amount || 0) < 0;
 }
 
 function buildCategorySelectOptions(input: {
