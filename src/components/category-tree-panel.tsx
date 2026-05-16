@@ -396,6 +396,69 @@ export function CategoryTreePanel(input: {
     setOpenMap((current) => ({ ...current, ...Object.fromEntries(entries) }));
   }
 
+  async function deleteSelectedCategories() {
+    const targets = Array.from(
+      new Set(
+        selected.filter((name) => name !== ROOT_CATEGORY_NAME && normalizeCategoryName(name) !== normalizeCategoryName("Outros")),
+      ),
+    );
+
+    if (!targets.length) {
+      setMessage("Selecione ao menos uma categoria válida para exclusão.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Excluir ${targets.length} categoria(s) selecionada(s)?`);
+    if (!confirmed) return;
+
+    setIsWorking(true);
+    setContextMenu(null);
+    setMessage("");
+    notifyGlobalLoading(true);
+
+    try {
+      let removed = 0;
+      const failed: string[] = [];
+
+      for (const categoryName of targets) {
+        const response = await fetch("/api/categories/manage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delete",
+            category_name: categoryName,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          failed.push(String(data?.error || categoryName));
+          continue;
+        }
+
+        applyLocalDelete(normalizeCategoryName(categoryName));
+        removed += 1;
+      }
+
+      const nextSelected = selected.filter((name) => !targets.includes(name));
+      setSelected(nextSelected);
+      navigateWith(nextSelected);
+
+      if (!failed.length) {
+        setMessage(`${removed} categoria(s) excluída(s) com sucesso.`);
+      } else if (removed > 0) {
+        setMessage(`${removed} categoria(s) excluída(s). Falhas: ${failed.slice(0, 2).join(" | ")}`);
+      } else {
+        setMessage(`Não foi possível excluir as categorias selecionadas: ${failed.slice(0, 2).join(" | ")}`);
+      }
+    } catch {
+      setMessage("Erro inesperado ao excluir categorias selecionadas.");
+    } finally {
+      setIsWorking(false);
+      notifyGlobalLoading(false);
+    }
+  }
+
   function openContextMenu(event: MouseEvent, categoryName: string) {
     event.preventDefault();
     event.stopPropagation();
@@ -558,7 +621,7 @@ export function CategoryTreePanel(input: {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setMessage(String(data?.error || "Nao foi possivel atualizar categoria."));
+        setMessage(String(data?.error || "Não foi possível atualizar categoria."));
         return;
       }
 
@@ -605,7 +668,7 @@ export function CategoryTreePanel(input: {
     if (dialog.mode === "edit") {
       const nextNameRaw = nameValue.trim();
       if (!nextNameRaw) {
-        setMessage("Informe um nome valido para categoria.");
+        setMessage("Informe um nome válido para categoria.");
         return;
       }
 
@@ -632,7 +695,7 @@ export function CategoryTreePanel(input: {
     if (dialog.mode === "add_subcategory") {
       const nextNameRaw = nameValue.trim();
       if (!nextNameRaw) {
-        setMessage("Informe o nome da sub-categoria.");
+        setMessage("Informe o nome da subcategoria.");
         return;
       }
 
@@ -691,7 +754,7 @@ export function CategoryTreePanel(input: {
           className={`fg-category-node-row ${allSelected ? "is-selected" : partialSelected ? "is-partial" : ""}`}
           style={{ paddingLeft: `${4 + depth * 14}px` }}
           onContextMenu={(event) => openContextMenu(event, categoryName)}
-          title="Clique com o botao direito para editar categoria"
+          title="Clique com o botão direito para editar categoria"
         >
           <button
             type="button"
@@ -736,13 +799,22 @@ export function CategoryTreePanel(input: {
             <button type="button" className="fg-category-tool-btn is-create" onClick={() => openDialog("create")} disabled={isPending || isWorking} title="Criar nova categoria">
               +
             </button>
+            <button
+              type="button"
+              className="fg-category-tool-btn is-delete"
+              onClick={deleteSelectedCategories}
+              disabled={isPending || isWorking || !selected.length}
+              title="Excluir categorias selecionadas"
+            >
+              DEL
+            </button>
             <button type="button" className="fg-category-tool-btn" onClick={expandAll} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Expandir categorias">
               +
             </button>
             <button type="button" className="fg-category-tool-btn" onClick={collapseAll} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Recolher categorias">
               -
             </button>
-            <button type="button" className="fg-category-tool-btn" onClick={selectVisible} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Selecionar categorias visiveis">
+            <button type="button" className="fg-category-tool-btn" onClick={selectVisible} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Selecionar categorias visíveis">
               {"\u2713"}
             </button>
             <button type="button" className="fg-category-tool-btn" onClick={clearSelection} disabled={isPending || isWorking || !selected.length} title="Limpar filtro de categorias">
@@ -760,7 +832,7 @@ export function CategoryTreePanel(input: {
         {tree.rootChildren.length && !visibleCategoryNames.length ? <div className="fg-empty">Nenhuma categoria encontrada.</div> : null}
       </div>
 
-      <div className="fg-field-note">Selecionadas: {selected.length} | Visiveis: {visibleCategoryNames.length} | Total: {brl(visibleSpent)}</div>
+      <div className="fg-field-note">Selecionadas: {selected.length} | Visíveis: {visibleCategoryNames.length} | Total: {brl(visibleSpent)}</div>
 
       {contextMenu ? (
         <div
@@ -783,7 +855,7 @@ export function CategoryTreePanel(input: {
             onClick={() => openDialog("add_subcategory", contextMenu.categoryName)}
             disabled={isWorking || isPending}
           >
-            Adicionar sub-categoria
+            Adicionar subcategoria
           </button>
           <button
             type="button"
@@ -802,7 +874,7 @@ export function CategoryTreePanel(input: {
             <div className="fg-card-title">
               {dialog.mode === "create" ? "Nova categoria" : null}
               {dialog.mode === "edit" ? "Editar categoria" : null}
-              {dialog.mode === "add_subcategory" ? "Adicionar sub-categoria" : null}
+              {dialog.mode === "add_subcategory" ? "Adicionar subcategoria" : null}
               {dialog.mode === "delete" ? "Excluir categoria" : null}
             </div>
 
@@ -856,7 +928,7 @@ export function CategoryTreePanel(input: {
                   className="fg-input"
                   value={nameValue}
                   onChange={(event) => setNameValue(event.target.value)}
-                  placeholder="Nome da sub-categoria"
+                  placeholder="Nome da subcategoria"
                 />
                 <select className="fg-select" value={parentValue} onChange={(event) => setParentValue(event.target.value)}>
                   {parentOptions.map((name) => (
@@ -866,14 +938,14 @@ export function CategoryTreePanel(input: {
                   ))}
                 </select>
                 <div className="fg-field-note">
-                  Se categoria pai nao for informada no cadastro, o sistema usa Raiz automaticamente.
+                  Se categoria pai não for informada no cadastro, o sistema usa Raiz automaticamente.
                 </div>
               </div>
             ) : null}
 
             {dialog.mode === "delete" ? (
               <div className="fg-field-note">
-                A categoria <strong>{dialog.categoryName}</strong> sera removida e os lancamentos vinculados serao movidos para <strong>Outros</strong>.
+                A categoria <strong>{dialog.categoryName}</strong> será removida e os lançamentos vinculados serão movidos para <strong>Outros</strong>.
               </div>
             ) : null}
 

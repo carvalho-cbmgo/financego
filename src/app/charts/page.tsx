@@ -37,12 +37,12 @@ export default async function ChartsPage() {
     <PageShell>
       <div className="fg-stack">
         <SectionIntro
-          title="Graficos financeiros"
-          subtitle="Distribuicao das despesas consolidadas por categoria no mes atual."
+          title="Gráficos financeiros"
+          subtitle="Distribuição das despesas consolidadas por categoria no mês atual."
         />
 
         <div className="fg-grid-4">
-          <Stat label="Mes" value={ref} />
+          <Stat label="Mês" value={ref} />
           <Stat label="Categorias com gasto" value={String(rows.length)} />
           <Stat label="Total de despesas" value={brl(total)} tone="negative" />
           <Stat label="Maior categoria" value={rows[0]?.category || "-"} />
@@ -64,7 +64,7 @@ export default async function ChartsPage() {
               ))}
             </div>
           ) : (
-            <div className="fg-empty">Nao ha despesas consolidadas para gerar o grafico neste mes.</div>
+            <div className="fg-empty">Não há despesas consolidadas para gerar o gráfico neste mês.</div>
           )}
         </Card>
       </div>

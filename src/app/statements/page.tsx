@@ -37,17 +37,17 @@ export default async function StatementsPage() {
     <PageShell>
       <div className="fg-stack" style={{ maxWidth: 1200 }}>
         <SectionIntro
-          title="Extrato e importacao"
-          subtitle="Importe PDF, CSV ou texto de fatura/extrato, sempre vinculando cada item a uma conta especifica."
+          title="Extrato e importação"
+          subtitle="Importe PDF, CSV ou texto de fatura/extrato, sempre vinculando cada item a uma conta específica."
           action={<Link href="/accounts" className="fg-link">Gerenciar contas</Link>}
         />
 
         <div className="fg-grid-4">
           <Stat label="Bancos cadastrados" value={String((banks || []).length)} />
-          <Stat label="Contas disponiveis" value={String((accounts || []).length)} />
-          <Stat label="Importacoes listadas" value={String((imports || []).length)} />
+          <Stat label="Contas disponíveis" value={String((accounts || []).length)} />
+          <Stat label="Importações listadas" value={String((imports || []).length)} />
           <Stat
-            label="Ultima importacao"
+            label="Última importação"
             value={imports?.[0]?.created_at ? shortDate(imports[0].created_at) : "-"}
           />
         </div>
@@ -55,7 +55,7 @@ export default async function StatementsPage() {
         {!accounts?.length ? (
           <Card title="Sem contas cadastradas">
             <div className="fg-empty">
-              Para importar transacoes, primeiro cadastre bancos e contas.
+              Para importar transações, primeiro cadastre bancos e contas.
               <div style={{ marginTop: 10 }}>
                 <Link href="/accounts" className="fg-link">Ir para bancos e contas</Link>
               </div>
@@ -63,7 +63,7 @@ export default async function StatementsPage() {
           </Card>
         ) : null}
 
-        <Card title="Importacao estruturada" action={<span className="fg-chip">PDF, CSV, TXT e OFX</span>}>
+        <Card title="Importação estruturada" action={<span className="fg-chip">PDF, CSV, TXT e OFX</span>}>
           <form action="/api/statements/import" method="post" encType="multipart/form-data" className="fg-form">
             <div className="fg-grid-2">
               <div className="fg-form">
@@ -87,7 +87,7 @@ export default async function StatementsPage() {
                 <select name="source_type" className="fg-select">
                   <option value="pdf">PDF de fatura/extrato</option>
                   <option value="csv">CSV</option>
-                  <option value="manual_text">Texto colado</option>
+                    <option value="manual_text">Texto colado</option>
                 </select>
               </div>
             </div>
@@ -96,7 +96,7 @@ export default async function StatementsPage() {
               <label>Banco (parser)</label>
               <select name="bank_key" className="fg-select">
                 <option value="nubank">Nubank</option>
-                <option value="itau">Itau</option>
+                  <option value="itau">Itaú</option>
                 <option value="bradesco">Bradesco</option>
                 <option value="santander">Santander</option>
                 <option value="banco_do_brasil">Banco do Brasil</option>
@@ -105,7 +105,7 @@ export default async function StatementsPage() {
                 <option value="inter">Inter</option>
                 <option value="mercado_pago">Mercado Pago</option>
                 <option value="picpay">PicPay</option>
-                <option value="generic">Generico</option>
+                  <option value="generic">Genérico</option>
               </select>
             </div>
 
@@ -119,21 +119,21 @@ export default async function StatementsPage() {
                 <label>Texto da fatura (alternativa)</label>
                 <textarea
                   name="raw_text"
-                  placeholder="Cole aqui as linhas da fatura/extrato, caso nao envie arquivo"
+                  placeholder="Cole aqui as linhas da fatura/extrato, caso não envie arquivo"
                   className="fg-textarea"
                 />
               </div>
             </div>
 
             <p className="fg-field-note">
-              A importacao sempre fica vinculada ao usuario autenticado e a conta selecionada.
+              A importação sempre fica vinculada ao usuário autenticado e à conta selecionada.
             </p>
 
-            <button className="fg-btn" disabled={!accounts?.length}>Importar transacoes</button>
+            <button className="fg-btn" disabled={!accounts?.length}>Importar transações</button>
           </form>
         </Card>
 
-        <Card title="Historico de importacoes">
+        <Card title="Histórico de importações">
           <div className="fg-table-wrap">
             <table className="fg-table">
               <thead>

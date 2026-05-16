@@ -22,18 +22,18 @@ export default async function NotificationsPage() {
     <PageShell>
       <div className="fg-stack">
         <SectionIntro
-          title="Notificacoes bancarias"
-          subtitle="Historico de notificacoes recebidas e resultado da leitura automatica."
+          title="Notificações bancárias"
+          subtitle="Histórico de notificações recebidas e resultado da leitura automática."
         />
 
         <div className="fg-grid-4">
           <Stat label="Eventos listados" value={String((events || []).length)} />
-          <Stat label="Convertidos em transacao" value={String(parsedCount)} tone="positive" />
+          <Stat label="Convertidos em transação" value={String(parsedCount)} tone="positive" />
           <Stat label="Ignorados" value={String((events || []).length - parsedCount)} />
-          <Stat label="Ultimo evento" value={events?.[0]?.received_at ? shortDate(events[0].received_at) : "-"} />
+          <Stat label="Último evento" value={events?.[0]?.received_at ? shortDate(events[0].received_at) : "-"} />
         </div>
 
-        <Card title="Ultimas notificacoes recebidas">
+        <Card title="Últimas notificações recebidas">
           {(events || []).length ? (
             <div className="fg-stack" style={{ gap: 10 }}>
               {(events || []).map((event: any) => (
@@ -45,13 +45,13 @@ export default async function NotificationsPage() {
                   <div style={{ color: "#374151" }}>{event.title}</div>
                   <div style={{ color: "#6b7280", marginTop: 4 }}>{event.big_text || event.text}</div>
                   <div style={{ marginTop: 8, fontSize: 13 }}>
-                    Status: {event.parsed ? "transacao criada" : `ignorada (${event.ignored_reason || "sem motivo"})`}
+                    Status: {event.parsed ? "transação criada" : `ignorada (${event.ignored_reason || "sem motivo"})`}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="fg-empty">Nenhuma notificacao encontrada.</div>
+            <div className="fg-empty">Nenhuma notificação encontrada.</div>
           )}
         </Card>
       </div>

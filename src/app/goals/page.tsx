@@ -24,7 +24,7 @@ export default async function GoalsPage() {
       <div className="fg-stack" style={{ maxWidth: 1100 }}>
         <SectionIntro
           title="Metas financeiras"
-          subtitle="Acompanhe evolucao de objetivos de curto e longo prazo com progresso visual."
+          subtitle="Acompanhe evolução de objetivos de curto e longo prazo com progresso visual."
         />
 
         <div className="fg-grid-4">
@@ -46,7 +46,7 @@ export default async function GoalsPage() {
               <input name="current_amount" type="number" step="0.01" placeholder="Valor atual" className="fg-input" />
             </div>
             <input name="target_date" type="date" className="fg-input" />
-            <textarea name="notes" placeholder="Observacoes" className="fg-textarea" />
+            <textarea name="notes" placeholder="Observações" className="fg-textarea" />
             <button className="fg-btn">Salvar meta</button>
           </form>
         </Card>

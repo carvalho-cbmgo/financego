@@ -94,7 +94,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       <div className="fg-stack">
         <SectionIntro
           title="Bancos & Contas"
-          subtitle="Gerencie bancos e contas com cadastro rapido e edicao individual. Use os atalhos para abrir somente o formulario necessario."
+          subtitle="Gerencie bancos e contas com cadastro rápido e edição individual. Use os atalhos para abrir somente o formulário necessário."
         />
 
         {status ? (
@@ -117,7 +117,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <Stat label="Receitas consolidadas" value={brl(totals.consolidatedIncome)} tone="positive" />
         </div>
 
-        <Card title="Cadastro rapido">
+        <Card title="Cadastro rápido">
           <div className="fg-accounts-quick-actions">
             <a href="#cadastro-conta-corrente" className="fg-accounts-action-pill">
               <span className="fg-accounts-action-icon">CC</span>
@@ -125,10 +125,10 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
             </a>
             <a href="#cadastro-cartao-credito" className="fg-accounts-action-pill">
               <span className="fg-accounts-action-icon">CR</span>
-              Cadastrar Cartao
+              Cadastrar Cartão
             </a>
           </div>
-          <p className="fg-field-note">Escolha o tipo desejado e abra somente o bloco necessario.</p>
+          <p className="fg-field-note">Escolha o tipo desejado e abra somente o bloco necessário.</p>
         </Card>
 
         <div className="fg-accounts-create-grid">
@@ -140,7 +140,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
             <div className="fg-accounts-fold-body">
               <form action="/api/banks/save" method="post" className="fg-form">
                 <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
-                <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
+                <input name="bank_code" placeholder="Código opcional (ex: 260, 208, 104)" className="fg-input" />
                 <button className="fg-btn">Salvar banco</button>
               </form>
               <p className="fg-field-note">Dica: use o nome oficial para facilitar filtros e comparativos.</p>
@@ -175,7 +175,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <details className="fg-accounts-fold" id="cadastro-cartao-credito">
             <summary>
               <span className="fg-accounts-fold-icon">CR</span>
-              <span>3) Cadastrar Cartao</span>
+              <span>3) Cadastrar Cartão</span>
             </summary>
             <div className="fg-accounts-fold-body">
               <form action="/api/accounts/save" method="post" className="fg-form">
@@ -189,7 +189,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                       </option>
                     ))}
                   </select>
-                  <input name="account_name" required placeholder="Nome do cartao (ex: Cartao principal)" className="fg-input" />
+                  <input name="account_name" required placeholder="Nome do cartão (ex: Cartão principal)" className="fg-input" />
                 </div>
                 <input
                   name="balance"
@@ -198,9 +198,9 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                   placeholder="Saldo/Fatura inicial (opcional)"
                   className="fg-input"
                 />
-                <button className="fg-btn" disabled={!banks?.length}>Salvar cartao</button>
+                <button className="fg-btn" disabled={!banks?.length}>Salvar cartão</button>
               </form>
-              <p className="fg-field-note">Cada transacao do sistema fica vinculada a uma dessas contas.</p>
+              <p className="fg-field-note">Cada transação do sistema fica vinculada a uma dessas contas.</p>
             </div>
           </details>
         </div>
@@ -211,10 +211,10 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
               <input type="hidden" name="id" value={editingBank.id} />
               <div className="fg-grid-2">
                 <input name="bank_name" required defaultValue={editingBank.name || ""} placeholder="Nome do banco" className="fg-input" />
-                <input name="bank_code" defaultValue={editingBank.code || ""} placeholder="Codigo do banco (opcional)" className="fg-input" />
+                <input name="bank_code" defaultValue={editingBank.code || ""} placeholder="Código do banco (opcional)" className="fg-input" />
               </div>
               <div className="fg-account-actions">
-                <button className="fg-btn">Salvar alteracoes</button>
+                <button className="fg-btn">Salvar alterações</button>
                 <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
               </div>
             </form>
@@ -247,25 +247,25 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                 className="fg-input"
               />
               <div className="fg-account-actions">
-                <button className="fg-btn">Salvar alteracoes</button>
+                <button className="fg-btn">Salvar alterações</button>
                 <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
               </div>
             </form>
           </Card>
         ) : null}
 
-        <Card title="Visao por banco">
+        <Card title="Visão por banco">
           <div className="fg-table-wrap">
             <table className="fg-table">
               <thead>
                 <tr>
                   <th>Banco</th>
-                  <th>Codigo</th>
+                  <th>Código</th>
                   <th>Contas</th>
                   <th>Saldo das contas</th>
                   <th>Despesas consolidadas</th>
                   <th>Despesas previstas</th>
-                  <th>Acoes</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -305,7 +305,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           </div>
         </Card>
 
-        <Card title="Visao por conta">
+        <Card title="Visão por conta">
           <div className="fg-table-wrap">
             <table className="fg-table">
               <thead>
@@ -314,11 +314,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                   <th>Conta</th>
                   <th>Tipo</th>
                   <th>Saldo</th>
-                  <th>Transacoes</th>
+                  <th>Transações</th>
                   <th>Despesa consolidada</th>
                   <th>Despesa prevista</th>
                   <th>Receita consolidada</th>
-                  <th>Acoes</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -362,7 +362,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
         <Card title="Categorias">
           <AccountsCategoriesPanel categories={categories} catalogEnabled={categoriesTableAvailable} />
-          <p className="fg-field-note">Toda categoria possui categoria pai. Caso nao seja informada, sera usada a categoria pai Raiz.</p>
+          <p className="fg-field-note">Toda categoria possui categoria pai. Caso não seja informada, será usada a categoria pai Raiz.</p>
         </Card>
       </div>
     </PageShell>
@@ -381,10 +381,10 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
   };
 
   const errorMap: Record<string, string> = {
-    missing_fields: "Preencha todos os campos obrigatorios da conta.",
+    missing_fields: "Preencha todos os campos obrigatórios da conta.",
     missing_bank_name: "Informe o nome do banco.",
-    invalid_bank: "Banco invalido para esta conta.",
-    bank_not_found: "Banco nao encontrado para edicao.",
+    invalid_bank: "Banco inválido para esta conta.",
+    bank_not_found: "Banco não encontrado para edição.",
   };
 
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };

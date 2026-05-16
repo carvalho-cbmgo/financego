@@ -39,16 +39,16 @@ export default async function BudgetsPage() {
     <PageShell>
       <div className="fg-stack" style={{ maxWidth: 1100 }}>
         <SectionIntro
-          title="Orcamento mensal"
-          subtitle="Defina limites por categoria e acompanhe consumo realizado nas transacoes consolidadas."
+          title="Orçamento mensal"
+          subtitle="Defina limites por categoria e acompanhe consumo realizado nas transações consolidadas."
         />
 
         <div className="fg-grid-4">
-          <Stat label="Mes de referencia" value={ref} />
+          <Stat label="Mês de referência" value={ref} />
           <Stat label="Total planejado" value={brl(totalPlanned)} />
           <Stat label="Total realizado" value={brl(totalSpent)} tone="negative" />
           <Stat
-            label="Saldo do orcamento"
+            label="Saldo do orçamento"
             value={brl(totalPlanned - totalSpent)}
             tone={totalPlanned - totalSpent >= 0 ? "positive" : "negative"}
           />
@@ -92,7 +92,7 @@ export default async function BudgetsPage() {
 }
 
 function BudgetForm({ monthRefValue }: { monthRefValue: string }) {
-  const rows = ["Alimentacao", "Casa", "Transporte", "Saude", "Lazer", "Outros"];
+  const rows = ["Alimentação", "Casa", "Transporte", "Saúde", "Lazer", "Outros"];
   return (
     <form action="/api/budgets/save" method="post" className="fg-form">
       <input type="hidden" name="month_ref" value={monthRefValue} />
@@ -102,7 +102,7 @@ function BudgetForm({ monthRefValue }: { monthRefValue: string }) {
           <input name="planned_amount" type="number" step="0.01" placeholder={`Valor para ${category}`} className="fg-input" />
         </div>
       ))}
-      <button className="fg-btn">Salvar orcamento</button>
+      <button className="fg-btn">Salvar orçamento</button>
     </form>
   );
 }

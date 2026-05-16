@@ -8,18 +8,18 @@ export default async function ExportsPage() {
     <PageShell>
       <div className="fg-stack" style={{ maxWidth: 980 }}>
         <SectionIntro
-          title="Exportacoes"
-          subtitle="Baixe seus dados em formatos estruturados para auditoria, analise externa e backup."
+          title="Exportações"
+          subtitle="Baixe seus dados em formatos estruturados para auditoria, análise externa e backup."
         />
 
         <Card title="Excel estruturado" action={<span className="fg-chip">GET /api/export/excel</span>}>
-          <p>Exporta transacoes, orcamento e metas em abas separadas.</p>
-          <p className="fg-field-note">Requer login ativo e utiliza cookie seguro de sessao.</p>
+          <p>Exporta transações, orçamento e metas em abas separadas.</p>
+          <p className="fg-field-note">Requer login ativo e utiliza cookie seguro de sessão.</p>
         </Card>
 
         <Card title="PDF estruturado" action={<span className="fg-chip">GET /api/export/pdf</span>}>
-          <p>Gera um relatorio pronto para imprimir ou salvar em PDF no navegador.</p>
-          <p className="fg-field-note">Requer login ativo e utiliza cookie seguro de sessao.</p>
+          <p>Gera um relatório pronto para imprimir ou salvar em PDF no navegador.</p>
+          <p className="fg-field-note">Requer login ativo e utiliza cookie seguro de sessão.</p>
         </Card>
       </div>
     </PageShell>

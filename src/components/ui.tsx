@@ -3,14 +3,13 @@ import { ReactNode } from "react";
 import { TopNavLinks } from "@/components/top-nav-links";
 
 const navItems = [
-  { href: "/dashboard", label: "Inicio" },
-  { href: "/dashboard?tab=transactions", label: "Transacoes" },
-  { href: "/goals", label: "Sonhos" },
-  { href: "/budgets", label: "Orcamento" },
-  { href: "/charts", label: "Analise" },
+  { href: "/dashboard", label: "Início" },
+  { href: "/dashboard?tab=transactions", label: "Transações" },
+  { href: "/budgets", label: "Orçamento" },
+  { href: "/charts", label: "Gráficos" },
   { href: "/accounts", label: "Bancos & Contas" },
   { href: "/statements", label: "Importar" },
-  { href: "/notifications", label: "Notificacoes" },
+  { href: "/notifications", label: "Notificações" },
   { href: "/exports", label: "Exportar" },
 ];
 
@@ -25,18 +24,18 @@ export function PageShell({ children }: { children: ReactNode }) {
           <span className="shell-brand-go">go</span>
         </div>
 
-        <nav className="shell-topnav" aria-label="Navegacao principal">
+        <nav className="shell-topnav" aria-label="Navegação principal">
           <TopNavLinks items={navItems} />
         </nav>
 
         <Link href="/login" className="shell-user-pill">
-          Trocar usuario
+          Trocar usuário
         </Link>
       </header>
 
       <main className="shell-main">
         {children}
-        <footer className="fg-app-footer">{`© ${currentYear} Mayko Araujo de Carvalho. Todos os direitos reservados.`}</footer>
+        <footer className="fg-app-footer">{`© ${currentYear} Mayko Araújo de Carvalho. Todos os direitos reservados.`}</footer>
       </main>
     </div>
   );

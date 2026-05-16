@@ -78,7 +78,7 @@ export function AccountsCategoriesPanel(input: {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setMessage(String(data?.error || "Nao foi possivel processar a acao da categoria."));
+        setMessage(String(data?.error || "Não foi possível processar a ação da categoria."));
         return;
       }
 
@@ -101,7 +101,7 @@ export function AccountsCategoriesPanel(input: {
     if (dialog.mode === "edit") {
       const nextName = nameValue.trim();
       if (!nextName) {
-        setMessage("Informe um nome valido para a categoria.");
+        setMessage("Informe um nome válido para a categoria.");
         return;
       }
 
@@ -117,7 +117,7 @@ export function AccountsCategoriesPanel(input: {
     if (dialog.mode === "add_subcategory") {
       const nextName = nameValue.trim();
       if (!nextName) {
-        setMessage("Informe o nome da sub-categoria.");
+        setMessage("Informe o nome da subcategoria.");
         return;
       }
 
@@ -140,7 +140,7 @@ export function AccountsCategoriesPanel(input: {
     <div className="fg-category-manager-wrap">
       {!input.catalogEnabled ? (
         <div className="fg-empty" style={{ borderColor: "#cfb0b0", background: "#fff7f7", color: "#7c1d1d" }}>
-          Estrutura de categorias ainda nao habilitada no banco. Execute a atualizacao do schema para ativar edicao de pai/filho.
+          Estrutura de categorias ainda não habilitada no banco. Execute a atualização do schema para ativar edição de pai/filho.
         </div>
       ) : null}
 
@@ -152,9 +152,9 @@ export function AccountsCategoriesPanel(input: {
             <tr>
               <th>Categoria</th>
               <th>Categoria pai</th>
-              <th>Transacoes</th>
-              <th>Orcamentos</th>
-              <th>Acoes</th>
+              <th>Transações</th>
+              <th>Orçamentos</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -197,7 +197,7 @@ export function AccountsCategoriesPanel(input: {
                             onClick={() => openDialog({ mode: "add_subcategory", categoryName: item.name })}
                             disabled={addDisabled}
                           >
-                            Adicionar sub-categoria
+                            Adicionar subcategoria
                           </button>
                           <button
                             type="button"
@@ -223,7 +223,7 @@ export function AccountsCategoriesPanel(input: {
           <div className="fg-category-dialog">
             <div className="fg-card-title">
               {dialog.mode === "edit" ? "Editar categoria" : null}
-              {dialog.mode === "add_subcategory" ? "Adicionar sub-categoria" : null}
+              {dialog.mode === "add_subcategory" ? "Adicionar subcategoria" : null}
               {dialog.mode === "delete" ? "Excluir categoria" : null}
             </div>
 
@@ -253,7 +253,7 @@ export function AccountsCategoriesPanel(input: {
                   className="fg-input"
                   value={nameValue}
                   onChange={(event) => setNameValue(event.target.value)}
-                  placeholder="Nome da sub-categoria"
+                  placeholder="Nome da subcategoria"
                 />
                 <select className="fg-select" value={parentValue} onChange={(event) => setParentValue(event.target.value)}>
                   {parentOptions.map((name) => (
@@ -267,7 +267,7 @@ export function AccountsCategoriesPanel(input: {
 
             {dialog.mode === "delete" ? (
               <div className="fg-field-note">
-                A categoria <strong>{dialog.categoryName}</strong> sera removida e os lancamentos vinculados passarao para <strong>Outros</strong>.
+                A categoria <strong>{dialog.categoryName}</strong> será removida e os lançamentos vinculados passarão para <strong>Outros</strong>.
               </div>
             ) : null}
 

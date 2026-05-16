@@ -40,7 +40,7 @@ export default function LoginPage() {
       });
 
       if (!response.ok) {
-        setMessage("Nao foi possivel iniciar sessao no servidor.");
+        setMessage("Não foi possível iniciar sessão no servidor.");
         return;
       }
 
@@ -146,7 +146,7 @@ export default function LoginPage() {
         </section>
       </section>
 
-      <footer className="fg-login-footer">© {new Date().getFullYear()} Mayko Araujo de Carvalho. Todos os direitos reservados.</footer>
+      <footer className="fg-login-footer">© {new Date().getFullYear()} Mayko Araújo de Carvalho. Todos os direitos reservados.</footer>
     </main>
   );
 }

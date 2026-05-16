@@ -242,11 +242,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           ) : (
             <div className="fg-overview-grid">
               <div className="fg-stack">
-                <Card title="Entradas e saidas">
+                <Card title="Entradas e saídas">
                   <div className="fg-checkbox-row"><input type="checkbox" checked readOnly /> Incluir saldo anterior</div>
                   <SummaryRow label="Saldo anterior" value={brl(saldoAnterior)} />
                   <SummaryRow label="Entradas" value={brl(entradas)} />
-                  <SummaryRow label="Saidas" value={brl(-saidas)} tone="negative" />
+                  <SummaryRow label="Saídas" value={brl(-saidas)} tone="negative" />
                   <div className="fg-legacy-balance-total">{brl(saldo)}</div>
                 </Card>
 
@@ -282,9 +282,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </div>
 
               <div className="fg-stack">
-                <LegacyTxListCard title="Anteriores nao consolidadas" rows={nonConsolidatedPast} />
-                <LegacyTxListCard title="Proximas nao consolidadas" rows={nonConsolidatedFuture} />
-                <LegacyTxListCard title="Proximas com alerta" rows={alertFuture} />
+                <LegacyTxListCard title="Anteriores não consolidadas" rows={nonConsolidatedPast} />
+                <LegacyTxListCard title="Próximas não consolidadas" rows={nonConsolidatedFuture} />
+                <LegacyTxListCard title="Próximas com alerta" rows={alertFuture} />
               </div>
             </div>
           )}
@@ -368,7 +368,7 @@ function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, a
             );
           })}
         </select>
-        <input name="description" required placeholder="Descricao" className="fg-input" />
+        <input name="description" required placeholder="Descrição" className="fg-input" />
         <input name="posted_at" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required className="fg-input" />
       </div>
 
@@ -377,7 +377,7 @@ function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, a
         <select name="action" defaultValue="Despesa" required className="fg-select">
           <option value="Receita">Receita</option>
           <option value="Despesa">Despesa</option>
-          <option value="Transferência">Transferencia</option>
+          <option value="Transferência">Transferência</option>
         </select>
         <input name="category" placeholder="Categoria" defaultValue="Outros" className="fg-input" />
       </div>
@@ -435,7 +435,7 @@ function LegacyTxListCard({ title, rows }: { title: string; rows: any[] }) {
           <table className="fg-table">
             <thead>
               <tr>
-                <th>Transacao</th>
+                <th>Transação</th>
                 <th>Data</th>
                 <th>Valor (R$)</th>
               </tr>
@@ -452,7 +452,7 @@ function LegacyTxListCard({ title, rows }: { title: string; rows: any[] }) {
           </table>
         </div>
       ) : (
-        <div className="fg-empty">Nenhuma transacao.</div>
+        <div className="fg-empty">Nenhuma transação.</div>
       )}
     </Card>
   );
@@ -470,8 +470,8 @@ function TransactionsTable(input: {
 }) {
   if (!input.txs.length) {
     return (
-      <Card title="Transacoes">
-        <div className="fg-empty">Nenhuma transacao neste filtro.</div>
+      <Card title="Transações">
+        <div className="fg-empty">Nenhuma transação neste filtro.</div>
       </Card>
     );
   }
@@ -479,7 +479,7 @@ function TransactionsTable(input: {
   const grouped = groupTransactionsByDay(input.txs);
 
   return (
-    <Card title="Transacoes" action={<span className="fg-chip">Clique na linha para editar</span>}>
+    <Card title="Transações" action={<span className="fg-chip">Clique na linha para editar</span>}>
       <div className="fg-legacy-transactions-actions">
         <button className="fg-btn-secondary" type="button">✖</button>
         <button className="fg-btn-secondary" type="button">✓</button>
@@ -535,7 +535,7 @@ function TransactionsTable(input: {
                       <tr className={`fg-legacy-tx-row ${isEditing ? "is-active" : ""}`}>
                         <td>
                           <Link href={editUrl} className="fg-legacy-desc-link">
-                            {tx.description || "Sem descricao"}
+                            {tx.description || "Sem descrição"}
                           </Link>
                         </td>
                         <td>
@@ -580,7 +580,7 @@ function TransactionsTable(input: {
                                   name="description"
                                   required
                                   defaultValue={tx.description || ""}
-                                  placeholder="Descricao"
+                                  placeholder="Descrição"
                                   className="fg-input"
                                 />
                                 <select name="category" required defaultValue={currentCategory} className="fg-select">
@@ -612,7 +612,7 @@ function TransactionsTable(input: {
                                 <div className="fg-legacy-action-group">
                                   <label><input type="radio" name="action" value="Despesa" defaultChecked={actionFromType(tx.type) === "Despesa"} /> Despesa</label>
                                   <label><input type="radio" name="action" value="Receita" defaultChecked={actionFromType(tx.type) === "Receita"} /> Receita</label>
-                                  <label><input type="radio" name="action" value="Transferência" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferencia</label>
+                                  <label><input type="radio" name="action" value="Transferência" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferência</label>
                                 </div>
                                 <div className="fg-legacy-inline-right">
                                   <label className="fg-checkbox-row">
@@ -637,18 +637,18 @@ function TransactionsTable(input: {
                                     <option value="3d">3 dias antes</option>
                                     <option value="7d">7 dias antes</option>
                                   </select>
-                                  <div className="fg-legacy-inline-label">Repetir transacao</div>
+                                  <div className="fg-legacy-inline-label">Repetir transação</div>
                                   <div className="fg-legacy-repeat-options">
-                                    <label><input type="radio" name="repeat_mode" value="none" defaultChecked /> Sem repeticao</label>
+                                    <label><input type="radio" name="repeat_mode" value="none" defaultChecked /> Sem repetição</label>
                                     <label><input type="radio" name="repeat_mode" value="installment" /> Parcelamento</label>
-                                    <label><input type="radio" name="repeat_mode" value="advanced" /> Avancado</label>
+                                    <label><input type="radio" name="repeat_mode" value="advanced" /> Avançado</label>
                                   </div>
                                   <button className="fg-btn-danger" name="intent" value="delete">Excluir</button>
                                 </div>
 
                                 <div className="fg-legacy-inline-col">
                                   <div className="fg-legacy-inline-label">Nota</div>
-                                  <textarea name="note" className="fg-textarea fg-legacy-inline-note" placeholder="Observacoes da transacao" />
+                                  <textarea name="note" className="fg-textarea fg-legacy-inline-note" placeholder="Observações da transação" />
                                   <div className="fg-legacy-inline-actions">
                                     <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
                                     <button className="fg-btn" name="intent" value="save">Salvar</button>
@@ -748,7 +748,7 @@ function formatCurrentDateInfo() {
   const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(now);
 
   const weekdayDate = `${capitalize(weekday)}, ${date}`;
-  const accessText = `Ultimo acesso: ${date} as ${time}`;
+  const accessText = `Último acesso: ${date} às ${time}`;
 
   return { weekdayDate, accessText };
 }

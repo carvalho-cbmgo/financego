@@ -31,11 +31,11 @@ export default async function RefundsPage() {
       <div className="fg-stack">
         <SectionIntro
           title="Estornos"
-          subtitle="Monitore creditos de estorno e compras marcadas como estornadas."
+          subtitle="Monitore créditos de estorno e compras marcadas como estornadas."
         />
 
         <div className="fg-grid-4">
-          <Stat label="Creditos de estorno" value={String((refunds || []).length)} />
+          <Stat label="Créditos de estorno" value={String((refunds || []).length)} />
           <Stat label="Compras estornadas" value={String((refundedPurchases || []).length)} />
           <Stat
             label="Valor total de estornos"
@@ -48,13 +48,13 @@ export default async function RefundsPage() {
           />
         </div>
 
-        <Card title="Creditos de estorno detectados">
+        <Card title="Créditos de estorno detectados">
           <div className="fg-table-wrap">
             <table className="fg-table">
               <thead>
                 <tr>
                   <th>Data</th>
-                  <th>Descricao</th>
+                  <th>Descrição</th>
                   <th>Estabelecimento</th>
                   <th>Valor</th>
                   <th>Vinculado</th>
@@ -67,7 +67,7 @@ export default async function RefundsPage() {
                     <td>{tx.description}</td>
                     <td>{tx.merchant || "-"}</td>
                     <td>{brl(tx.amount)}</td>
-                    <td>{tx.refund_of_transaction_id ? "Sim" : "Nao"}</td>
+                    <td>{tx.refund_of_transaction_id ? "Sim" : "Não"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -81,7 +81,7 @@ export default async function RefundsPage() {
               <thead>
                 <tr>
                   <th>Data</th>
-                  <th>Descricao</th>
+                  <th>Descrição</th>
                   <th>Valor</th>
                   <th>Status</th>
                 </tr>

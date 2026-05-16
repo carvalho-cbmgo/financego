@@ -4,7 +4,7 @@ import GlobalLoadingOverlay from "@/components/global-loading-overlay";
 
 export const metadata = {
   title: "Finance GO",
-  description: "Gestao financeira pessoal por banco, conta e consolidacao de transacoes.",
+  description: "Gestão financeira pessoal por banco, conta e consolidação de transações.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
