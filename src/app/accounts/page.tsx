@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageShell, Card, SectionIntro, Stat } from "@/components/ui";
+import { AccountsQuickCreateDialogs } from "@/components/accounts-quick-create-dialogs";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl } from "@/lib/format";
@@ -142,70 +143,15 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           title="Atalhos de cadastro"
           action={<span className="fg-chip">Fluxo rapido</span>}
         >
-          <div className="fg-accounts-quick-actions">
-            <a href="#cadastro-banco" className="fg-accounts-action-pill">
-              <span className="fg-accounts-action-icon">BK</span>
-              Cadastrar banco
-            </a>
-            <a href="#cadastro-conta-corrente" className="fg-accounts-action-pill">
-              <span className="fg-accounts-action-icon">CC</span>
-              Cadastrar conta
-            </a>
-            <a href="#cadastro-cartao-credito" className="fg-accounts-action-pill">
-              <span className="fg-accounts-action-icon">CR</span>
-              Cadastrar cartao
-            </a>
-          </div>
+          <AccountsQuickCreateDialogs
+            banks={(banks || []).map((bank: any) => ({
+              id: String(bank.id),
+              name: String(bank.name || ""),
+              code: bank.code ? String(bank.code) : "",
+            }))}
+          />
           <p className="fg-field-note">Use os atalhos para ir direto ao formulario desejado.</p>
         </Card>
-
-        <div className="fg-accounts-modern-grid">
-          <Card title="Cadastrar banco">
-            <form id="cadastro-banco" action="/api/banks/save" method="post" className="fg-form">
-              <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
-              <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
-              <button className="fg-btn">Salvar banco</button>
-            </form>
-          </Card>
-
-          <Card title="Cadastrar conta corrente">
-            <form id="cadastro-conta-corrente" action="/api/accounts/save" method="post" className="fg-form">
-              <input type="hidden" name="account_type" value="CONTA_CORRENTE" />
-              <div className="fg-grid-2">
-                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
-                  {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
-                  {(banks || []).map((bank: any) => (
-                    <option key={bank.id} value={bank.id}>
-                      {bank.name} {bank.code ? `(${bank.code})` : ""}
-                    </option>
-                  ))}
-                </select>
-                <input name="account_name" required placeholder="Nome da conta" className="fg-input" />
-              </div>
-              <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
-              <button className="fg-btn" disabled={!banks?.length}>Salvar conta corrente</button>
-            </form>
-          </Card>
-
-          <Card title="Cadastrar cartao de credito">
-            <form id="cadastro-cartao-credito" action="/api/accounts/save" method="post" className="fg-form">
-              <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
-              <div className="fg-grid-2">
-                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
-                  {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
-                  {(banks || []).map((bank: any) => (
-                    <option key={bank.id} value={bank.id}>
-                      {bank.name} {bank.code ? `(${bank.code})` : ""}
-                    </option>
-                  ))}
-                </select>
-                <input name="account_name" required placeholder="Nome do cartao" className="fg-input" />
-              </div>
-              <input name="balance" type="number" step="0.01" placeholder="Fatura inicial (opcional)" className="fg-input" />
-              <button className="fg-btn" disabled={!banks?.length}>Salvar cartao</button>
-            </form>
-          </Card>
-        </div>
 
         {editingBank ? (
           <Card title={`Editar banco: ${editingBank.name}`}>
