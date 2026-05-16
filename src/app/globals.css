@@ -1483,7 +1483,16 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-legacy-del-btn {
-  min-width: 34px;
+  min-width: 30px;
+  width: auto;
+  height: 28px;
+  padding: 0 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .fg-legacy-del-btn:disabled {
@@ -1520,6 +1529,49 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   background: linear-gradient(180deg, #fbfdf5 0%, #f2f7e3 100%);
 }
 
+.fg-legacy-create-action-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 2px 1px;
+}
+
+.fg-legacy-create-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334a1d;
+}
+
+.fg-legacy-create-action-pill input[type="radio"] {
+  margin: 0;
+}
+
+.fg-legacy-create-fields-row {
+  display: grid;
+  grid-template-columns: 138px minmax(220px, 1fr) 190px 130px auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.fg-legacy-create-date {
+  min-width: 0;
+}
+
+.fg-legacy-create-desc {
+  min-width: 0;
+}
+
+.fg-legacy-create-category {
+  min-width: 0;
+}
+
+.fg-legacy-create-amount {
+  min-width: 0;
+}
+
 .fg-legacy-create-check {
   min-height: 28px;
   align-items: center;
@@ -1527,7 +1579,16 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-create-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fg-legacy-create-save {
+  min-width: 96px;
+}
+
+.fg-legacy-create-cancel {
+  min-width: 96px;
 }
 
 .fg-legacy-transactions-table .fg-legacy-group-row td {

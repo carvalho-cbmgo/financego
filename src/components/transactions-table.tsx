@@ -182,6 +182,7 @@ export function TransactionsTable(input: {
           bankById={bankById}
           categoryOptions={categoryOptions}
           returnUrl={input.returnUrl}
+          onCancel={() => setShowCreateForm(false)}
         />
       ) : null}
 
@@ -396,6 +397,7 @@ function CreateTransactionInline(input: {
   bankById: Map<string, any>;
   categoryOptions: CategorySelectOption[];
   returnUrl: string;
+  onCancel: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaultAccountId = String(input.accounts?.[0]?.id || "");
@@ -418,45 +420,41 @@ function CreateTransactionInline(input: {
       }}
     >
       <input type="hidden" name="return_url" value={input.returnUrl} />
+      <input type="hidden" name="account_id" value={defaultAccountId} />
 
-      <div className="fg-grid-3">
-        <select name="account_id" required defaultValue={defaultAccountId} className="fg-select">
-          {input.accounts.map((account: any) => {
-            const bank = input.bankById.get(String(account.bank_id || ""));
-            const bankName = bank?.name || account.institution_name || "Sem banco";
-            return (
-              <option key={account.id} value={account.id}>
-                {bankName} - {account.name} ({accountTypeLabel(account.type)})
-              </option>
-            );
-          })}
-        </select>
+      <div className="fg-legacy-create-action-row">
+        <label className="fg-legacy-create-action-pill">
+          <input type="radio" name="action" value="Despesa" defaultChecked />
+          Despesa
+        </label>
+        <label className="fg-legacy-create-action-pill">
+          <input type="radio" name="action" value="Transferencia" />
+          Transferencia
+        </label>
+        <label className="fg-legacy-create-action-pill">
+          <input type="radio" name="action" value="Receita" />
+          Receita
+        </label>
+      </div>
 
-        <input name="description" required placeholder="Descricao" className="fg-input" />
-
+      <div className="fg-legacy-create-fields-row">
         <input
           name="posted_at"
           type="date"
           defaultValue={new Date().toISOString().slice(0, 10)}
           required
-          className="fg-input"
+          className="fg-input fg-legacy-create-date"
         />
-      </div>
 
-      <div className="fg-grid-4">
-        <input name="amount" type="number" step="0.01" required placeholder="Valor" className="fg-input" />
+        <input name="description" required placeholder="Descricao da transacao" className="fg-input fg-legacy-create-desc" />
 
-        <select name="action" defaultValue="Despesa" required className="fg-select">
-          <option value="Receita">Receita</option>
-          <option value="Despesa">Despesa</option>
-          <option value="Transferencia">Transferencia</option>
-        </select>
-
-        <select name="category" defaultValue="Outros" className="fg-select">
+        <select name="category" defaultValue="Outros" className="fg-select fg-legacy-create-category">
           {safeCategoryOptions.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
+
+        <input name="amount" type="number" step="0.01" required placeholder="Valor" className="fg-input fg-legacy-create-amount" />
 
         <label className="fg-checkbox-row fg-legacy-create-check">
           <input name="is_consolidated" type="checkbox" defaultChecked />
@@ -465,7 +463,15 @@ function CreateTransactionInline(input: {
       </div>
 
       <div className="fg-legacy-create-actions">
-        <button className="fg-btn" disabled={isSubmitting}>Salvar transacao</button>
+        <button className="fg-btn fg-legacy-create-save" disabled={isSubmitting}>Salvar</button>
+        <button
+          type="button"
+          className="fg-btn-danger fg-legacy-create-cancel"
+          onClick={input.onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </button>
       </div>
     </form>
   );
