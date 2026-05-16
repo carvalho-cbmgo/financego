@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { PageShell, Card, SectionIntro, Stat } from "@/components/ui";
-import { AccountsCategoriesPanel } from "@/components/accounts-categories-panel";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl } from "@/lib/format";
 import { accountTypeLabel } from "@/lib/accounts";
-import { normalizeCategoryName, ROOT_CATEGORY_NAME, toCategorySet } from "@/lib/category-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +19,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const supabaseAdmin = createUserDb(accessToken);
   const params = await searchParams;
 
-  const [{ data: banks }, { data: accounts }, { data: txs }, { data: budgets }] = await Promise.all([
+  const [{ data: banks }, { data: accounts }, { data: txs }] = await Promise.all([
     supabaseAdmin
       .from("banks")
       .select("id, name, code, created_at")
@@ -34,21 +32,9 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("transactions")
-      .select("account_id, amount, is_consolidated, app_category")
-      .eq("profile_id", user.id),
-    supabaseAdmin
-      .from("budgets")
-      .select("category")
+      .select("account_id, amount, is_consolidated")
       .eq("profile_id", user.id),
   ]);
-
-  const categoriesResponse = await supabaseAdmin
-    .from("categories")
-    .select("id, name, parent_id")
-    .eq("profile_id", user.id);
-
-  const categoriesTableAvailable = !categoriesResponse.error;
-  const categoriesCatalog = categoriesResponse.data || [];
 
   const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
 
@@ -81,128 +67,144 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   const editingBank = (banks || []).find((bank: any) => String(bank.id) === selectedEditBankId) || null;
   const editingAccount = (accounts || []).find((account: any) => String(account.id) === selectedEditAccountId) || null;
   const editingAccountTypeLabel = accountTypeLabel(editingAccount?.type);
-
   const status = buildStatusMessage(params.ok, params.error);
-  const categories = buildAccountCategories({
-    categoriesCatalog,
-    txs: txs || [],
-    budgets: budgets || [],
+
+  const bankRows = (banks || []).map((bank: any) => {
+    const accountsFromBank = (accounts || []).filter((account: any) => String(account.bank_id || "") === String(bank.id));
+    const accountIds = new Set(accountsFromBank.map((account: any) => String(account.id)));
+
+    const bankBalance = accountsFromBank.reduce((sum: number, account: any) => sum + Number(account.balance || 0), 0);
+    let bankConsolidatedExpense = 0;
+    let bankPlannedExpense = 0;
+
+    for (const [accountId, stats] of statsByAccount.entries()) {
+      if (!accountIds.has(accountId)) continue;
+      bankConsolidatedExpense += stats.consolidatedExpense;
+      bankPlannedExpense += stats.plannedExpense;
+    }
+
+    return {
+      id: String(bank.id),
+      name: String(bank.name || ""),
+      code: String(bank.code || ""),
+      accountCount: accountsFromBank.length,
+      balance: bankBalance,
+      consolidatedExpense: bankConsolidatedExpense,
+      plannedExpense: bankPlannedExpense,
+    };
+  });
+
+  const accountRows = (accounts || []).map((account: any) => {
+    const stats = statsByAccount.get(String(account.id)) || {
+      consolidatedExpense: 0,
+      plannedExpense: 0,
+      consolidatedIncome: 0,
+      txCount: 0,
+    };
+
+    const bank = bankById.get(String(account.bank_id || ""));
+    const bankName = bank?.name || account.institution_name || "-";
+    const typeLabel = accountTypeLabel(account.type);
+
+    return {
+      id: String(account.id),
+      bankName,
+      name: account.name || "-",
+      typeLabel,
+      balance: Number(account.balance || 0),
+      txCount: stats.txCount,
+      consolidatedExpense: stats.consolidatedExpense,
+      plannedExpense: stats.plannedExpense,
+      consolidatedIncome: stats.consolidatedIncome,
+    };
   });
 
   return (
     <PageShell>
-      <div className="fg-stack">
+      <div className="fg-stack fg-accounts-page">
         <SectionIntro
           title="Bancos & Contas"
-          subtitle="Gerencie bancos e contas com cadastro rápido e edição individual. Use os atalhos para abrir somente o formulário necessário."
+          subtitle="Estruture seus bancos e contas em um fluxo simples e profissional. Cadastre, edite e acompanhe o panorama financeiro em tempo real."
         />
 
-        {status ? (
-          <div
-            className="fg-empty"
-            style={
-              status.tone === "error"
-                ? { borderColor: "#cfb0b0", background: "#fff3f3", color: "#7c1d1d" }
-                : { borderColor: "#b8cca0", background: "#f4faec", color: "#345f27" }
-            }
-          >
-            {status.text}
-          </div>
-        ) : null}
+        {status ? <div className={`fg-accounts-status ${status.tone === "error" ? "is-error" : "is-ok"}`}>{status.text}</div> : null}
 
-        <div className="fg-grid-4">
+        <div className="fg-accounts-kpi-grid">
           <Stat label="Bancos cadastrados" value={String((banks || []).length)} />
           <Stat label="Contas cadastradas" value={String((accounts || []).length)} />
           <Stat label="Saldo total" value={brl(totals.balance)} tone={totals.balance >= 0 ? "positive" : "negative"} />
           <Stat label="Receitas consolidadas" value={brl(totals.consolidatedIncome)} tone="positive" />
+          <Stat label="Despesas consolidadas" value={brl(-totals.consolidatedExpense)} tone="negative" />
+          <Stat label="Despesas planejadas" value={brl(-totals.plannedExpense)} tone="negative" />
         </div>
 
-        <Card title="Cadastro rápido">
+        <Card
+          title="Atalhos de cadastro"
+          action={<span className="fg-chip">Fluxo rapido</span>}
+        >
           <div className="fg-accounts-quick-actions">
+            <a href="#cadastro-banco" className="fg-accounts-action-pill">
+              <span className="fg-accounts-action-icon">BK</span>
+              Cadastrar banco
+            </a>
             <a href="#cadastro-conta-corrente" className="fg-accounts-action-pill">
               <span className="fg-accounts-action-icon">CC</span>
-              Cadastrar Conta
+              Cadastrar conta
             </a>
             <a href="#cadastro-cartao-credito" className="fg-accounts-action-pill">
               <span className="fg-accounts-action-icon">CR</span>
-              Cadastrar Cartão
+              Cadastrar cartao
             </a>
           </div>
-          <p className="fg-field-note">Escolha o tipo desejado e abra somente o bloco necessário.</p>
+          <p className="fg-field-note">Use os atalhos para ir direto ao formulario desejado.</p>
         </Card>
 
-        <div className="fg-accounts-create-grid">
-          <details className="fg-accounts-fold" open={!banks?.length}>
-            <summary>
-              <span className="fg-accounts-fold-icon">BK</span>
-              <span>1) Cadastrar banco</span>
-            </summary>
-            <div className="fg-accounts-fold-body">
-              <form action="/api/banks/save" method="post" className="fg-form">
-                <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
-                <input name="bank_code" placeholder="Código opcional (ex: 260, 208, 104)" className="fg-input" />
-                <button className="fg-btn">Salvar banco</button>
-              </form>
-              <p className="fg-field-note">Dica: use o nome oficial para facilitar filtros e comparativos.</p>
-            </div>
-          </details>
+        <div className="fg-accounts-modern-grid">
+          <Card title="Cadastrar banco">
+            <form id="cadastro-banco" action="/api/banks/save" method="post" className="fg-form">
+              <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
+              <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
+              <button className="fg-btn">Salvar banco</button>
+            </form>
+          </Card>
 
-          <details className="fg-accounts-fold" id="cadastro-conta-corrente">
-            <summary>
-              <span className="fg-accounts-fold-icon">CC</span>
-              <span>2) Cadastrar Conta</span>
-            </summary>
-            <div className="fg-accounts-fold-body">
-              <form action="/api/accounts/save" method="post" className="fg-form">
-                <input type="hidden" name="account_type" value="CONTA_CORRENTE" />
-                <div className="fg-grid-2">
-                  <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
-                    {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
-                    {(banks || []).map((bank: any) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name} {bank.code ? `(${bank.code})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <input name="account_name" required placeholder="Nome da conta (ex: Conta principal)" className="fg-input" />
-                </div>
-                <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
-                <button className="fg-btn" disabled={!banks?.length}>Salvar conta corrente</button>
-              </form>
-            </div>
-          </details>
+          <Card title="Cadastrar conta corrente">
+            <form id="cadastro-conta-corrente" action="/api/accounts/save" method="post" className="fg-form">
+              <input type="hidden" name="account_type" value="CONTA_CORRENTE" />
+              <div className="fg-grid-2">
+                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
+                  {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
+                  {(banks || []).map((bank: any) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.name} {bank.code ? `(${bank.code})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <input name="account_name" required placeholder="Nome da conta" className="fg-input" />
+              </div>
+              <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
+              <button className="fg-btn" disabled={!banks?.length}>Salvar conta corrente</button>
+            </form>
+          </Card>
 
-          <details className="fg-accounts-fold" id="cadastro-cartao-credito">
-            <summary>
-              <span className="fg-accounts-fold-icon">CR</span>
-              <span>3) Cadastrar Cartão</span>
-            </summary>
-            <div className="fg-accounts-fold-body">
-              <form action="/api/accounts/save" method="post" className="fg-form">
-                <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
-                <div className="fg-grid-2">
-                  <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
-                    {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
-                    {(banks || []).map((bank: any) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name} {bank.code ? `(${bank.code})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <input name="account_name" required placeholder="Nome do cartão (ex: Cartão principal)" className="fg-input" />
-                </div>
-                <input
-                  name="balance"
-                  type="number"
-                  step="0.01"
-                  placeholder="Saldo/Fatura inicial (opcional)"
-                  className="fg-input"
-                />
-                <button className="fg-btn" disabled={!banks?.length}>Salvar cartão</button>
-              </form>
-              <p className="fg-field-note">Cada transação do sistema fica vinculada a uma dessas contas.</p>
-            </div>
-          </details>
+          <Card title="Cadastrar cartao de credito">
+            <form id="cadastro-cartao-credito" action="/api/accounts/save" method="post" className="fg-form">
+              <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
+              <div className="fg-grid-2">
+                <select name="bank_id" required className="fg-select" defaultValue={String(banks?.[0]?.id || "")}>
+                  {!banks?.length ? <option value="">Cadastre um banco antes</option> : null}
+                  {(banks || []).map((bank: any) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.name} {bank.code ? `(${bank.code})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <input name="account_name" required placeholder="Nome do cartao" className="fg-input" />
+              </div>
+              <input name="balance" type="number" step="0.01" placeholder="Fatura inicial (opcional)" className="fg-input" />
+              <button className="fg-btn" disabled={!banks?.length}>Salvar cartao</button>
+            </form>
+          </Card>
         </div>
 
         {editingBank ? (
@@ -211,10 +213,10 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
               <input type="hidden" name="id" value={editingBank.id} />
               <div className="fg-grid-2">
                 <input name="bank_name" required defaultValue={editingBank.name || ""} placeholder="Nome do banco" className="fg-input" />
-                <input name="bank_code" defaultValue={editingBank.code || ""} placeholder="Código do banco (opcional)" className="fg-input" />
+                <input name="bank_code" defaultValue={editingBank.code || ""} placeholder="Codigo do banco (opcional)" className="fg-input" />
               </div>
               <div className="fg-account-actions">
-                <button className="fg-btn">Salvar alterações</button>
+                <button className="fg-btn">Salvar alteracoes</button>
                 <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
               </div>
             </form>
@@ -247,123 +249,94 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                 className="fg-input"
               />
               <div className="fg-account-actions">
-                <button className="fg-btn">Salvar alterações</button>
+                <button className="fg-btn">Salvar alteracoes</button>
                 <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
               </div>
             </form>
           </Card>
         ) : null}
 
-        <Card title="Visão por banco">
-          <div className="fg-table-wrap">
-            <table className="fg-table">
-              <thead>
-                <tr>
-                  <th>Banco</th>
-                  <th>Código</th>
-                  <th>Contas</th>
-                  <th>Saldo das contas</th>
-                  <th>Despesas consolidadas</th>
-                  <th>Despesas previstas</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(banks || []).map((bank: any) => {
-                  const accountsFromBank = (accounts || []).filter((account: any) => String(account.bank_id || "") === String(bank.id));
-                  const accountIds = new Set(accountsFromBank.map((account: any) => String(account.id)));
+        <div className="fg-accounts-table-grid">
+          <Card title="Visao por banco">
+            <div className="fg-table-wrap">
+              <table className="fg-table fg-accounts-table">
+                <thead>
+                  <tr>
+                    <th>Banco</th>
+                    <th>Codigo</th>
+                    <th>Contas</th>
+                    <th>Saldo</th>
+                    <th>Despesa consolidada</th>
+                    <th>Despesa prevista</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bankRows.map((row) => {
+                    const isEditing = selectedEditBankId === row.id;
+                    return (
+                      <tr key={row.id} className={isEditing ? "is-row-active" : ""}>
+                        <td>{row.name}</td>
+                        <td>{row.code || "-"}</td>
+                        <td>{row.accountCount}</td>
+                        <td>{brl(row.balance)}</td>
+                        <td>{brl(-row.consolidatedExpense)}</td>
+                        <td>{brl(-row.plannedExpense)}</td>
+                        <td>
+                          <Link href={editLink("edit_bank", row.id)} className="fg-link fg-accounts-inline-action">Editar</Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
 
-                  const bankBalance = accountsFromBank.reduce((sum: number, account: any) => sum + Number(account.balance || 0), 0);
-
-                  let bankConsolidatedExpense = 0;
-                  let bankPlannedExpense = 0;
-
-                  for (const [accountId, stats] of statsByAccount.entries()) {
-                    if (!accountIds.has(accountId)) continue;
-                    bankConsolidatedExpense += stats.consolidatedExpense;
-                    bankPlannedExpense += stats.plannedExpense;
-                  }
-
-                  const isEditing = selectedEditBankId === String(bank.id);
-
-                  return (
-                    <tr key={bank.id} style={isEditing ? { background: "#f3f8df" } : undefined}>
-                      <td>{bank.name}</td>
-                      <td>{bank.code || "-"}</td>
-                      <td>{accountsFromBank.length}</td>
-                      <td>{brl(bankBalance)}</td>
-                      <td>{brl(bankConsolidatedExpense)}</td>
-                      <td>{brl(bankPlannedExpense)}</td>
-                      <td>
-                        <Link href={editLink("edit_bank", String(bank.id))} className="fg-link">Editar</Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card title="Visão por conta">
-          <div className="fg-table-wrap">
-            <table className="fg-table">
-              <thead>
-                <tr>
-                  <th>Banco</th>
-                  <th>Conta</th>
-                  <th>Tipo</th>
-                  <th>Saldo</th>
-                  <th>Transações</th>
-                  <th>Despesa consolidada</th>
-                  <th>Despesa prevista</th>
-                  <th>Receita consolidada</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(accounts || []).map((account: any) => {
-                  const stats = statsByAccount.get(String(account.id)) || {
-                    consolidatedExpense: 0,
-                    plannedExpense: 0,
-                    consolidatedIncome: 0,
-                    txCount: 0,
-                  };
-
-                  const bank = bankById.get(String(account.bank_id || ""));
-                  const bankName = bank?.name || account.institution_name || "-";
-                  const typeLabel = accountTypeLabel(account.type);
-                  const isEditing = selectedEditAccountId === String(account.id);
-
-                  return (
-                    <tr key={account.id} style={isEditing ? { background: "#f3f8df" } : undefined}>
-                      <td>{bankName}</td>
-                      <td>{account.name || "-"}</td>
-                      <td>
-                        <span className={`fg-chip ${typeLabel === "CARTAO_DE_CREDITO" ? "fg-chip-negative" : "fg-chip-positive"}`}>
-                          {typeLabel}
-                        </span>
-                      </td>
-                      <td>{brl(account.balance || 0)}</td>
-                      <td>{stats.txCount}</td>
-                      <td>{brl(stats.consolidatedExpense)}</td>
-                      <td>{brl(stats.plannedExpense)}</td>
-                      <td>{brl(stats.consolidatedIncome)}</td>
-                      <td>
-                        <Link href={editLink("edit_account", String(account.id))} className="fg-link">Editar</Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card title="Categorias">
-          <AccountsCategoriesPanel categories={categories} catalogEnabled={categoriesTableAvailable} />
-          <p className="fg-field-note">Toda categoria possui categoria pai. Caso não seja informada, será usada a categoria pai Raiz.</p>
-        </Card>
+          <Card title="Visao por conta">
+            <div className="fg-table-wrap">
+              <table className="fg-table fg-accounts-table">
+                <thead>
+                  <tr>
+                    <th>Banco</th>
+                    <th>Conta</th>
+                    <th>Tipo</th>
+                    <th>Saldo</th>
+                    <th>Transacoes</th>
+                    <th>Despesa consolidada</th>
+                    <th>Despesa prevista</th>
+                    <th>Receita consolidada</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accountRows.map((row) => {
+                    const isEditing = selectedEditAccountId === row.id;
+                    return (
+                      <tr key={row.id} className={isEditing ? "is-row-active" : ""}>
+                        <td>{row.bankName}</td>
+                        <td>{row.name}</td>
+                        <td>
+                          <span className={`fg-chip ${row.typeLabel === "CARTAO_DE_CREDITO" ? "fg-chip-negative" : "fg-chip-positive"}`}>
+                            {row.typeLabel}
+                          </span>
+                        </td>
+                        <td>{brl(row.balance)}</td>
+                        <td>{row.txCount}</td>
+                        <td>{brl(-row.consolidatedExpense)}</td>
+                        <td>{brl(-row.plannedExpense)}</td>
+                        <td>{brl(row.consolidatedIncome)}</td>
+                        <td>
+                          <Link href={editLink("edit_account", row.id)} className="fg-link fg-accounts-inline-action">Editar</Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
       </div>
     </PageShell>
   );
@@ -381,69 +354,13 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
   };
 
   const errorMap: Record<string, string> = {
-    missing_fields: "Preencha todos os campos obrigatórios da conta.",
+    missing_fields: "Preencha os campos obrigatorios da conta.",
     missing_bank_name: "Informe o nome do banco.",
-    invalid_bank: "Banco inválido para esta conta.",
-    bank_not_found: "Banco não encontrado para edição.",
+    invalid_bank: "Banco invalido para esta conta.",
+    bank_not_found: "Banco nao encontrado para edicao.",
   };
 
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
   if (okValue && okMap[okValue]) return { tone: "ok" as const, text: okMap[okValue] };
   return null;
-}
-
-function buildAccountCategories(input: {
-  categoriesCatalog: Array<{ id: string; name: string; parent_id: string | null }>;
-  txs: Array<{ app_category?: string | null }>;
-  budgets: Array<{ category?: string | null }>;
-}) {
-  const usageTxCount = new Map<string, number>();
-  for (const tx of input.txs) {
-    const name = normalizeCategoryName(tx.app_category);
-    usageTxCount.set(name, (usageTxCount.get(name) || 0) + 1);
-  }
-
-  const usageBudgetCount = new Map<string, number>();
-  for (const budget of input.budgets) {
-    const name = normalizeCategoryName(budget.category);
-    usageBudgetCount.set(name, (usageBudgetCount.get(name) || 0) + 1);
-  }
-
-  const byId = new Map<string, { id: string; name: string; parent_id: string | null }>();
-  const byName = new Map<string, { id: string; name: string; parent_id: string | null }>();
-
-  for (const row of input.categoriesCatalog) {
-    byId.set(String(row.id), row);
-    byName.set(normalizeCategoryName(row.name), row);
-  }
-
-  const categoryNames = toCategorySet([
-    ROOT_CATEGORY_NAME,
-    ...input.categoriesCatalog.map((item) => item.name),
-    ...input.txs.map((item) => item.app_category),
-    ...input.budgets.map((item) => item.category),
-  ]);
-
-  const rows = Array.from(categoryNames).map((name) => {
-    const record = byName.get(name);
-    const parentFromId = record?.parent_id ? byId.get(String(record.parent_id))?.name : null;
-    const parentName = name === ROOT_CATEGORY_NAME ? ROOT_CATEGORY_NAME : normalizeCategoryName(parentFromId || ROOT_CATEGORY_NAME);
-
-    return {
-      name,
-      parentName,
-      txCount: usageTxCount.get(name) || 0,
-      budgetCount: usageBudgetCount.get(name) || 0,
-      isRoot: name === ROOT_CATEGORY_NAME,
-    };
-  });
-
-  rows.sort((a, b) => {
-    if (a.isRoot && !b.isRoot) return -1;
-    if (!a.isRoot && b.isRoot) return 1;
-    if (a.parentName !== b.parentName) return a.parentName.localeCompare(b.parentName, "pt-BR");
-    return a.name.localeCompare(b.name, "pt-BR");
-  });
-
-  return rows;
 }
