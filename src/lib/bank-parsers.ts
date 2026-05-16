@@ -284,6 +284,7 @@ export function parseCsvStatement(bankKey: BankKey, csv: string, profileId: stri
     const rawDate = cols[dateIdx] || "";
     const rawDescription = cols[descIdx] || "";
     const rawAmount = cols[amountIdx] || "";
+    const cleanedDescription = sanitizeCsvDescription(rawDescription);
     const amount = parseFlexibleMoney(rawAmount);
     if (amount === null) continue;
 
@@ -293,7 +294,7 @@ export function parseCsvStatement(bankKey: BankKey, csv: string, profileId: stri
 
     results.push(baseBuild({
       bankKey,
-      raw: `${rawDate} ${rawDescription} ${rawAmount}`,
+      raw: cleanedDescription || rawDescription.trim(),
       amount: signedAmount,
       postedAt: parseFlexibleDate(rawDate),
       source: "statement",
@@ -315,6 +316,7 @@ function parseNubankCsvRows(
     const date = (cols[indexes.dateIdx] || "").trim();
     const title = (cols[indexes.descIdx] || "").trim();
     const amountRaw = (cols[indexes.amountIdx] || "").trim();
+    const cleanedDescription = sanitizeCsvDescription(title);
 
     if (!date || !title || !amountRaw) continue;
 
@@ -326,7 +328,7 @@ function parseNubankCsvRows(
 
     results.push(baseBuild({
       bankKey: "nubank",
-      raw: `${date} ${title} ${amountRaw}`,
+      raw: cleanedDescription || title,
       amount: appAmount,
       postedAt: parseFlexibleDate(date),
       type,
@@ -380,6 +382,26 @@ function parseFlexibleDate(input: string) {
   }
 
   return parseDateBR(clean);
+}
+
+function sanitizeCsvDescription(input: string) {
+  let description = input
+    .trim()
+    .replace(/^"+|"+$/g, "")
+    .replace(/\s+/g, " ");
+
+  // Remove data no inicio da descricao (YYYY-MM-DD ou DD/MM/YYYY).
+  description = description
+    .replace(/^\d{4}-\d{2}-\d{2}\s+/, "")
+    .replace(/^\d{2}\/\d{2}(?:\/\d{2,4})?\s+/, "");
+
+  // Remove valor no fim da descricao (ex.: 147.75, 1.234,56, R$ 99,90).
+  description = description.replace(
+    /\s+(?:[-–—]\s*)?(?:R\$\s*)?-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})\s*$/,
+    ""
+  );
+
+  return description.replace(/\s+/g, " ").trim();
 }
 
 function parseCsvRows(csv: string): string[][] {
