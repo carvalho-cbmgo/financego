@@ -1480,18 +1480,27 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-add-btn {
   white-space: nowrap;
+  min-height: 28px;
+}
+
+.fg-legacy-transactions-actions-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
 }
 
 .fg-legacy-del-btn {
+  width: 30px;
   min-width: 30px;
-  width: auto;
   height: 28px;
-  padding: 0 7px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -1551,7 +1560,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-create-fields-row {
   display: grid;
-  grid-template-columns: 138px minmax(220px, 1fr) 190px 130px auto;
+  grid-template-columns: 136px minmax(300px, 1fr) 190px 130px auto auto;
   align-items: center;
   gap: 6px;
 }
@@ -1577,9 +1586,10 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   align-items: center;
 }
 
-.fg-legacy-create-actions {
+.fg-legacy-create-inline-actions {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -1595,6 +1605,15 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   background: #f0f0f0;
   font-weight: 700;
   color: #404040;
+}
+
+.fg-legacy-transactions-table .fg-legacy-balance-head-row th,
+.fg-legacy-transactions-table .fg-legacy-balance-foot-row td {
+  background: #f6f9ec;
+  color: #314721;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
 }
 
 .fg-legacy-tx-row td {

@@ -195,6 +195,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     : selectedBankId
       ? (accounts || []).filter((a: any) => String(a.bank_id || "") === selectedBankId)
       : (accounts || []);
+  const selectedAccountsTotalBalance = selectedAccounts.reduce((sum: number, account: any) => {
+    const accountId = String(account.id || "");
+    const computedBalance = accountBalanceById.get(accountId);
+    if (Number.isFinite(Number(computedBalance))) return sum + Number(computedBalance);
+    return sum + Number(account.balance || 0);
+  }, 0);
 
   const consolidatedMonthTxs = (monthTxs || []).filter((t: any) => t.is_consolidated !== false);
   const plannedMonthTxs = (monthTxs || []).filter((t: any) => t.is_consolidated === false);
@@ -290,6 +296,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 txs={txs || []}
                 banks={banks || []}
                 accounts={accounts || []}
+                accountsTotalBalance={selectedAccountsTotalBalance}
                 categoryOptions={categoryOptions}
                 returnUrl={returnUrl}
                 selectedEditTxId={selectedEditTxId}

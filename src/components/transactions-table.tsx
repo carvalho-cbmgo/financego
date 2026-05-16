@@ -31,6 +31,7 @@ export function TransactionsTable(input: {
   txs: any[];
   banks: any[];
   accounts: any[];
+  accountsTotalBalance: number;
   categoryOptions: CategorySelectOption[];
   returnUrl: string;
   selectedEditTxId: string;
@@ -51,6 +52,12 @@ export function TransactionsTable(input: {
   );
 
   const grouped = useMemo(() => groupTransactionsByDay(input.txs || []), [input.txs]);
+  const displayedAmount = useMemo(
+    () => (input.txs || []).reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0),
+    [input.txs],
+  );
+  const balanceBeforeDisplayed = Number(input.accountsTotalBalance || 0) - displayedAmount;
+  const balanceWithDisplayed = Number(input.accountsTotalBalance || 0);
   const displayedTxIds = useMemo(() => (input.txs || []).map((tx: any) => String(tx.id)), [input.txs]);
   const allDisplayedSelected = displayedTxIds.length > 0 && displayedTxIds.every((id) => selectedTxIds.includes(id));
   const categoryOptions = useMemo(() => dedupeCategoryOptions(input.categoryOptions || []), [input.categoryOptions]);
@@ -120,7 +127,7 @@ export function TransactionsTable(input: {
   }
 
   return (
-    <Card title="Transações" action={<span className="fg-chip">Clique na linha para editar</span>}>
+    <Card title="Transações">
       <div className="fg-legacy-transactions-actions">
         <button
           className="fg-btn fg-legacy-add-btn"
@@ -128,8 +135,9 @@ export function TransactionsTable(input: {
           onClick={() => setShowCreateForm((current) => !current)}
           title="Adicionar nova transacao"
         >
-          {showCreateForm ? "Fechar" : "+ Adicionar transacao"}
+          + Adicionar transacao
         </button>
+        <div className="fg-legacy-transactions-actions-right">
         <button
           className="fg-btn-secondary fg-legacy-bulk-icon"
           type="button"
@@ -172,7 +180,7 @@ export function TransactionsTable(input: {
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}
         </select>
-        <Link href="/exports" className="fg-btn-secondary">Exportar</Link>
+        </div>
       </div>
 
       {message ? <div className="fg-field-note">{message}</div> : null}
@@ -189,6 +197,11 @@ export function TransactionsTable(input: {
       <div className="fg-table-wrap">
         <table className="fg-table fg-legacy-transactions-table">
           <thead>
+            <tr className="fg-legacy-balance-head-row">
+              <th colSpan={6}>
+                Saldo sem as transacoes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
+              </th>
+            </tr>
             <tr>
               <th></th>
               <th>Descrição</th>
@@ -199,10 +212,6 @@ export function TransactionsTable(input: {
             </tr>
           </thead>
           <tbody>
-            <tr className="fg-legacy-group-row">
-              <td colSpan={6}>Todos</td>
-            </tr>
-
             {grouped.map((group) => (
               <Fragment key={group.dayKey}>
                 <tr className="fg-legacy-group-row">
@@ -385,6 +394,11 @@ export function TransactionsTable(input: {
                 })}
               </Fragment>
             ))}
+            <tr className="fg-legacy-balance-foot-row">
+              <td colSpan={6}>
+                Saldo com as transacoes exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -460,18 +474,18 @@ function CreateTransactionInline(input: {
           <input name="is_consolidated" type="checkbox" defaultChecked />
           Consolidada
         </label>
-      </div>
 
-      <div className="fg-legacy-create-actions">
-        <button className="fg-btn fg-legacy-create-save" disabled={isSubmitting}>Salvar</button>
-        <button
-          type="button"
-          className="fg-btn-danger fg-legacy-create-cancel"
-          onClick={input.onCancel}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </button>
+        <div className="fg-legacy-create-inline-actions">
+          <button className="fg-btn fg-legacy-create-save" disabled={isSubmitting}>Salvar</button>
+          <button
+            type="button"
+            className="fg-btn-danger fg-legacy-create-cancel"
+            onClick={input.onCancel}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </form>
   );
@@ -662,6 +676,16 @@ function formatLegacyDayLabel(dayKey: string) {
 function amountOnly(value: number | string | null | undefined) {
   const amount = Number(value || 0);
   return amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function brlCompact(value: number | string | null | undefined) {
+  const amount = Number(value || 0);
+  return amount.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function actionFromType(type: string | null | undefined) {
