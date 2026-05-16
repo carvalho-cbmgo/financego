@@ -1294,6 +1294,22 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   flex-wrap: wrap;
 }
 
+.fg-legacy-bulk-icon {
+  min-width: 30px;
+  padding: 0 7px;
+  font-weight: 800;
+}
+
+.fg-legacy-bulk-icon.is-green {
+  color: #1c7a2d;
+  border-color: #8bb995;
+}
+
+.fg-legacy-bulk-icon.is-red {
+  color: #b93b3b;
+  border-color: #d5a3a3;
+}
+
 .fg-legacy-transactions-actions .fg-select {
   width: 170px;
 }
