@@ -474,20 +474,173 @@ function CreateTransactionInline(input: {
           <input name="is_consolidated" type="checkbox" defaultChecked />
           Consolidada
         </label>
+      </div>
 
-        <div className="fg-legacy-create-inline-actions">
-          <button className="fg-btn fg-legacy-create-save" disabled={isSubmitting}>Salvar</button>
-          <button
-            type="button"
-            className="fg-btn-danger fg-legacy-create-cancel"
-            onClick={input.onCancel}
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </button>
-        </div>
+      <RecurringCreateControls />
+
+      <div className="fg-legacy-create-actions">
+        <button className="fg-btn fg-legacy-create-save" disabled={isSubmitting}>Salvar</button>
+        <button
+          type="button"
+          className="fg-btn-danger fg-legacy-create-cancel"
+          onClick={input.onCancel}
+          disabled={isSubmitting}
+        >
+          Cancelar
+        </button>
       </div>
     </form>
+  );
+}
+
+function RecurringCreateControls() {
+  const [mode, setMode] = useState<RepeatMode>("none");
+  const [repeatEvery, setRepeatEvery] = useState<RepeatEvery>("month");
+  const [repeatForever, setRepeatForever] = useState<boolean>(false);
+  const [installmentCurrent, setInstallmentCurrent] = useState<number>(1);
+  const [installmentTotal, setInstallmentTotal] = useState<number>(1);
+  const [installmentTotalAmount, setInstallmentTotalAmount] = useState<string>("");
+
+  const showInstallment = mode === "installment";
+  const showAdvanced = mode === "advanced";
+
+  function updateCurrent(value: string) {
+    const nextCurrent = Math.max(1, Math.trunc(Number(value) || 1));
+    setInstallmentCurrent(nextCurrent);
+    setInstallmentTotal((current) => Math.max(nextCurrent, Math.trunc(Number(current) || nextCurrent)));
+  }
+
+  function updateTotal(value: string) {
+    const nextTotal = Math.max(installmentCurrent, Math.trunc(Number(value) || installmentCurrent));
+    setInstallmentTotal(nextTotal);
+  }
+
+  return (
+    <div className="fg-legacy-create-repeat-wrap">
+      <div className="fg-legacy-inline-label">Repetir transacao</div>
+      <div className="fg-legacy-repeat-options">
+        <label>
+          <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />
+          Sem repeticao
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="repeat_mode"
+            value="installment"
+            checked={mode === "installment"}
+            onChange={() => setMode("installment")}
+          />
+          Parcelamento (mensal)
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="repeat_mode"
+            value="advanced"
+            checked={mode === "advanced"}
+            onChange={() => setMode("advanced")}
+          />
+          Avancado
+        </label>
+      </div>
+
+      {showInstallment ? (
+        <div className="fg-legacy-repeat-grid">
+          <label className="fg-field-label">
+            N. da parcela atual
+            <input
+              type="number"
+              name="installment_current"
+              min={1}
+              required
+              className="fg-input"
+              value={installmentCurrent}
+              onChange={(event) => updateCurrent(event.target.value)}
+            />
+          </label>
+          <label className="fg-field-label">
+            Quantidade total de parcelas
+            <input
+              type="number"
+              name="installment_total"
+              min={installmentCurrent}
+              required
+              className="fg-input"
+              value={installmentTotal}
+              onChange={(event) => updateTotal(event.target.value)}
+            />
+          </label>
+          <label className="fg-field-label">
+            R$ Total
+            <input
+              type="number"
+              name="installment_total_amount"
+              min="0.01"
+              step="0.01"
+              className="fg-input"
+              value={installmentTotalAmount}
+              onChange={(event) => setInstallmentTotalAmount(event.target.value)}
+            />
+          </label>
+          <input type="hidden" name="repeat_every" value="month" />
+        </div>
+      ) : null}
+
+      {showAdvanced ? (
+        <div className="fg-legacy-repeat-grid">
+          <label className="fg-field-label">
+            Repetir a cada
+            <select
+              name="repeat_every"
+              className="fg-select"
+              value={repeatEvery}
+              onChange={(event) => setRepeatEvery(parseRepeatEvery(event.target.value))}
+            >
+              <option value="week">Semana</option>
+              <option value="month">Mes</option>
+              <option value="year">Ano</option>
+            </select>
+          </label>
+
+          <label className="fg-checkbox-row fg-legacy-repeat-check">
+            <input
+              type="checkbox"
+              name="repeat_forever"
+              checked={repeatForever}
+              onChange={(event) => setRepeatForever(event.target.checked)}
+            />
+            Repetir infinitamente
+          </label>
+
+          <label className="fg-field-label">
+            N. da parcela atual
+            <input
+              type="number"
+              name="installment_current"
+              min={1}
+              required
+              className="fg-input"
+              value={installmentCurrent}
+              onChange={(event) => updateCurrent(event.target.value)}
+            />
+          </label>
+
+          <label className="fg-field-label">
+            Quantidade total de parcelas
+            <input
+              type="number"
+              name="installment_total"
+              min={installmentCurrent}
+              className="fg-input"
+              disabled={repeatForever}
+              value={installmentTotal}
+              onChange={(event) => updateTotal(event.target.value)}
+            />
+          </label>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

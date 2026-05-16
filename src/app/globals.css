@@ -1560,13 +1560,14 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-create-fields-row {
   display: grid;
-  grid-template-columns: 136px minmax(300px, 1fr) 190px 130px auto auto;
+  grid-template-columns: 108px minmax(320px, 1fr) 190px 130px auto;
   align-items: center;
   gap: 6px;
 }
 
 .fg-legacy-create-date {
   min-width: 0;
+  max-width: 108px;
 }
 
 .fg-legacy-create-desc {
@@ -1587,6 +1588,18 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-legacy-create-inline-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fg-legacy-create-repeat-wrap {
+  display: grid;
+  gap: 5px;
+}
+
+.fg-legacy-create-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
