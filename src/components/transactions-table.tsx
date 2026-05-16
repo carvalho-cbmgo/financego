@@ -181,6 +181,10 @@ export function TransactionsTable(input: {
                   const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
                   const selectedBankId = String(account?.bank_id || input.banks[0]?.id || "");
                   const currentCategory = String(tx.app_category || "Outros");
+                  const txAmount = Number(tx.amount || 0);
+                  const amountInputDefault = tx.type === "transfer"
+                    ? (Number.isFinite(txAmount) ? txAmount.toFixed(2) : "0.00")
+                    : Math.abs(Number.isFinite(txAmount) ? txAmount : 0).toFixed(2);
                   const categoryOptions = Array.from(new Set((input.categoryOptions || []).filter(Boolean)))
                     .sort((a, b) => a.localeCompare(b, "pt-BR"));
                   if (!categoryOptions.includes(currentCategory)) categoryOptions.unshift(currentCategory);
@@ -268,7 +272,7 @@ export function TransactionsTable(input: {
                                   type="number"
                                   step="0.01"
                                   required
-                                  defaultValue={Math.abs(Number(tx.amount || 0)).toFixed(2)}
+                                  defaultValue={amountInputDefault}
                                   placeholder="Valor"
                                   className="fg-input"
                                 />
@@ -392,4 +396,3 @@ function capitalize(value: string) {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
-
