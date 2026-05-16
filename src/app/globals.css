@@ -1478,6 +1478,19 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   flex-wrap: wrap;
 }
 
+.fg-legacy-add-btn {
+  white-space: nowrap;
+}
+
+.fg-legacy-del-btn {
+  min-width: 34px;
+}
+
+.fg-legacy-del-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .fg-legacy-bulk-icon {
   min-width: 30px;
   padding: 0 7px;
@@ -1496,6 +1509,25 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-transactions-actions .fg-select {
   width: 170px;
+}
+
+.fg-legacy-create-form {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0;
+  padding: 8px;
+  border: 1px solid #cfd8b4;
+  background: linear-gradient(180deg, #fbfdf5 0%, #f2f7e3 100%);
+}
+
+.fg-legacy-create-check {
+  min-height: 28px;
+  align-items: center;
+}
+
+.fg-legacy-create-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .fg-legacy-transactions-table .fg-legacy-group-row td {

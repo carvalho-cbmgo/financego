@@ -36,6 +36,7 @@ export function TransactionsTable(input: {
   selectedEditTxId: string;
 }) {
   const router = useRouter();
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
   const [isWorking, setIsWorking] = useState(false);
   const [message, setMessage] = useState("");
@@ -122,6 +123,14 @@ export function TransactionsTable(input: {
     <Card title="Transações" action={<span className="fg-chip">Clique na linha para editar</span>}>
       <div className="fg-legacy-transactions-actions">
         <button
+          className="fg-btn fg-legacy-add-btn"
+          type="button"
+          onClick={() => setShowCreateForm((current) => !current)}
+          title="Adicionar nova transacao"
+        >
+          {showCreateForm ? "Fechar" : "+ Adicionar transacao"}
+        </button>
+        <button
           className="fg-btn-secondary fg-legacy-bulk-icon"
           type="button"
           onClick={toggleAllDisplayed}
@@ -131,13 +140,13 @@ export function TransactionsTable(input: {
           ☑
         </button>
         <button
-          className="fg-btn-secondary fg-legacy-bulk-icon"
+          className="fg-category-tool-btn is-delete fg-legacy-del-btn"
           type="button"
           onClick={() => runBatch("delete")}
           disabled={!selectedTxIds.length || isWorking}
           title="Excluir transações selecionadas"
         >
-          ✖
+          DEL
         </button>
         <button
           className="fg-btn-secondary fg-legacy-bulk-icon is-green"
@@ -167,6 +176,14 @@ export function TransactionsTable(input: {
       </div>
 
       {message ? <div className="fg-field-note">{message}</div> : null}
+      {showCreateForm ? (
+        <CreateTransactionInline
+          accounts={input.accounts}
+          bankById={bankById}
+          categoryOptions={categoryOptions}
+          returnUrl={input.returnUrl}
+        />
+      ) : null}
 
       <div className="fg-table-wrap">
         <table className="fg-table fg-legacy-transactions-table">
@@ -371,6 +388,86 @@ export function TransactionsTable(input: {
         </table>
       </div>
     </Card>
+  );
+}
+
+function CreateTransactionInline(input: {
+  accounts: any[];
+  bankById: Map<string, any>;
+  categoryOptions: CategorySelectOption[];
+  returnUrl: string;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const defaultAccountId = String(input.accounts?.[0]?.id || "");
+  const safeCategoryOptions = input.categoryOptions?.length
+    ? input.categoryOptions
+    : [{ value: "Outros", label: "Outros", depth: 0 }];
+
+  if (!input.accounts?.length) {
+    return <div className="fg-empty">Cadastre uma conta antes de adicionar transacoes.</div>;
+  }
+
+  return (
+    <form
+      action="/api/transactions/save"
+      method="post"
+      className="fg-legacy-create-form"
+      onSubmit={() => {
+        setIsSubmitting(true);
+        notifyGlobalLoading(true);
+      }}
+    >
+      <input type="hidden" name="return_url" value={input.returnUrl} />
+
+      <div className="fg-grid-3">
+        <select name="account_id" required defaultValue={defaultAccountId} className="fg-select">
+          {input.accounts.map((account: any) => {
+            const bank = input.bankById.get(String(account.bank_id || ""));
+            const bankName = bank?.name || account.institution_name || "Sem banco";
+            return (
+              <option key={account.id} value={account.id}>
+                {bankName} - {account.name} ({accountTypeLabel(account.type)})
+              </option>
+            );
+          })}
+        </select>
+
+        <input name="description" required placeholder="Descricao" className="fg-input" />
+
+        <input
+          name="posted_at"
+          type="date"
+          defaultValue={new Date().toISOString().slice(0, 10)}
+          required
+          className="fg-input"
+        />
+      </div>
+
+      <div className="fg-grid-4">
+        <input name="amount" type="number" step="0.01" required placeholder="Valor" className="fg-input" />
+
+        <select name="action" defaultValue="Despesa" required className="fg-select">
+          <option value="Receita">Receita</option>
+          <option value="Despesa">Despesa</option>
+          <option value="Transferencia">Transferencia</option>
+        </select>
+
+        <select name="category" defaultValue="Outros" className="fg-select">
+          {safeCategoryOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+
+        <label className="fg-checkbox-row fg-legacy-create-check">
+          <input name="is_consolidated" type="checkbox" defaultChecked />
+          Consolidada
+        </label>
+      </div>
+
+      <div className="fg-legacy-create-actions">
+        <button className="fg-btn" disabled={isSubmitting}>Salvar transacao</button>
+      </div>
+    </form>
   );
 }
 
