@@ -60,11 +60,15 @@ function usageFromGroups(groups: CategoryGroupStats[]) {
   const usage: Record<string, CategoryUsage> = {};
   for (const group of groups || []) {
     for (const leaf of group.leaves || []) {
+      const txCount = Number(leaf.txCount || 0);
+      const totalAbs = Number(leaf.totalAbs || 0);
+      if (txCount <= 0 && totalAbs <= 0) continue;
+
       const key = normalizeCategoryName(leaf.name);
       if (!key) continue;
       if (!usage[key]) usage[key] = { txCount: 0, totalAbs: 0 };
-      usage[key].txCount += Number(leaf.txCount || 0);
-      usage[key].totalAbs += Number(leaf.totalAbs || 0);
+      usage[key].txCount += txCount;
+      usage[key].totalAbs += totalAbs;
     }
   }
   return usage;
