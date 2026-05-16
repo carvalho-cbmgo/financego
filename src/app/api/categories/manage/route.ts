@@ -15,6 +15,8 @@ function normalizeLookup(input?: string | null) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s/-]/gu, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -151,11 +153,11 @@ async function renameCategoryEverywhere(profileId: string, oldCategory: string, 
   await mergeBudgetsCategory(profileId, oldCategory, newCategory);
 }
 
-async function deleteDuplicateNamedCategories(profileId: string, canonicalName: string, keepId?: string) {
+async function deleteDuplicateNamedCategories(profileId: string, canonicalName: string, rootId: string, keepId?: string) {
   const canonicalKey = normalizeLookup(canonicalName);
   const { data: rows, error } = await supabaseAdmin
     .from("categories")
-    .select("id, name")
+    .select("id, name, parent_id")
     .eq("profile_id", profileId);
   if (error) throw error;
 
@@ -165,63 +167,19 @@ async function deleteDuplicateNamedCategories(profileId: string, canonicalName: 
   if (!toDelete.length) return;
 
   const ids = toDelete.map((row: any) => String(row.id));
+  const { error: reparentChildrenError } = await supabaseAdmin
+    .from("categories")
+    .update({ parent_id: rootId })
+    .eq("profile_id", profileId)
+    .in("parent_id", ids);
+  if (reparentChildrenError) throw reparentChildrenError;
+
   const { error: deleteError } = await supabaseAdmin
     .from("categories")
     .delete()
     .eq("profile_id", profileId)
     .in("id", ids);
   if (deleteError) throw deleteError;
-}
-
-async function renameCategoryRows(profileId: string, oldCategory: string, newCategory: string, rootId: string) {
-  const oldKey = normalizeLookup(oldCategory);
-  const newKey = normalizeLookup(newCategory);
-
-  const { data: rows, error } = await supabaseAdmin
-    .from("categories")
-    .select("id, name, parent_id")
-    .eq("profile_id", profileId);
-  if (error) throw error;
-
-  const matching = (rows || []).filter((row: any) => normalizeLookup(row.name) === oldKey);
-  if (!matching.length) return;
-
-  const keeper = matching[0];
-  const resolvedParentId = newKey === normalizeLookup(ROOT_CATEGORY_NAME)
-    ? null
-    : (() => {
-      const target = (rows || []).find((row: any) => normalizeLookup(row.name) === newKey);
-      return target?.id || rootId;
-    })();
-
-  const { error: updateKeeperError } = await supabaseAdmin
-    .from("categories")
-    .update({
-      name: newCategory,
-      parent_id: resolvedParentId,
-    })
-    .eq("profile_id", profileId)
-    .eq("id", keeper.id);
-  if (updateKeeperError) throw updateKeeperError;
-
-  const duplicateIds = matching.slice(1).map((row: any) => String(row.id));
-  if (duplicateIds.length) {
-    const { error: reparentChildrenError } = await supabaseAdmin
-      .from("categories")
-      .update({ parent_id: keeper.id })
-      .eq("profile_id", profileId)
-      .in("parent_id", duplicateIds);
-    if (reparentChildrenError) throw reparentChildrenError;
-
-    const { error: deleteError } = await supabaseAdmin
-      .from("categories")
-      .delete()
-      .eq("profile_id", profileId)
-      .in("id", duplicateIds);
-    if (deleteError) throw deleteError;
-  }
-
-  await deleteDuplicateNamedCategories(profileId, newCategory, keeper.id);
 }
 
 export async function POST(req: Request) {
@@ -277,8 +235,8 @@ export async function POST(req: Request) {
         .eq("profile_id", user.id);
       if (updateError) throw updateError;
 
-      await renameCategoryRows(user.id, normalizedCurrentName, normalizedNextName, root.id);
       await renameCategoryEverywhere(user.id, normalizedCurrentName, normalizedNextName);
+      await deleteDuplicateNamedCategories(user.id, normalizedNextName, root.id, current.id);
 
       return NextResponse.json({ ok: true });
     }
@@ -341,7 +299,7 @@ export async function POST(req: Request) {
           .eq("profile_id", user.id);
         if (deleteError) throw deleteError;
       }
-      await deleteDuplicateNamedCategories(user.id, normalizedCurrentName);
+      await deleteDuplicateNamedCategories(user.id, normalizedCurrentName, root.id);
 
       await renameCategoryEverywhere(user.id, normalizedCurrentName, "Outros");
       return NextResponse.json({ ok: true });

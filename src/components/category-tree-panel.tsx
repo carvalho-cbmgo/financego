@@ -325,6 +325,12 @@ export function CategoryTreePanel(input: {
     return total;
   }, [visibleSet, usage]);
 
+  function refreshServerState() {
+    startTransition(() => {
+      router.refresh();
+    });
+  }
+
   function navigateWith(nextSelected: string[]) {
     const params = new URLSearchParams(window.location.search);
 
@@ -443,6 +449,7 @@ export function CategoryTreePanel(input: {
       const nextSelected = selected.filter((name) => !targets.includes(name));
       setSelected(nextSelected);
       navigateWith(nextSelected);
+      if (removed > 0) refreshServerState();
 
       if (!failed.length) {
         setMessage(`${removed} categoria(s) excluída(s) com sucesso.`);
@@ -627,6 +634,7 @@ export function CategoryTreePanel(input: {
 
       setMessage("Categorias atualizadas em tempo real.");
       onSuccess();
+      refreshServerState();
     } catch {
       setMessage("Erro inesperado ao atualizar categoria.");
     } finally {

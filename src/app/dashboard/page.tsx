@@ -23,6 +23,15 @@ type DashboardParams = {
   edit_tx?: string;
 };
 
+function normalizeLookup(input?: string | null) {
+  return String(input || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<DashboardParams> }) {
   const { user, accessToken } = await requireServerSession();
   const supabaseAdmin = createUserDb(accessToken);
@@ -41,6 +50,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const selectedMonthRef = normalizeMonthRef(String(params.month_ref || ""), monthRef());
   const selectedEditTxId = String(params.edit_tx || "");
   const currentTab = params.tab === "transactions" ? "transactions" : "overview";
+  const applyBankFilterInTransactions = false;
   const monthStart = `${selectedMonthRef}-01T00:00:00.000Z`;
   const monthEnd = `${nextMonthRef(selectedMonthRef)}-01T00:00:00.000Z`;
 
@@ -83,20 +93,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   if (selectedAccountIds.length) {
     txQuery = txQuery.in("account_id", selectedAccountIds);
-  } else if (selectedBankId) {
+  } else if (selectedBankId && (currentTab !== "transactions" || applyBankFilterInTransactions)) {
     if (bankMatchedAccountIds.length) txQuery = txQuery.in("account_id", bankMatchedAccountIds);
     else txQuery = txQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
-  }
-
-  if (currentTab === "transactions" && selectedCategoryNames.length) {
-    txQuery = txQuery.in("app_category", selectedCategoryNames);
   }
 
   if (currentTab === "transactions") {
     txQuery = txQuery.gte("posted_at", monthStart).lt("posted_at", monthEnd);
   }
 
-  const { data: txs } = await txQuery;
+  const { data: txRows } = await txQuery;
+  const selectedCategoryLookup = new Set(selectedCategoryNames.map((name) => normalizeLookup(name)).filter(Boolean));
+  const txs = currentTab === "transactions" && selectedCategoryLookup.size
+    ? (txRows || []).filter((tx: any) => selectedCategoryLookup.has(normalizeLookup(tx.app_category || "Outros")))
+    : (txRows || []);
 
   let categoryGroups = buildCategoryGroups([]);
   if (currentTab === "transactions") {
@@ -109,7 +119,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
     if (selectedAccountIds.length) {
       categoryTreeQuery = categoryTreeQuery.in("account_id", selectedAccountIds);
-    } else if (selectedBankId) {
+    } else if (selectedBankId && applyBankFilterInTransactions) {
       if (bankMatchedAccountIds.length) categoryTreeQuery = categoryTreeQuery.in("account_id", bankMatchedAccountIds);
       else categoryTreeQuery = categoryTreeQuery.eq("account_id", "00000000-0000-0000-0000-000000000000");
     }
@@ -133,6 +143,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   }
 
   const { data: monthTxs } = await monthTxQuery;
+
+  const categoryOptions = Array.from(
+    new Set(
+      [
+        ...categoriesCatalog.map((row) => String(row.name || "").trim()),
+        ...categoryGroups.flatMap((group) => group.leaves.map((leaf) => String(leaf.name || "").trim())),
+        ...(txs || []).map((tx: any) => String(tx.app_category || "Outros").trim()),
+        "Outros",
+      ].filter((value) => value.length > 0 && value !== ROOT_CATEGORY_NAME),
+    ),
+  ).sort((a, b) => a.localeCompare(b, "pt-BR"));
 
   const selectedAccounts = selectedAccountIds.length
     ? (accounts || []).filter((a: any) => selectedAccountIds.includes(String(a.id)))
@@ -231,7 +252,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 txs={txs || []}
                 banks={banks || []}
                 accounts={accounts || []}
-                categoryOptions={categoryGroups.flatMap((group) => group.leaves.map((leaf) => leaf.name))}
+                categoryOptions={categoryOptions}
                 returnUrl={returnUrl}
                 selectedEditTxId={selectedEditTxId}
               />
