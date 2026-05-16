@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useTransition, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -26,6 +26,7 @@ type TreeNode = {
 };
 
 type DialogState =
+  | { mode: "create" }
   | { mode: "edit"; categoryName: string }
   | { mode: "add_subcategory"; categoryName: string }
   | { mode: "delete"; categoryName: string }
@@ -411,7 +412,16 @@ export function CategoryTreePanel(input: {
     setMessage("");
   }
 
-  function openDialog(mode: "edit" | "add_subcategory" | "delete", categoryName: string) {
+  function openDialog(mode: "create" | "edit" | "add_subcategory" | "delete", categoryName = ROOT_CATEGORY_NAME) {
+    if (mode === "create") {
+      setDialog({ mode: "create" });
+      setContextMenu(null);
+      setMessage("");
+      setNameValue("");
+      setParentValue(ROOT_CATEGORY_NAME);
+      return;
+    }
+
     setDialog({ mode, categoryName });
     setContextMenu(null);
     setMessage("");
@@ -566,6 +576,32 @@ export function CategoryTreePanel(input: {
     if (!dialog) return;
     if (isWorking || isPending) return;
 
+    if (dialog.mode === "create") {
+      const nextNameRaw = nameValue.trim();
+      if (!nextNameRaw) {
+        setMessage("Informe o nome da categoria.");
+        return;
+      }
+
+      const nextName = normalizeCategoryName(nextNameRaw);
+      const nextParent = normalizeCategoryName(parentValue || ROOT_CATEGORY_NAME);
+
+      runCategoryAction(
+        {
+          action: "add_subcategory",
+          category_name: ROOT_CATEGORY_NAME,
+          new_name: nextName,
+          parent_name: nextParent,
+        },
+        () => {
+          applyLocalAdd(nextName, nextParent);
+          closeDialog();
+          setOpenMap((current) => ({ ...current, [nextParent]: true }));
+        },
+      );
+      return;
+    }
+
     if (dialog.mode === "edit") {
       const nextNameRaw = nameValue.trim();
       if (!nextNameRaw) {
@@ -691,12 +727,15 @@ export function CategoryTreePanel(input: {
       <div className="fg-category-tree-top">
         <div className="fg-category-search-row">
           <input
-            className="fg-input"
+            className="fg-input fg-category-search-input"
             placeholder="Texto da busca"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
           />
           <div className="fg-category-tree-actions">
+            <button type="button" className="fg-category-tool-btn is-create" onClick={() => openDialog("create")} disabled={isPending || isWorking} title="Criar nova categoria">
+              +
+            </button>
             <button type="button" className="fg-category-tool-btn" onClick={expandAll} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Expandir categorias">
               +
             </button>
@@ -704,7 +743,7 @@ export function CategoryTreePanel(input: {
               -
             </button>
             <button type="button" className="fg-category-tool-btn" onClick={selectVisible} disabled={isPending || isWorking || !visibleCategoryNames.length} title="Selecionar categorias visiveis">
-              ✓
+              {"\u2713"}
             </button>
             <button type="button" className="fg-category-tool-btn" onClick={clearSelection} disabled={isPending || isWorking || !selected.length} title="Limpar filtro de categorias">
               x
@@ -761,10 +800,35 @@ export function CategoryTreePanel(input: {
         <div className="fg-category-dialog-backdrop" role="dialog" aria-modal="true">
           <div className="fg-category-dialog">
             <div className="fg-card-title">
+              {dialog.mode === "create" ? "Nova categoria" : null}
               {dialog.mode === "edit" ? "Editar categoria" : null}
               {dialog.mode === "add_subcategory" ? "Adicionar sub-categoria" : null}
               {dialog.mode === "delete" ? "Excluir categoria" : null}
             </div>
+
+            {dialog.mode === "create" ? (
+              <div className="fg-form">
+                <label className="fg-field-label">
+                  Nome
+                  <input
+                    className="fg-input"
+                    value={nameValue}
+                    onChange={(event) => setNameValue(event.target.value)}
+                    placeholder="Nome da categoria"
+                  />
+                </label>
+                <label className="fg-field-label">
+                  Categoria Pai
+                  <select className="fg-select" value={parentValue} onChange={(event) => setParentValue(event.target.value)}>
+                    {parentOptions.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            ) : null}
 
             {dialog.mode === "edit" ? (
               <div className="fg-form">
@@ -827,3 +891,6 @@ export function CategoryTreePanel(input: {
     </div>
   );
 }
+
+
+

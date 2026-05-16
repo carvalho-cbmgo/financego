@@ -939,9 +939,16 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-category-search-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   gap: 4px;
+}
+
+.fg-category-search-input {
+  width: 50%;
+  min-width: 90px;
+  max-width: 140px;
 }
 
 .fg-category-tree-actions {
@@ -965,6 +972,17 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-category-tool-btn:hover {
   background: #e6efd0;
   border-color: #95af37;
+}
+
+.fg-category-tool-btn.is-create {
+  border-color: #7f9f31;
+  background: #dfeec0;
+  color: #2f4f1a;
+}
+
+.fg-category-tool-btn.is-create:hover {
+  background: #d3e7aa;
+  border-color: #6d8f24;
 }
 
 .fg-category-tree-list {
@@ -1152,6 +1170,14 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   padding: 10px;
   display: grid;
   gap: 8px;
+}
+
+.fg-field-label {
+  display: grid;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a4a4a;
 }
 
 .fg-legacy-toolbar {
