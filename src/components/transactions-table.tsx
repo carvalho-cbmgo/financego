@@ -8,11 +8,17 @@ import { shortDate } from "@/lib/format";
 import { accountTypeLabel } from "@/lib/accounts";
 import { notifyGlobalLoading } from "@/components/global-loading-overlay";
 
+type CategorySelectOption = {
+  value: string;
+  label: string;
+  depth?: number;
+};
+
 export function TransactionsTable(input: {
   txs: any[];
   banks: any[];
   accounts: any[];
-  categoryOptions: string[];
+  categoryOptions: CategorySelectOption[];
   returnUrl: string;
   selectedEditTxId: string;
 }) {
@@ -33,6 +39,7 @@ export function TransactionsTable(input: {
   const grouped = useMemo(() => groupTransactionsByDay(input.txs || []), [input.txs]);
   const displayedTxIds = useMemo(() => (input.txs || []).map((tx: any) => String(tx.id)), [input.txs]);
   const allDisplayedSelected = displayedTxIds.length > 0 && displayedTxIds.every((id) => selectedTxIds.includes(id));
+  const categoryOptions = useMemo(() => dedupeCategoryOptions(input.categoryOptions || []), [input.categoryOptions]);
 
   function toggleOne(txId: string) {
     setSelectedTxIds((current) => (current.includes(txId) ? current.filter((id) => id !== txId) : [...current, txId]));
@@ -139,10 +146,8 @@ export function TransactionsTable(input: {
         </button>
         <select className="fg-select" defaultValue="">
           <option value="">Alterar categoria</option>
-          {Array.from(new Set((input.categoryOptions || []).filter(Boolean)))
-            .sort((a, b) => a.localeCompare(b, "pt-BR"))
-            .map((categoryName) => (
-              <option key={categoryName} value={categoryName}>{categoryName}</option>
+          {categoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
             ))}
         </select>
         <Link href="/exports" className="fg-btn-secondary">Exportar</Link>
@@ -185,9 +190,10 @@ export function TransactionsTable(input: {
                   const amountInputDefault = tx.type === "transfer"
                     ? (Number.isFinite(txAmount) ? txAmount.toFixed(2) : "0.00")
                     : Math.abs(Number.isFinite(txAmount) ? txAmount : 0).toFixed(2);
-                  const categoryOptions = Array.from(new Set((input.categoryOptions || []).filter(Boolean)))
-                    .sort((a, b) => a.localeCompare(b, "pt-BR"));
-                  if (!categoryOptions.includes(currentCategory)) categoryOptions.unshift(currentCategory);
+                  let txCategoryOptions = categoryOptions;
+                  if (!txCategoryOptions.some((option) => option.value === currentCategory)) {
+                    txCategoryOptions = [{ value: currentCategory, label: currentCategory, depth: 0 }, ...txCategoryOptions];
+                  }
                   const editUrl = buildEditUrl(input.returnUrl, txId);
                   const isEditing = input.selectedEditTxId === txId;
                   const checked = selectedTxIds.includes(txId);
@@ -254,9 +260,9 @@ export function TransactionsTable(input: {
                                   className="fg-input"
                                 />
                                 <select name="category" required defaultValue={currentCategory} className="fg-select">
-                                  {categoryOptions.map((categoryName) => (
-                                    <option key={categoryName} value={categoryName}>
-                                      {categoryName}
+                                  {txCategoryOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
                                     </option>
                                   ))}
                                 </select>
@@ -395,4 +401,23 @@ function appendQueryParam(baseUrl: string, key: string, value: string) {
 function capitalize(value: string) {
   if (!value) return value;
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function dedupeCategoryOptions(options: CategorySelectOption[]) {
+  const list: CategorySelectOption[] = [];
+  const used = new Set<string>();
+
+  for (const option of options || []) {
+    const value = String(option?.value || "").trim();
+    if (!value || used.has(value)) continue;
+
+    used.add(value);
+    list.push({
+      value,
+      label: String(option?.label || value),
+      depth: Number(option?.depth || 0),
+    });
+  }
+
+  return list;
 }

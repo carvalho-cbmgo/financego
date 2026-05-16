@@ -23,6 +23,12 @@ type DashboardParams = {
   edit_tx?: string;
 };
 
+type CategorySelectOption = {
+  value: string;
+  label: string;
+  depth: number;
+};
+
 function normalizeLookup(input?: string | null) {
   return String(input || "")
     .normalize("NFD")
@@ -156,16 +162,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const { data: monthTxs } = await monthTxQuery;
 
-  const categoryOptions = Array.from(
-    new Set(
-      [
-        ...categoriesCatalog.map((row) => String(row.name || "").trim()),
-        ...categoryGroups.flatMap((group) => group.leaves.map((leaf) => String(leaf.name || "").trim())),
-        ...(txs || []).map((tx: any) => String(tx.app_category || "Outros").trim()),
-        "Outros",
-      ].filter((value) => value.length > 0 && value !== ROOT_CATEGORY_NAME),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const categoryOptions = buildCategorySelectOptions({
+    categoriesCatalog,
+    extraNames: [
+      ...(monthTxs || []).map((tx: any) => String(tx.app_category || "Outros").trim()),
+      ...(txs || []).map((tx: any) => String(tx.app_category || "Outros").trim()),
+      "Outros",
+    ],
+  });
 
   const selectedAccounts = selectedAccountIds.length
     ? (accounts || []).filter((a: any) => selectedAccountIds.includes(String(a.id)))
@@ -547,6 +551,81 @@ function buildCategoryCatalog(rows: Array<{ id: string; name: string; parent_id:
       parentName: row.parent_id ? idToName.get(String(row.parent_id)) || ROOT_CATEGORY_NAME : ROOT_CATEGORY_NAME,
     }))
     .filter((row) => row.name.length > 0);
+}
+
+function buildCategorySelectOptions(input: {
+  categoriesCatalog: Array<{ name: string; parentName: string }>;
+  extraNames: string[];
+}): CategorySelectOption[] {
+  const parentByName = new Map<string, string>();
+
+  for (const row of input.categoriesCatalog || []) {
+    const name = String(row.name || "").trim();
+    if (!name) continue;
+    let parentName = String(row.parentName || ROOT_CATEGORY_NAME).trim() || ROOT_CATEGORY_NAME;
+    if (name === ROOT_CATEGORY_NAME) parentName = ROOT_CATEGORY_NAME;
+    if (name === parentName) parentName = ROOT_CATEGORY_NAME;
+    parentByName.set(name, parentName);
+  }
+
+  if (!parentByName.has(ROOT_CATEGORY_NAME)) {
+    parentByName.set(ROOT_CATEGORY_NAME, ROOT_CATEGORY_NAME);
+  }
+
+  for (const extra of input.extraNames || []) {
+    const name = String(extra || "").trim();
+    if (!name || name === ROOT_CATEGORY_NAME) continue;
+    if (!parentByName.has(name)) parentByName.set(name, ROOT_CATEGORY_NAME);
+  }
+
+  const allNames = Array.from(parentByName.keys());
+  for (const name of allNames) {
+    if (name === ROOT_CATEGORY_NAME) continue;
+    const parentName = parentByName.get(name) || ROOT_CATEGORY_NAME;
+    if (!parentByName.has(parentName)) parentByName.set(parentName, ROOT_CATEGORY_NAME);
+  }
+
+  const childrenByParent = new Map<string, string[]>();
+  function pushChild(parentName: string, childName: string) {
+    const list = childrenByParent.get(parentName) || [];
+    if (!list.includes(childName)) list.push(childName);
+    childrenByParent.set(parentName, list);
+  }
+
+  for (const [name, parentNameRaw] of parentByName.entries()) {
+    if (name === ROOT_CATEGORY_NAME) continue;
+    const parentName = parentNameRaw && parentNameRaw !== name ? parentNameRaw : ROOT_CATEGORY_NAME;
+    pushChild(parentName, name);
+  }
+
+  for (const [parentName, children] of childrenByParent.entries()) {
+    childrenByParent.set(parentName, [...children].sort((a, b) => a.localeCompare(b, "pt-BR")));
+  }
+
+  const options: CategorySelectOption[] = [];
+  const visited = new Set<string>();
+
+  function walkNode(name: string, depth: number) {
+    if (name === ROOT_CATEGORY_NAME) return;
+    if (visited.has(name)) return;
+    visited.add(name);
+
+    const indent = depth > 0 ? `${"\u00A0\u00A0".repeat(depth)}↳ ` : "";
+    options.push({ value: name, label: `${indent}${name}`, depth });
+
+    const children = childrenByParent.get(name) || [];
+    for (const child of children) walkNode(child, depth + 1);
+  }
+
+  const rootChildren = childrenByParent.get(ROOT_CATEGORY_NAME) || [];
+  for (const child of rootChildren) walkNode(child, 0);
+
+  const remaining = Array.from(parentByName.keys())
+    .filter((name) => name !== ROOT_CATEGORY_NAME && !visited.has(name))
+    .sort((a, b) => a.localeCompare(b, "pt-BR"));
+  for (const name of remaining) walkNode(name, 0);
+
+  return options;
 }
 
 
