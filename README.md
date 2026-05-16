@@ -36,3 +36,13 @@ Arquitetura final:
 
 Leia `REMOVE_PLUGGY_REPORT.json`.
 
+## Documentação do Projeto
+
+A pasta [`/docs`](./docs) centraliza a documentação viva do desenvolvimento para facilitar a continuidade do projeto em qualquer computador, sem depender exclusivamente do histórico de conversas.
+
+Arquivos principais:
+- [`docs/andamento.md`](./docs/andamento.md): status da execução (última etapa, etapa atual, próximas etapas e observações).
+- [`docs/decisoes.md`](./docs/decisoes.md): decisões técnicas, de interface, de banco e decisões futuras.
+- [`docs/pendencias.md`](./docs/pendencias.md): pendências críticas/importantes, melhorias e bugs conhecidos.
+- [`docs/comandos.md`](./docs/comandos.md): comandos essenciais de setup, execução, build, Git e Supabase.
+- [`docs/prompts-importantes.md`](./docs/prompts-importantes.md): prompts relevantes usados no desenvolvimento.
