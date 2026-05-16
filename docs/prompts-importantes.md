@@ -1,49 +1,40 @@
 # Prompts Importantes
 
-Registro de prompts úteis para acelerar futuras evoluções.
+Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
-## Prompts usados para implementação
-- Modelo de registro:
-  - Objetivo:
-  - Prompt:
-  - Resultado:
-  - Referência (commit/arquivos):
+## Prompts usados para implementacao
+- Objetivo: incluir modos de recorrencia na criacao/edicao de transacoes.
+- Prompt base: "Na pagina transactions, ajustar para criar transacoes em 3 modalidades: Sem repeticao, Parcelamento (mensal) e Avancado..."
+- Resultado: suporte completo de recorrencia com vinculo e controle por escopo.
+- Referencia: `b0a7711`, `310b3c4`.
 
-- Exemplo:
-  - Objetivo: Implementar recorrência de transações.
-  - Prompt: "Na página transactions, ajuste para que na criação/edição de transação o usuário possa criar transações em 3 modalidades..."
-  - Resultado: Inclusão de `Sem repetição`, `Parcelamento (mensal)` e `Avançado`.
+- Objetivo: reorganizar toolbar da aba transactions.
+- Prompt base: "Criar botao para adicionar transacoes... substituir icone de excluir por DEL..."
+- Resultado: barra com melhor hierarquia, DEL padronizado e fluxo de adicao mais claro.
+- Referencia: `516ccbd`, `d32cb40`, `c8a502b`.
 
-## Prompts usados para correção de bugs
-- Modelo de registro:
-  - Bug:
-  - Prompt:
-  - Correção aplicada:
-  - Validação:
+## Prompts usados para correcao de bugs
+- Bug: variaveis de ambiente ausentes do Supabase em runtime.
+- Prompt base: "Ao tentar criar conta pelo site apareceu erro de NEXT_PUBLIC_SUPABASE_URL..."
+- Correcao aplicada: revisao de variaveis no ambiente local/Vercel.
+- Validacao: criacao de conta/login funcionando.
 
-- Exemplo:
-  - Bug: Erro de variáveis de ambiente do Supabase ausentes.
-  - Prompt: "Ao tentar criar conta pelo site apareceu o erro de NEXT_PUBLIC_SUPABASE_URL ausente..."
-  - Correção aplicada: Ajuste de configuração de variáveis no ambiente.
+- Bug: exclusao de categoria reaparecendo no painel.
+- Prompt base: "Na pagina transactions, nao estou conseguindo excluir categorias..."
+- Correcao aplicada: ajuste de sincronizacao/atualizacao da arvore.
+- Validacao: exclusao com refresh consistente.
 
-## Prompts usados para revisão de código
-- Modelo de registro:
-  - Escopo revisado:
-  - Prompt:
-  - Pontos encontrados:
-  - Ações tomadas:
+## Prompts usados para revisao de codigo
+- Escopo revisado: regras de transacao, recorrencia e filtros.
+- Prompt base: "Revise riscos de regressao na pagina transactions..."
+- Pontos principais: consistencia de sinais de valores, filtros combinados, exclusao por escopo.
+- Acoes tomadas: ajustes em APIs e no frontend com build de validacao.
 
-- Exemplo:
-  - Escopo revisado: Fluxo de transações e filtros.
-  - Prompt: "Revise os riscos de regressão na página transactions..."
+## Prompts usados para documentacao
+- Artefato documentado: pasta `/docs` e `README`.
+- Prompt base: "Crie no meu projeto uma pasta chamada /docs..."
+- Resultado: estrutura persistente de contexto no repositorio.
 
-## Prompts usados para documentação
-- Modelo de registro:
-  - Artefato documentado:
-  - Prompt:
-  - Resultado:
-
-- Exemplo:
-  - Artefato documentado: Pasta `/docs`.
-  - Prompt: "Crie no meu projeto uma pasta chamada /docs na raiz do repositório..."
-  - Resultado: Estrutura inicial de documentação persistente no repositório.
+- Artefato documentado: atualizacao de estado apos iteracoes de `transactions`.
+- Prompt base: "atualizar arquivos do projeto da pasta docs".
+- Resultado: alinhamento de andamento, decisoes, pendencias e comandos com estado atual.

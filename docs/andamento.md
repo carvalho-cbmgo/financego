@@ -1,45 +1,46 @@
 # Andamento do Projeto
 
-Este documento registra o estado atual do desenvolvimento para facilitar continuidade em qualquer máquina.
+Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Última etapa concluída
-- Data: `2026-05-15`
-- Entrega: Implementação de recorrência de transações (`Sem repetição`, `Parcelamento (mensal)`, `Avançado`), com vínculo entre transações recorrentes.
-- Resultado:
-  - Criação/edição com campos de recorrência.
-  - Indicador visual de recorrência na tabela de transações.
-  - Exclusão com escopo (`somente atual`, `atuais+anteriores`, `atuais+posteriores`).
-- Referência técnica:
-  - Commit: `b0a7711`
-  - Arquivos principais:
-    - `src/app/api/transactions/save/route.ts`
-    - `src/app/api/categories/update/route.ts`
-    - `src/components/transactions-table.tsx`
-    - `src/app/dashboard/page.tsx`
-    - `src/app/globals.css`
+- Data: `2026-05-16`
+- Entrega principal: refinamentos da aba `transactions` (toolbar, formulário de criação e saldos na tabela).
+- Resultado entregue:
+  - Botão `+ Adicionar transacao` fixado à esquerda da barra.
+  - Ações em lote reposicionadas para a direita.
+  - `DEL` padronizado em tamanho com os demais ícones.
+  - Removidos: `Clique na linha para editar`, linha `Todos` e botão `Exportar`.
+  - Inclusão de linha de saldo antes do cabeçalho e após a última transação.
+  - Formulário de criação reorganizado:
+    - Linha 1: ação (`Despesa`, `Transferencia`, `Receita`).
+    - Linha 2: `Data`, `Descricao`, `Categoria`, `Valor`, `Consolidada`.
+    - Linha 3+: recorrência (`Sem repeticao`, `Parcelamento (mensal)`, `Avancado`) e botões `Salvar/Cancelar`.
+- Referências técnicas (commits):
+  - `516ccbd` - botão adicionar + DEL em lote.
+  - `d32cb40` - layout aprimorado do bloco de criação.
+  - `c8a502b` - ajustes de toolbar e linhas de saldo.
+  - `310b3c4` - recorrência no formulário de criação e data compacta.
 
 ## Etapa atual
-- Objetivo da etapa:
-  - Refinar experiência de uso e validar regras de negócio no fluxo de transações.
+- Objetivo: estabilização visual e validação funcional ponta a ponta da aba `transactions`.
 - Em andamento:
-  - [ ] Validação funcional completa das modalidades de recorrência.
-  - [ ] Testes manuais de exclusão por escopo.
-  - [ ] Revisão visual em resoluções desktop e mobile.
-- Responsável: `Mayko / Finance GO`
+  - [ ] Validar recorrência criada no formulário de adição em todos os cenários.
+  - [ ] Validar comportamento dos saldos com filtros de contas/categorias.
+  - [ ] Revisão final de responsividade (desktop e mobile).
 
 ## Próximas etapas
 - Curto prazo:
-  - [ ] Consolidar testes de importação CSV/OFX/PDF com categorias e contas.
-  - [ ] Revisar performance de carregamento em páginas com muitos registros.
-  - [ ] Criar checklist de regressão da aba `Transações`.
+  - [ ] Ajustar seleção de conta no formulário de criação (sem comprometer layout compacto).
+  - [ ] Revisar textos e acentuação para consistência global.
+  - [ ] Criar checklist de regressão da aba `transactions`.
 - Médio prazo:
-  - [ ] Padronizar componentes visuais de feedback (loading, sucesso, erro).
-  - [ ] Expandir testes automatizados para rotas críticas de API.
+  - [ ] Expandir testes automatizados para APIs de transações.
+  - [ ] Melhorar feedbacks de erro/sucesso no frontend.
 - Longo prazo:
-  - [ ] Evoluir painel analítico (gráficos e filtros avançados).
+  - [ ] Evoluir análises e gráficos por conta, banco e período.
 
 ## Observações importantes
-- Sempre manter este arquivo atualizado ao final de cada entrega relevante.
-- Em toda alteração de regra de negócio, registrar também em `docs/decisoes.md`.
-- Em toda nova demanda, registrar itens abertos em `docs/pendencias.md`.
-- Antes de publicar, revisar comandos de deploy em `docs/comandos.md`.
+- Sempre atualizar este arquivo após qualquer entrega relevante.
+- Registrar novas regras em `docs/decisoes.md`.
+- Registrar pendências novas em `docs/pendencias.md`.
+- Antes de publicar, validar `npm run build` e fluxo de deploy.

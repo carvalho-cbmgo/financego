@@ -1,52 +1,56 @@
-# Decisões do Projeto
+# Decisoes do Projeto
 
-Registro das decisões tomadas, com contexto e impacto.
+Registro das decisoes arquiteturais, de interface e de dados.
 
-## Decisões técnicas
-- Formato recomendado de registro:
-  - Data:
-  - Decisão:
-  - Motivo:
-  - Impacto:
-  - Referência (commit/arquivo):
+## Decisoes tecnicas
+- Data: `2026-05-15`
+- Decisao: recorrencia de transacoes gerada no backend com vinculo por `installment_group_key`.
+- Motivo: suportar parcelamento e recorrencia avancada com rastreabilidade.
+- Impacto: criacao/edicao/exclusao por escopo no mesmo grupo de recorrencia.
+- Referencia: `b0a7711`.
 
-- Decisões já aplicadas:
-  - Data: `2026-05-15`
-  - Decisão: Implementar recorrência via backend (geração de múltiplas transações) e manter vínculo por `installment_group_key`.
-  - Motivo: Permitir parcelamento e recorrência avançada com rastreabilidade e edição/exclusão por grupo.
-  - Impacto: Fluxo de transações ficou mais robusto e compatível com cenários reais de finanças pessoais.
+- Data: `2026-05-16`
+- Decisao: reutilizar padrao de recorrencia no formulario de `Adicionar transacao`.
+- Motivo: manter consistencia entre criar e editar.
+- Impacto: menos ambiguidade de uso e menor curva de aprendizado.
+- Referencia: `310b3c4`.
 
-## Decisões de interface
-- Formato recomendado de registro:
-  - Data:
-  - Tela:
-  - Decisão:
-  - Motivo:
-  - Impacto:
+## Decisoes de interface
+- Data: `2026-05-16`
+- Tela: `transactions`
+- Decisao: reorganizar a barra de acoes com `Adicionar transacao` a esquerda e acoes em lote a direita.
+- Motivo: melhorar hierarquia visual e foco de uso.
+- Impacto: interface mais limpa e previsivel.
+- Referencias: `516ccbd`, `c8a502b`.
 
-- Decisões já aplicadas:
-  - Data: `2026-05-15`
-  - Tela: `Transações`
-  - Decisão: Exibir indicador visual para transações recorrentes e campos dinâmicos conforme modalidade escolhida.
-  - Motivo: Melhorar entendimento do usuário sobre parcelas e recorrências.
-  - Impacto: Edição mais clara e menos ambígua.
+- Data: `2026-05-16`
+- Tela: `transactions`
+- Decisao: remover `Clique na linha para editar`, remover linha `Todos` e remover `Exportar` da barra principal.
+- Motivo: reduzir ruido visual e priorizar fluxo operacional.
+- Impacto: area de transacoes mais objetiva.
+- Referencia: `c8a502b`.
 
-## Decisões de banco de dados
-- Formato recomendado de registro:
-  - Data:
-  - Entidade/Tabela:
-  - Decisão:
-  - Motivo:
-  - Impacto:
+- Data: `2026-05-16`
+- Tela: `transactions`
+- Decisao: incluir linha de saldo antes do cabecalho e apos ultima transacao.
+- Motivo: dar contexto de saldo antes/depois do conjunto exibido.
+- Impacto: leitura financeira imediata sem depender de outra tela.
+- Referencia: `c8a502b`.
 
-- Decisões já aplicadas:
-  - Data: `2026-05-15`
-  - Entidade: `transactions`
-  - Decisão: Utilizar campos `installment_current`, `installment_total`, `installment_group_key` e metadados em `raw.recurrence`.
-  - Motivo: Preservar vínculo e contexto de recorrência sem perder compatibilidade com o modelo existente.
-  - Impacto: Permite exclusão por escopo e melhor visualização no frontend.
+## Decisoes de banco de dados
+- Data: `2026-05-15`
+- Entidade: `transactions`
+- Decisao: manter campos `installment_current`, `installment_total`, `installment_group_key` e `raw.recurrence`.
+- Motivo: permitir recorrencia com metadata sem quebrar compatibilidade.
+- Impacto: flexibilidade de modelagem e controle de exclusao por escopo.
 
-## Decisões futuras
-- [ ] Definir estratégia formal de testes automatizados (unitário + integração) para regras de recorrência.
-- [ ] Definir política de versionamento de regras de importação (`CSV/OFX/PDF`).
-- [ ] Definir padrão único para mensagens de erro orientadas ao usuário.
+- Data: `2026-05-16`
+- Entidade: `transactions`
+- Decisao: sem nova migracao de schema nos refinamentos recentes de UI.
+- Motivo: mudancas focadas em layout/UX e reaproveitamento da base existente.
+- Impacto: deploy mais simples e menor risco de regressao em dados.
+
+## Decisoes futuras
+- [ ] Definir testes automatizados para fluxos de recorrencia (`none/installment/advanced`).
+- [ ] Definir estrategia de selecao de conta no formulario de adicao sem perder layout compacto.
+- [ ] Definir padrao unico de mensagens de erro e sucesso no frontend.

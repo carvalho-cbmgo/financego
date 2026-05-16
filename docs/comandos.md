@@ -1,13 +1,13 @@
 # Comandos do Projeto
 
-Referência rápida para setup, execução e manutenção.
+Referencia rapida para setup, execucao, validacao e publicacao.
 
-## Instalação do projeto
+## Instalacao do projeto
 ```bash
 npm install
 ```
 
-## Execução em ambiente de desenvolvimento
+## Execucao em ambiente de desenvolvimento
 ```bash
 npm run dev
 ```
@@ -27,7 +27,7 @@ git push origin main
 ```
 
 ## Supabase
-> Use estes comandos se o Supabase CLI estiver instalado e configurado no ambiente.
+> Use se o Supabase CLI estiver instalado e configurado.
 
 ```bash
 supabase start
@@ -35,14 +35,26 @@ supabase db push
 supabase migration list
 ```
 
-## Outros comandos úteis
+## Outros comandos uteis
 ```bash
-# Worker de sincronização local
+# Worker de sincronizacao local
 npm run sync:worker
 
-# Buscar texto no projeto
+# Buscar termos no projeto
 rg "texto-ou-termo"
 
-# Listar arquivos rapidamente
+# Listar arquivos
 rg --files
+
+# Ver ultimos commits
+git log --oneline -n 12
+```
+
+## Rotina recomendada antes de deploy
+```bash
+git status -sb
+npm run build
+git add -A
+git commit -m "descricao da entrega"
+git push origin main
 ```
