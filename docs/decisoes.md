@@ -4,9 +4,20 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
-- Decisao: usar `accounts.balance` como fonte do saldo exibido no painel lateral de contas da pagina `transactions`.
-- Motivo: a soma historica de transacoes estava distorcendo o saldo de contas (ex.: `NUBANK Cartao` negativo incorreto).
-- Impacto: saldo apresentado ao usuario fica alinhado ao valor persistido da conta e evita divergencias por parcelas/planejadas historicas.
+- Decisao: saldos de conta no `dashboard`/`transactions` devem considerar apenas transacoes consolidadas na composicao dinamica.
+- Motivo: evitar inflar saldo com despesas previstas (`is_consolidated = false`) e corrigir divergencias como a do `NUBANK Cartao`.
+- Impacto: o painel de contas volta a refletir saldo real consolidado, mantendo previsoes separadas em indicadores proprios.
+
+- Data: `2026-05-17`
+- Decisao: aplicar fallback de saldo por prioridade:
+  1) snapshot (`last_balance_at` + `balance`), 2) saldo base manual + consolidado, 3) apenas consolidado.
+- Motivo: `accounts.balance` isolado nao e atualizado automaticamente em todos os fluxos; usar fallback evita valores nulos.
+- Impacto: maior robustez de exibicao sem perder compatibilidade com contas sincronizadas e contas manuais.
+
+- Data: `2026-05-17`
+- Decisao: **revisada**. A estrategia de usar apenas `accounts.balance` foi substituida por composicao com consolidado + fallback de snapshot.
+- Motivo: em contas manuais, `accounts.balance` isolado deixou saldos nulos/zerados.
+- Impacto: manter historico da decisao e registrar o ajuste corretivo aplicado na etapa seguinte.
 
 - Data: `2026-05-17`
 - Decisao: implementar exclusao de conta via rota dedicada `POST /api/accounts/delete` com etapa explicita de confirmacao na UI.

@@ -3,6 +3,13 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir saldo nulo no painel de contas e separar previsto de saldo consolidado.
+- Prompt base: "Na pagina accounts... despesa prevista... e no dashboard/transactions os saldos estao nulos."
+- Resultado:
+  - Saldo de contas passou a usar composicao por transacoes consolidadas com fallback de snapshot.
+  - `Despesa prevista` permaneceu como indicador separado (nao entra no saldo consolidado).
+  - Correcao aplicada em `dashboard` e `accounts`.
+
 - Objetivo: habilitar exclusao de conta e corrigir saldo incorreto na tela de transacoes.
 - Prompt base: "A pagina accounts deve permitir que o usuario possa deletar uma determinada conta... Corrigir saldo negativo incorreto da conta NUBANK Cartao."
 - Resultado:

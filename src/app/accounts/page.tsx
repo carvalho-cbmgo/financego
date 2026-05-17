@@ -29,7 +29,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       .order("name"),
     supabaseAdmin
       .from("accounts")
-      .select("id, bank_id, name, institution_name, type, balance, created_at")
+      .select("id, bank_id, name, institution_name, type, balance, last_balance_at, created_at")
       .eq("profile_id", user.id)
       .order("created_at", { ascending: false }),
     supabaseAdmin
@@ -57,7 +57,10 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   }
 
   const totals = {
-    balance: (accounts || []).reduce((sum: number, account: any) => sum + Number(account.balance || 0), 0),
+    balance: (accounts || []).reduce((sum: number, account: any) => {
+      const stats = statsByAccount.get(String(account.id)) || null;
+      return sum + resolveAccountDisplayedBalance(account, stats);
+    }, 0),
     consolidatedExpense: Array.from(statsByAccount.values()).reduce((sum, item) => sum + item.consolidatedExpense, 0),
     plannedExpense: Array.from(statsByAccount.values()).reduce((sum, item) => sum + item.plannedExpense, 0),
     consolidatedIncome: Array.from(statsByAccount.values()).reduce((sum, item) => sum + item.consolidatedIncome, 0),
@@ -77,7 +80,10 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
     const accountsFromBank = (accounts || []).filter((account: any) => String(account.bank_id || "") === String(bank.id));
     const accountIds = new Set(accountsFromBank.map((account: any) => String(account.id)));
 
-    const bankBalance = accountsFromBank.reduce((sum: number, account: any) => sum + Number(account.balance || 0), 0);
+    const bankBalance = accountsFromBank.reduce((sum: number, account: any) => {
+      const stats = statsByAccount.get(String(account.id)) || null;
+      return sum + resolveAccountDisplayedBalance(account, stats);
+    }, 0);
     let bankConsolidatedExpense = 0;
     let bankPlannedExpense = 0;
 
@@ -115,7 +121,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
       bankName,
       name: account.name || "-",
       typeLabel,
-      balance: Number(account.balance || 0),
+      balance: resolveAccountDisplayedBalance(account, stats),
       txCount: stats.txCount,
       consolidatedExpense: stats.consolidatedExpense,
       plannedExpense: stats.plannedExpense,
@@ -335,4 +341,23 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
   if (okValue && okMap[okValue]) return { tone: "ok" as const, text: okMap[okValue] };
   return null;
+}
+
+function resolveAccountDisplayedBalance(
+  account: any,
+  stats: { consolidatedExpense: number; consolidatedIncome: number } | null | undefined
+) {
+  const consolidatedAmount = (stats?.consolidatedIncome || 0) - (stats?.consolidatedExpense || 0);
+  const rawBalance = Number(account?.balance || 0);
+  const hasSnapshotBalance = Boolean(account?.last_balance_at);
+
+  if (hasSnapshotBalance && Number.isFinite(rawBalance)) {
+    return rawBalance;
+  }
+
+  if (Number.isFinite(rawBalance) && rawBalance !== 0) {
+    return rawBalance + consolidatedAmount;
+  }
+
+  return consolidatedAmount;
 }

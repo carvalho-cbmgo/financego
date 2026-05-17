@@ -63,7 +63,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const monthStart = `${selectedMonthRef}-01T00:00:00.000Z`;
   const monthEnd = `${nextMonthRef(selectedMonthRef)}-01T00:00:00.000Z`;
 
-  const [{ data: banks }, { data: accounts }, categoriesCatalogResponse] = await Promise.all([
+  const [{ data: banks }, { data: accounts }, categoriesCatalogResponse, accountBalancesResponse] = await Promise.all([
     supabaseAdmin
       .from("banks")
       .select("id, name, code")
@@ -71,20 +71,40 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .order("name"),
     supabaseAdmin
       .from("accounts")
-      .select("id, bank_id, name, balance, institution_name, type")
+      .select("id, bank_id, name, balance, institution_name, type, last_balance_at")
       .eq("profile_id", user.id)
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("categories")
       .select("id, name, parent_id")
       .eq("profile_id", user.id),
+    supabaseAdmin
+      .from("transactions")
+      .select("account_id, amount, is_consolidated")
+      .eq("profile_id", user.id),
   ]);
 
   const categoriesCatalog = categoriesCatalogResponse.error
     ? []
     : buildCategoryCatalog(categoriesCatalogResponse.data || []);
+  const consolidatedAmountByAccountId = new Map<string, number>();
+  for (const row of accountBalancesResponse.data || []) {
+    const accountId = String((row as any)?.account_id || "").trim();
+    if (!accountId) continue;
+    const consolidated = (row as any)?.is_consolidated !== false;
+    if (!consolidated) continue;
+    const amount = Number((row as any)?.amount || 0);
+    if (!Number.isFinite(amount)) continue;
+    consolidatedAmountByAccountId.set(accountId, (consolidatedAmountByAccountId.get(accountId) || 0) + amount);
+  }
   const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
   const accountById = new Map<string, any>((accounts || []).map((acc: any) => [String(acc.id), acc]));
+  const displayedBalanceByAccountId = new Map<string, number>();
+  for (const account of accounts || []) {
+    const accountId = String((account as any)?.id || "").trim();
+    if (!accountId) continue;
+    displayedBalanceByAccountId.set(accountId, resolveAccountDisplayedBalance(account, consolidatedAmountByAccountId));
+  }
 
   const bankMatchedAccountIds = selectedBankId
     ? (accounts || [])
@@ -243,6 +263,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <AccountsSidePanel
               accounts={accounts || []}
               bankById={bankById}
+              displayedBalanceByAccountId={displayedBalanceByAccountId}
               selectedAccountIds={selectedAccountIds}
               selectedBankId={selectedBankId}
               currentTab={currentTab}
@@ -311,11 +332,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <tbody>
                         {selectedAccounts.slice(0, 12).map((acc: any) => {
                           const bank = bankById.get(String(acc.bank_id || ""));
+                          const resolvedBalance = displayedBalanceByAccountId.get(String(acc.id || "")) || 0;
                           return (
                             <tr key={acc.id}>
                               <td>{acc.name}</td>
                               <td>{bank?.name || acc.institution_name || "-"}</td>
-                              <td>{brl(acc.balance || 0)}</td>
+                              <td>{brl(resolvedBalance)}</td>
                             </tr>
                           );
                         })}
@@ -370,6 +392,7 @@ function SummaryRow({ label, value, tone }: { label: string; value: string; tone
 function AccountsSidePanel(input: {
   accounts: any[];
   bankById: Map<string, any>;
+  displayedBalanceByAccountId: Map<string, number>;
   selectedAccountIds: string[];
   selectedBankId: string;
   currentTab: "overview" | "transactions";
@@ -380,7 +403,7 @@ function AccountsSidePanel(input: {
     return {
       id: accountId,
       name: String(account.name || ""),
-      balance: Number(account.balance || 0),
+      balance: Number(input.displayedBalanceByAccountId.get(accountId) || 0),
       type: account.type || null,
       bankName: String(bank?.name || account.institution_name || "Sem banco"),
     };
@@ -542,6 +565,23 @@ function parseCsvList(input?: string) {
     .split(",")
     .map((value) => value.trim())
     .filter((value) => value.length > 0);
+}
+
+function resolveAccountDisplayedBalance(account: any, consolidatedAmountByAccountId: Map<string, number>) {
+  const accountId = String(account?.id || "").trim();
+  const consolidatedAmount = Number(consolidatedAmountByAccountId.get(accountId) || 0);
+  const rawBalance = Number(account?.balance || 0);
+  const hasSnapshotBalance = Boolean(account?.last_balance_at);
+
+  if (hasSnapshotBalance && Number.isFinite(rawBalance)) {
+    return rawBalance;
+  }
+
+  if (Number.isFinite(rawBalance) && rawBalance !== 0) {
+    return rawBalance + consolidatedAmount;
+  }
+
+  return consolidatedAmount;
 }
 
 function capitalize(value: string) {

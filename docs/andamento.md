@@ -4,25 +4,26 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: exclusao de conta em `accounts` + correcao de saldo exibido em `transactions`.
+- Entrega principal: recalculo de saldo por conta com base em transacoes consolidadas (sem inflar com previstas).
 - Resultado entregue:
+  - Pagina `dashboard` e aba `transactions`:
+    - Reintroduzido calculo dinamico de saldo por conta, sem depender apenas de `accounts.balance`.
+    - Regra aplicada:
+      - Se `last_balance_at` existir: usa `accounts.balance` como snapshot.
+      - Caso contrario: usa `accounts.balance` (quando nao-zero) + soma de transacoes consolidadas.
+      - Se saldo base estiver zerado/nulo: usa somente soma de transacoes consolidadas.
+    - Resultado: saldos deixaram de aparecer nulos e passaram a refletir o historico consolidado real.
   - Pagina `accounts`:
-    - Inclusao da acao `Excluir` por conta na tabela de `Visao por conta`.
-    - Fluxo de confirmacao de exclusao criado na propria pagina.
-    - Nova rota `POST /api/accounts/delete` implementada com validacao de usuario e ownership.
-    - Exclusao remove a conta e transacoes vinculadas (cascade no banco).
-  - Pagina `transactions`:
-    - Correcao do saldo exibido no painel lateral de contas.
-    - Removida a soma historica de transacoes para compor saldo do card de conta.
-    - O valor agora usa o saldo persistido da conta (`accounts.balance`), eliminando distorcoes como o negativo incorreto do `NUBANK Cartao`.
+    - Mesmo criterio de saldo aplicado em `Saldo total`, `Visao por banco` e `Visao por conta`.
+    - `Despesa prevista` continua separada, baseada em transacoes nao consolidadas.
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validacao funcional em dados reais apos ajustes de conta/saldo e continuidade do fluxo mobile.
+- Objetivo: validacao funcional dos novos calculos de saldo e reconciliacao do `NUBANK Cartao`.
 - Em andamento:
+  - [ ] Confirmar saldo do `NUBANK Cartao` em `accounts` e `transactions` apos deploy.
   - [ ] Validar exclusao de conta em ambiente real com conta que possui historico.
-  - [ ] Confirmar saldo correto do `NUBANK Cartao` na tela de transacoes apos deploy.
   - [ ] Validar ingestao real de notificacao bancaria (`/api/notifications/ingest`).
 
 ## Proximas etapas

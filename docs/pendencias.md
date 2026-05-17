@@ -40,5 +40,12 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Descricao: saldo da conta `NUBANK Cartao` exibido incorretamente (negativo distorcido) na pagina `transactions`.
 - Severidade: alta
 - Como reproduzir: abrir painel lateral de contas na aba de transacoes com historico de parcelas/planejadas.
+- Status: resolvido em `2026-05-17` (via saldo dinamico com base em transacoes consolidadas).
+- Responsavel: time de desenvolvimento
+
+- ID: `ACC-004`
+- Descricao: apos ajuste anterior, painel de contas no `dashboard`/`transactions` passou a mostrar saldos nulos por depender apenas de `accounts.balance`.
+- Severidade: alta
+- Como reproduzir: abrir painel de contas com contas manuais sem snapshot atualizado.
 - Status: resolvido em `2026-05-17`
 - Responsavel: time de desenvolvimento
