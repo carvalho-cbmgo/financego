@@ -4,31 +4,25 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: remodelagem completa da pagina `budgets` com fluxo mensal por categoria.
+- Entrega principal: inclusao de grafico pizza unico no resumo da pagina `budgets`.
 - Resultado entregue:
-  - Pagina `budgets`:
-    - Usuario escolhe o `mes de referencia` (input mes + setas de navegacao lateral).
-    - Usuario seleciona as categorias que deseja orcar (catalogo + inclusao de categoria personalizada).
-    - Usuario define um orcamento individual para cada categoria selecionada.
-    - Tudo permanece salvo por `mes_ref + categoria` e volta preenchido ao reabrir o mesmo mes.
-    - Painel da propria pagina mostra monitoramento por categoria:
-      - Orcado (R$)
-      - Gasto consolidado no mes (R$)
-      - Saldo (R$)
-      - Consumo (%), incluindo barra de progresso visual.
-  - API de orcamentos:
-    - `POST /api/budgets/save` passou a salvar/atualizar categorias selecionadas do mes.
-    - Categorias removidas da selecao passam a ser removidas daquele mes de referencia.
-    - Redirecionamento preserva `month_ref` e retorna status de sucesso/erro na tela.
+  - Resumo mensal em `budgets`:
+    - Abaixo de `Gasto fora do orcamento` foi adicionado um grafico tipo pizza unico.
+    - Cada categoria orcada aparece como fatia proporcional ao valor orcado.
+    - Em cada fatia, o consumo da categoria no mes e mostrado visualmente (parte consumida x parte restante).
+    - Incluida legenda com:
+      - percentual consumido por categoria;
+      - barra de consumo da categoria;
+      - valores `R$ gasto` e `R$ orcado`.
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validacao funcional da nova experiencia de orcamento mensal por categoria.
+- Objetivo: validar leitura visual do novo grafico pizza no acompanhamento mensal de orcamentos.
 - Em andamento:
-  - [ ] Validar ciclo completo: selecionar categorias -> salvar -> voltar no mesmo mes com dados persistidos.
-  - [ ] Validar monitoramento em `%` e `R$` com gastos reais no mes de referencia.
-  - [ ] Validar comportamento quando nenhuma categoria for selecionada e salvo (mes sem orcamento).
+  - [ ] Validar legibilidade do grafico com muitas categorias (8+).
+  - [ ] Validar comportamento visual quando categoria ultrapassa 100% do orcamento.
+  - [ ] Validar comportamento quando nenhuma categoria estiver orcada.
 
 ## Proximas etapas
 - Curto prazo:

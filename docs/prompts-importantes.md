@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: incluir grafico pizza unico em `budgets` para visualizar fatias orcadas e consumo por categoria.
+- Prompt base: "Abaixo de 'Gasto fora do orcamento' criar um unico grafico tipo pizza..."
+- Resultado:
+  - Grafico pizza adicionado no card `Resumo mensal` da pagina `budgets`.
+  - Fatias proporcionais ao valor orcado por categoria.
+  - Segmentacao visual por categoria entre parte consumida e parte restante.
+  - Legenda com `%`, `R$ gasto` e `R$ orcado` por categoria.
+
 - Objetivo: remodelar completamente `budgets` para planejamento mensal por categorias selecionadas pelo usuario com monitoramento por `%` e `R$`.
 - Prompt base: "A pagina budgets deve ser completamente remodelada... escolher mes de referencia... selecionar categorias... estabelecer orcamento individual... monitorar gastos por percentual e R$."
 - Resultado:

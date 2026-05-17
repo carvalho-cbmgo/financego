@@ -8,6 +8,8 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Adicionar opcao de destacar apenas categorias com maior consumo no grafico pizza (top N).
+- [ ] Avaliar tooltip no grafico pizza para detalhar categoria ao passar o mouse.
 - [ ] Ajustar ordenacao opcional no monitoramento de `budgets` (maior consumo, maior excesso, alfabetica).
 - [ ] Avaliar inclusao de modo "copiar orcamento do mes anterior" na tela de `budgets`.
 - [ ] Definir se categorias com orcamento zero devem permanecer visiveis ou serem ocultadas automaticamente.

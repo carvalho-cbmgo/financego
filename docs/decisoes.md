@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: representar o consumo de orcamento por categoria em um unico grafico pizza no card de resumo de `budgets`.
+- Motivo: dar leitura visual imediata das fatias orcadas e do quanto cada fatia ja foi consumida no mes de referencia.
+- Impacto: acompanhamento do orcamento ficou mais intuitivo sem sair da pagina.
+
+- Data: `2026-05-17`
+- Decisao: compor cada fatia da pizza com duas cores da mesma categoria (consumido x restante dentro da fatia).
+- Motivo: atender ao requisito de mostrar simultaneamente tamanho do orcamento e nivel de consumo de cada categoria.
+- Impacto: um unico grafico comunica participacao no orcamento e execucao do gasto.
+
+- Data: `2026-05-17`
 - Decisao: remodelar `budgets` para um fluxo guiado por `mes de referencia`, com selecao dinamica de categorias e limite individual por categoria.
 - Motivo: o formulario fixo anterior nao representava o uso real e nao permitia flexibilidade por mes.
 - Impacto: a gestao de orcamento virou um processo mensal interativo, com persistencia exata por mes/categoria.

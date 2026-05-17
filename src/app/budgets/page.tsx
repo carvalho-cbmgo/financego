@@ -14,6 +14,15 @@ type BudgetsParams = {
   error?: string;
 };
 
+type BudgetMonitorRow = {
+  id: string;
+  category: string;
+  planned: number;
+  spent: number;
+  remaining: number;
+  pct: number;
+};
+
 export default async function BudgetsPage({ searchParams }: { searchParams: Promise<BudgetsParams> }) {
   const { user, accessToken } = await requireServerSession();
   const supabaseAdmin = createUserDb(accessToken);
@@ -56,7 +65,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
     monthTxRows: monthTxs || [],
   });
 
-  const budgetRows = (budgets || []).map((item: any) => {
+  const budgetRows: BudgetMonitorRow[] = (budgets || []).map((item: any) => {
     const category = normalizeCategoryName(item.category);
     const planned = Number(item.planned_amount || 0);
     const spent = spentByCategory.get(category) || 0;
@@ -73,6 +82,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
   const unbudgetedSpent = Array.from(spentByCategory.entries())
     .filter(([category]) => !plannedCategorySet.has(category))
     .reduce((sum, [, value]) => sum + value, 0);
+  const budgetPieModel = buildBudgetPieModel(budgetRows);
   const status = buildStatusMessage(params.ok, params.error);
   const returnUrl = `/budgets?month_ref=${encodeURIComponent(selectedMonthRef)}`;
 
@@ -119,6 +129,11 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
               <SummaryRow label="Categorias orcadas" value={String(budgetRows.length)} />
               <SummaryRow label="Consumo medio das categorias orcadas" value={`${totalConsumptionPct.toFixed(1)}%`} />
               <SummaryRow label="Gasto fora do orcamento" value={brl(unbudgetedSpent)} />
+              {budgetPieModel ? (
+                <BudgetPiePanel model={budgetPieModel} totalConsumptionPct={totalConsumptionPct} />
+              ) : (
+                <div className="fg-empty">Sem categorias orcadas para montar o grafico pizza.</div>
+              )}
             </div>
           </Card>
         </div>
@@ -180,6 +195,43 @@ function SummaryRow(input: { label: string; value: string }) {
     <div className="fg-legacy-summary-row">
       <span>{input.label}</span>
       <strong>{input.value}</strong>
+    </div>
+  );
+}
+
+function BudgetPiePanel(input: { model: BudgetPieModel; totalConsumptionPct: number }) {
+  return (
+    <div className="fg-budgets-pie-wrap">
+      <div className="fg-budgets-pie-chart" style={{ background: `conic-gradient(${input.model.gradientStops.join(",")})` }}>
+        <div className="fg-budgets-pie-hole">
+          <strong>{input.totalConsumptionPct.toFixed(1)}%</strong>
+          <span>consumo geral</span>
+        </div>
+      </div>
+
+      <div className="fg-budgets-pie-legend">
+        {input.model.items.map((item) => {
+          const categoryUsedPct = item.categoryUsedRatio * 100;
+          const usedWidth = Math.max(0, Math.min(100, categoryUsedPct));
+          const isOver = categoryUsedPct > 100;
+          return (
+            <div key={item.category} className="fg-budgets-pie-legend-item">
+              <div className="fg-budgets-pie-legend-head">
+                <span className="fg-budgets-pie-dot" style={{ background: item.consumedColor }} />
+                <strong>{item.category}</strong>
+                <span className={isOver ? "fg-legacy-value-neg" : undefined}>{categoryUsedPct.toFixed(1)}%</span>
+              </div>
+              <div className={`fg-budgets-pie-legend-bar ${isOver ? "is-over" : ""}`} style={{ background: item.remainingColor }}>
+                <div style={{ width: `${usedWidth}%`, background: item.consumedColor }} />
+              </div>
+              <div className="fg-budgets-pie-legend-values">
+                <span>{brl(item.spent)} gastos</span>
+                <span>{brl(item.planned)} orcados</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -247,4 +299,74 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
   if (okValue && okMap[okValue]) return { tone: "ok" as const, text: okMap[okValue] };
   return null;
+}
+
+type BudgetPieModel = {
+  gradientStops: string[];
+  items: Array<{
+    category: string;
+    planned: number;
+    spent: number;
+    categoryUsedRatio: number;
+    consumedColor: string;
+    remainingColor: string;
+  }>;
+};
+
+const BUDGET_PIE_PALETTE = [
+  { consumed: "#3e8e2f", remaining: "#dbeecf" },
+  { consumed: "#0f7fa4", remaining: "#d3edf7" },
+  { consumed: "#7b5cbf", remaining: "#e6def9" },
+  { consumed: "#c56a27", remaining: "#f7e3d2" },
+  { consumed: "#bf3058", remaining: "#f8d7e2" },
+  { consumed: "#2c8d84", remaining: "#d3f0ec" },
+  { consumed: "#8c7a2b", remaining: "#f1e9c7" },
+  { consumed: "#4b6bc8", remaining: "#dde4fa" },
+];
+
+function buildBudgetPieModel(rows: BudgetMonitorRow[]): BudgetPieModel | null {
+  const validRows = (rows || []).filter((item) => Number(item.planned) > 0);
+  if (!validRows.length) return null;
+
+  const totalPlanned = validRows.reduce((sum, item) => sum + Number(item.planned || 0), 0);
+  if (totalPlanned <= 0) return null;
+
+  let cursor = 0;
+  const gradientStops: string[] = [];
+  const items: BudgetPieModel["items"] = [];
+
+  for (let index = 0; index < validRows.length; index++) {
+    const row = validRows[index];
+    const palette = BUDGET_PIE_PALETTE[index % BUDGET_PIE_PALETTE.length];
+    const slicePct = (Number(row.planned || 0) / totalPlanned) * 100;
+    const usedRatio = Number(row.planned) > 0 ? Math.max(0, Number(row.spent || 0) / Number(row.planned || 0)) : 0;
+    const usedRatioWithinBudget = Math.min(1, usedRatio);
+    const consumedPct = slicePct * usedRatioWithinBudget;
+    const remainingPct = Math.max(0, slicePct - consumedPct);
+
+    if (consumedPct > 0) {
+      const start = cursor;
+      const end = cursor + consumedPct;
+      gradientStops.push(`${palette.consumed} ${start}% ${end}%`);
+      cursor = end;
+    }
+
+    if (remainingPct > 0) {
+      const start = cursor;
+      const end = cursor + remainingPct;
+      gradientStops.push(`${palette.remaining} ${start}% ${end}%`);
+      cursor = end;
+    }
+
+    items.push({
+      category: row.category,
+      planned: Number(row.planned || 0),
+      spent: Number(row.spent || 0),
+      categoryUsedRatio: usedRatio,
+      consumedColor: palette.consumed,
+      remainingColor: palette.remaining,
+    });
+  }
+
+  return { gradientStops, items };
 }
