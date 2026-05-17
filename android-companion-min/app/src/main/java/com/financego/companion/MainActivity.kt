@@ -48,6 +48,13 @@ class MainActivity : AppCompatActivity() {
 
     AppWorkScheduler.ensurePeriodicSync(this)
     updateStatus("Pronto. Configure os campos e habilite permissao de notificacoes.")
+    handlePairIntent(intent)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    handlePairIntent(intent)
   }
 
   private fun saveConfig() {
@@ -192,5 +199,42 @@ class MainActivity : AppCompatActivity() {
 
   private fun toast(text: String) {
     Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+  }
+
+  private fun handlePairIntent(intent: Intent?) {
+    val data = intent?.data ?: return
+    if (data.scheme != "financego-companion" || data.host != "pair") return
+
+    val baseUrl = normalizeBaseUrl(data.getQueryParameter("base_url") ?: "")
+    val devicePublicId = (data.getQueryParameter("device_public_id") ?: "").trim()
+    val deviceToken = (data.getQueryParameter("device_token") ?: "").trim()
+    val deepLinkDeviceName = (data.getQueryParameter("device_name") ?: "").trim()
+
+    if (baseUrl.isBlank() || devicePublicId.isBlank() || deviceToken.isBlank()) {
+      updateStatus("Link de pareamento incompleto. Gere um novo pareamento no FinanceGO.")
+      toast("Link de pareamento invalido.")
+      return
+    }
+
+    baseUrlInput.setText(baseUrl)
+    devicePublicIdInput.setText(devicePublicId)
+    deviceTokenInput.setText(deviceToken)
+    if (deepLinkDeviceName.isNotBlank()) {
+      deviceNameInput.setText(deepLinkDeviceName)
+    }
+
+    val config = CompanionConfig(
+      baseUrl = baseUrl,
+      devicePublicId = devicePublicId,
+      deviceName = deviceNameInput.text.toString().ifBlank { android.os.Build.MODEL },
+    )
+    CompanionPrefs.save(this, config)
+    SecureTokenStore.save(this, deviceToken)
+    AppWorkScheduler.ensurePeriodicSync(this)
+    AppWorkScheduler.enqueueOneTimeSync(this)
+
+    updateStatus("Pareamento automatico concluido. Validando conectividade...")
+    toast("Pareamento automatico concluido.")
+    sendConnectivityTestAfterSave(config, deviceToken)
   }
 }

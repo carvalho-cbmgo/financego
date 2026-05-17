@@ -49,7 +49,8 @@ build-artifacts/financego-companion-compat-v2-signed.apk
 2) Redirecionamento automatico para /mobile
 3) Menu lateral (icone tres barras)
 4) Configuracoes -> /mobile/pair
-5) Gerar Device Public ID + Device Token
+5) Tocar em "Conectar app automaticamente"
+6) APK abre e recebe configuracao via deep link
 ```
 
 ## Git

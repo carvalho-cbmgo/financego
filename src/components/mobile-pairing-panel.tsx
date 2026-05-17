@@ -25,7 +25,7 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
     return `${payload.device_token.slice(0, 8)}...${payload.device_token.slice(-8)}`;
   }, [payload]);
 
-  async function createPairing() {
+  async function createPairing(options?: { autoOpen?: boolean }) {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setMessage("Gerando token de pareamento...");
@@ -44,13 +44,33 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
         return;
       }
 
-      setPayload(data as PairResponse);
-      setMessage("Pareamento gerado com sucesso. Salve os dados no app Android companion.");
+      const pairData = data as PairResponse;
+      setPayload(pairData);
+
+      if (options?.autoOpen) {
+        openCompanionPairing(pairData);
+        setMessage("Pareamento gerado. Abrindo o app companion para configuracao automatica...");
+      } else {
+        setMessage("Pareamento gerado com sucesso. Se preferir, use o botao de conexao automatica.");
+      }
     } catch (error: any) {
       setMessage(String(error?.message || "Erro inesperado ao gerar pareamento."));
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function openCompanionPairing(pairData: PairResponse) {
+    if (typeof window === "undefined") return;
+    const origin = window.location.origin.replace(/\/$/, "");
+    const params = new URLSearchParams({
+      base_url: origin,
+      device_public_id: pairData.device_public_id,
+      device_token: pairData.device_token,
+      device_name: deviceName.trim() || defaultDeviceName,
+    });
+    const deeplink = `financego-companion://pair?${params.toString()}`;
+    window.location.href = deeplink;
   }
 
   async function copyValue(label: string, value: string) {
@@ -76,12 +96,31 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
         />
       </label>
 
-      <button type="button" className="fg-mobile-pair-btn" onClick={createPairing} disabled={isSubmitting}>
-        {isSubmitting ? "Gerando..." : "Gerar novo pareamento"}
+      <button
+        type="button"
+        className="fg-mobile-pair-btn"
+        onClick={() => createPairing({ autoOpen: true })}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Gerando..." : "Conectar app automaticamente"}
+      </button>
+
+      <button type="button" className="fg-mobile-pair-btn fg-mobile-pair-btn-secondary" onClick={() => createPairing()} disabled={isSubmitting}>
+        {isSubmitting ? "Aguarde..." : "Gerar pareamento manual"}
       </button>
 
       {payload ? (
         <div className="fg-mobile-pair-result">
+          <div className="fg-mobile-pair-row">
+            <div>
+              <strong>Pareamento automatico</strong>
+              <div className="fg-mobile-pair-note">Se o app ja estiver instalado, toque para abrir com os dados preenchidos.</div>
+            </div>
+            <button type="button" className="fg-mobile-pair-copy" onClick={() => openCompanionPairing(payload)}>
+              Abrir app
+            </button>
+          </div>
+
           <div className="fg-mobile-pair-row">
             <div>
               <strong>Device Public ID</strong>

@@ -19,6 +19,13 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Teste automatico de conectividade apos salvar configuracao.
   - Novo APK de compatibilidade gerado para reteste.
 
+- Objetivo: remover necessidade de digitacao manual no pareamento.
+- Prompt base: "Mas na nova implementação a ideia é não precisar digitar nada..."
+- Resultado:
+  - Botao de auto-pareamento implementado em `/mobile/pair`.
+  - Deep link para abertura direta do APK com dados de configuracao.
+  - APK atualizado para consumir o deep link e salvar automaticamente.
+
 - Objetivo: implementar menu lateral mobile e pareamento Android.
 - Prompt base: "Quando o sistema for acessado de um celular... Pode implementar o proximo passo: tela de pareamento + app Android companion minimo..."
 - Resultado:

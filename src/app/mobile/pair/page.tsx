@@ -39,8 +39,8 @@ export default async function MobilePairPage({ searchParams }: { searchParams: P
           <h3 className="fg-mobile-section-title">Passo 1 - gerar credenciais</h3>
           <article className="fg-mobile-card">
             <p className="fg-mobile-pair-help">
-              Gere um novo pareamento e copie os campos <strong>Device Public ID</strong> e <strong>Device Token</strong>.
-              Esses dados serao usados no app Android companion.
+              Toque em <strong>Conectar app automaticamente</strong> para abrir o companion sem digitar dados.
+              Se o Android bloquear a abertura automatica, use o modo manual logo abaixo.
             </p>
             <MobilePairingPanel defaultDeviceName="Android principal" />
           </article>
@@ -50,8 +50,8 @@ export default async function MobilePairPage({ searchParams }: { searchParams: P
           <h3 className="fg-mobile-section-title">Passo 2 - configurar app Android</h3>
           <article className="fg-mobile-card">
             <ol className="fg-mobile-pair-steps">
-              <li>No Android companion, informe URL base do FinanceGO (ex.: https://seu-projeto.vercel.app).</li>
-              <li>Cole o Device Public ID e o Device Token gerados acima.</li>
+              <li>Se abriu automaticamente, apenas confirme no app companion e toque em salvar.</li>
+              <li>Caso o auto pareamento nao abra, preencha manualmente URL, Device Public ID e Device Token.</li>
               <li>Conceda permissao de leitura de notificacoes.</li>
               <li>Desative otimizacao de bateria para manter captura em tempo real.</li>
             </ol>

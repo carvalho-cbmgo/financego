@@ -9,6 +9,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias importantes
 - [ ] Implementar acao de desparear/desativar dispositivo direto em `/mobile/pair`.
+- [ ] Adicionar feedback no web quando deep link de auto-pareamento for bloqueado pelo navegador.
 - [ ] Expandir feedback da tela de pareamento (mostrar status de token ativo e ultimo envio em tempo real).
 - [ ] Refinar visual do menu lateral mobile para aproximacao final da referencia.
 - [ ] Definir rotina de publicacao recorrente de APK para teste interno.

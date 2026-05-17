@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: implementar pareamento automatico via deep link (`financego-companion://pair`) entre `/mobile/pair` e APK.
+- Motivo: eliminar digitacao manual de URL/ID/token no app companion.
+- Impacto: onboarding em 1 toque no celular quando app estiver instalado.
+
+- Data: `2026-05-17`
 - Decisao: reforcar feedback no APK apos `Salvar configuracao` com validacao de campos e teste automatico de conectividade.
 - Motivo: evitar percepcao de "nada aconteceu" ao salvar e reduzir erro de configuracao silencioso.
 - Impacto: onboarding no app ficou mais claro e autoexplicativo.

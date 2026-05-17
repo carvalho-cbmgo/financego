@@ -4,8 +4,12 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: melhoria do fluxo de configuracao no APK + nova rodada de APK de compatibilidade.
+- Entrega principal: pareamento automatico sem digitacao + APK com deep link.
 - Resultado entregue:
+  - Pareamento sem digitacao:
+    - Botao `Conectar app automaticamente` adicionado em `/mobile/pair`.
+    - Web gera o token e abre o APK via deep link `financego-companion://pair?...`.
+    - APK recebe os dados, salva automaticamente e testa conectividade.
   - UX de configuracao no APK:
     - Botao `Salvar configuracao` agora valida campos obrigatorios.
     - Exibe mensagens claras (toast + status na tela).
@@ -21,7 +25,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - APK debug gerado: `build-artifacts/financego-companion-debug.apk` (instalavel para teste).
     - APK release assinado gerado: `build-artifacts/financego-companion-release-signed.apk` (instalavel).
     - APK release nao assinado tambem gerado: `build-artifacts/financego-companion-release-unsigned.apk`.
-    - APK compat atualizado para instalacao/teste em aparelhos mais restritivos: `build-artifacts/financego-companion-compat-v2-signed.apk`.
+    - APK compat atualizado com auto-pair: `build-artifacts/financego-companion-compat-v3-signed.apk`.
 
 ## Etapa atual
 - Objetivo: validar fluxo fim a fim no celular com APK pronto.

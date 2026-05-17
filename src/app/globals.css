@@ -2354,6 +2354,11 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   cursor: default;
 }
 
+.fg-mobile-pair-btn-secondary {
+  background: #ffffff;
+  color: #2f8f3f;
+}
+
 .fg-mobile-pair-result {
   border: 1px solid #dbe1e9;
   border-radius: 10px;
