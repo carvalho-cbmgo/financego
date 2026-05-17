@@ -289,6 +289,7 @@ function buildAvailableCategories(input: {
 function buildStatusMessage(okValue?: string, errorValue?: string) {
   const okMap: Record<string, string> = {
     saved: "Orcamento mensal salvo com sucesso.",
+    saved_replicated: "Orcamento salvo e replicado automaticamente para os meses seguintes deste ano.",
   };
 
   const errorMap: Record<string, string> = {

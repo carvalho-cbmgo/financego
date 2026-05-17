@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: ao salvar `budgets` no mes atual, replicar automaticamente o mesmo planejamento para os meses seguintes do mesmo ano.
+- Motivo: reduzir atrito operacional e evitar configuracao manual recorrente mes a mes.
+- Impacto: usuario define o planejamento uma vez no mes corrente e recebe pre-preenchimento ate dezembro.
+
+- Data: `2026-05-17`
 - Decisao: representar o consumo de orcamento por categoria em um unico grafico pizza no card de resumo de `budgets`.
 - Motivo: dar leitura visual imediata das fatias orcadas e do quanto cada fatia ja foi consumida no mes de referencia.
 - Impacto: acompanhamento do orcamento ficou mais intuitivo sem sair da pagina.

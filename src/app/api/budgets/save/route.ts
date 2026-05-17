@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getApiUserFromCookiesOrRequest, unauthorized } from "@/lib/auth-server";
+import { monthRef as currentMonthRef } from "@/lib/format";
 
 export async function POST(req: Request) {
   const user = await getApiUserFromCookiesOrRequest(req);
@@ -26,28 +27,27 @@ export async function POST(req: Request) {
   }
 
   const selectedCategories = Array.from(budgetMap.keys());
+  const monthsToSync = buildMonthsToSync(monthRef, currentMonthRef());
 
   const { data: existingRows, error: existingError } = await supabaseAdmin
     .from("budgets")
-    .select("id, category")
+    .select("id, category, month_ref")
     .eq("profile_id", user.id)
-    .eq("month_ref", monthRef);
+    .in("month_ref", monthsToSync);
 
   if (existingError) {
     return NextResponse.redirect(new URL(withStatus(returnUrl || `/budgets?month_ref=${monthRef}`, "error", "save_failed"), req.url));
   }
 
-  const rowsToDelete = (existingRows || [])
-    .filter((row: any) => !budgetMap.has(String(row.category || "")))
-    .map((row: any) => String(row.id || ""))
-    .filter(Boolean);
+  const rowsToDelete = (existingRows || []).filter((row: any) => !budgetMap.has(String(row.category || "").trim()));
+  const deleteIds = rowsToDelete.map((row: any) => String(row.id || "")).filter(Boolean);
 
-  if (rowsToDelete.length) {
+  if (deleteIds.length) {
     const { error: deleteError } = await supabaseAdmin
       .from("budgets")
       .delete()
       .eq("profile_id", user.id)
-      .in("id", rowsToDelete);
+      .in("id", deleteIds);
 
     if (deleteError) {
       return NextResponse.redirect(new URL(withStatus(returnUrl || `/budgets?month_ref=${monthRef}`, "error", "save_failed"), req.url));
@@ -55,12 +55,12 @@ export async function POST(req: Request) {
   }
 
   if (selectedCategories.length) {
-    const rowsToUpsert = selectedCategories.map((category) => ({
+    const rowsToUpsert = monthsToSync.flatMap((targetMonthRef) => selectedCategories.map((category) => ({
       profile_id: user.id,
-      month_ref: monthRef,
+      month_ref: targetMonthRef,
       category,
       planned_amount: Number((budgetMap.get(category) || 0).toFixed(2)),
-    }));
+    })));
 
     const { error: upsertError } = await supabaseAdmin
       .from("budgets")
@@ -72,7 +72,8 @@ export async function POST(req: Request) {
   }
 
   const successUrl = returnUrl || `/budgets?month_ref=${encodeURIComponent(monthRef)}`;
-  return NextResponse.redirect(new URL(withStatus(successUrl, "ok", "saved"), req.url));
+  const okCode = monthsToSync.length > 1 ? "saved_replicated" : "saved";
+  return NextResponse.redirect(new URL(withStatus(successUrl, "ok", okCode), req.url));
 }
 
 function parseMoney(input: FormDataEntryValue) {
@@ -86,6 +87,22 @@ function safeReturnUrl(input: string) {
   if (!input) return "";
   if (!input.startsWith("/budgets")) return "";
   return input;
+}
+
+function buildMonthsToSync(selectedMonthRef: string, currentRef: string) {
+  const targets = [selectedMonthRef];
+  if (selectedMonthRef !== currentRef) return targets;
+
+  const [yearRaw, monthRaw] = selectedMonthRef.split("-");
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return targets;
+
+  for (let m = month + 1; m <= 12; m++) {
+    targets.push(`${year}-${String(m).padStart(2, "0")}`);
+  }
+
+  return targets;
 }
 
 function withStatus(url: string, key: "ok" | "error", value: string) {

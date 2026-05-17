@@ -3,6 +3,13 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: automatizar replicacao de orcamento quando o mes de referencia for o mes atual.
+- Prompt base: "Na pagina budget, se o mes de referencia for o mes atual... replicado para todos os meses seguintes dentro do ano..."
+- Resultado:
+  - Regra implementada em `POST /api/budgets/save`.
+  - Salvamento no mes atual replica categorias/valores ate dezembro.
+  - Mensagem visual de sucesso especifica informa quando houve replicacao.
+
 - Objetivo: incluir grafico pizza unico em `budgets` para visualizar fatias orcadas e consumo por categoria.
 - Prompt base: "Abaixo de 'Gasto fora do orcamento' criar um unico grafico tipo pizza..."
 - Resultado:

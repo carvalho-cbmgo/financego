@@ -4,25 +4,23 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: inclusao de grafico pizza unico no resumo da pagina `budgets`.
+- Entrega principal: replicacao automatica de orcamento ao salvar o mes atual em `budgets`.
 - Resultado entregue:
-  - Resumo mensal em `budgets`:
-    - Abaixo de `Gasto fora do orcamento` foi adicionado um grafico tipo pizza unico.
-    - Cada categoria orcada aparece como fatia proporcional ao valor orcado.
-    - Em cada fatia, o consumo da categoria no mes e mostrado visualmente (parte consumida x parte restante).
-    - Incluida legenda com:
-      - percentual consumido por categoria;
-      - barra de consumo da categoria;
-      - valores `R$ gasto` e `R$ orcado`.
+  - API `POST /api/budgets/save`:
+    - Quando `month_ref` salvo for o mes atual, o mesmo orcamento e replicado automaticamente para todos os meses seguintes do mesmo ano.
+    - A sincronizacao replica o conjunto de categorias e valores (upsert) e remove categorias nao selecionadas tambem nos meses replicados.
+    - Quando `month_ref` nao for o mes atual, o salvamento continua apenas no mes escolhido.
+  - UX da pagina `budgets`:
+    - Mensagem de sucesso diferenciada quando houve replicacao automatica (`saved_replicated`).
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validar leitura visual do novo grafico pizza no acompanhamento mensal de orcamentos.
+- Objetivo: validar a regra de replicacao automatica no fluxo mensal de orcamento.
 - Em andamento:
-  - [ ] Validar legibilidade do grafico com muitas categorias (8+).
-  - [ ] Validar comportamento visual quando categoria ultrapassa 100% do orcamento.
-  - [ ] Validar comportamento quando nenhuma categoria estiver orcada.
+  - [ ] Validar salvamento no mes atual com criacao automatica dos meses seguintes do ano.
+  - [ ] Validar que salvamento em mes futuro/passado nao dispara replicacao.
+  - [ ] Validar ajuste manual posterior em um mes futuro apos replicacao.
 
 ## Proximas etapas
 - Curto prazo:

@@ -8,6 +8,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Avaliar parametro opcional para desativar replicacao automatica ao salvar o mes atual (modo avancado).
 - [ ] Adicionar opcao de destacar apenas categorias com maior consumo no grafico pizza (top N).
 - [ ] Avaliar tooltip no grafico pizza para detalhar categoria ao passar o mouse.
 - [ ] Ajustar ordenacao opcional no monitoramento de `budgets` (maior consumo, maior excesso, alfabetica).
