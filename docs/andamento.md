@@ -4,45 +4,47 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: interface mobile dedicada com redirecionamento automatico apos login.
+- Entrega principal: navegacao lateral mobile + pareamento Android + companion minimo.
 - Resultado entregue:
-  - Fluxo mobile:
-    - `middleware.ts` passou a proteger e rotear `/mobile`.
-    - Usuario autenticado em celular e redirecionado automaticamente para `/mobile`.
-    - Usuario autenticado em desktop continua no fluxo `/dashboard`.
-  - Login:
-    - `src/app/login/page.tsx` identifica dispositivo no client e direciona para `/mobile` (celular) ou `/dashboard` (desktop).
-  - Nova tela mobile:
-    - Nova rota `src/app/mobile/page.tsx` com visao geral otimizada para celular.
-    - Blocos implementados: saldo das contas, resultado do periodo, comparativo de saidas, fluxo de caixa e despesas por categoria.
-    - Atalhos visuais: `Ultimas alteracoes` e `Nao consolidadas`.
-  - Navegacao de mes no mobile:
-    - Novo componente `src/components/mobile-month-picker.tsx` com setas anterior/proximo e seletor de mes.
-  - Estilizacao:
-    - Novas classes `fg-mobile-*` no `src/app/globals.css` para layout e identidade visual mobile.
-  - Validacao:
-    - `npm run build` executado com sucesso apos as alteracoes.
+  - Menu lateral mobile na tela inicial apos login (`/mobile`):
+    - Clique no icone de tres barras abre painel lateral.
+    - Opcoes implementadas no painel: `Visao geral`, `Saldo das contas`, `Extrato mensal`, `Grafico mensal`.
+    - `Metas` e `Sonhos` nao foram implementados no painel, conforme solicitado.
+    - Rodape do painel com `Configuracoes` apontando para pareamento Android.
+  - Tela de pareamento no FinanceGO:
+    - Nova rota: `src/app/mobile/pair/page.tsx`.
+    - Gera `Device Public ID` + `Device Token` consumindo `POST /api/devices/pair`.
+    - Exibe historico de dispositivos pareados (`sync_devices`).
+  - Companion Android minimo operacional:
+    - Novo projeto em `android-companion-min/` (Android Studio).
+    - Captura notificacoes bancarias via `NotificationListenerService`.
+    - Envio imediato para `/api/notifications/ingest`.
+    - Fila offline + reenvio em lote via WorkManager para `/api/notifications/batch`.
+    - Token salvo com `EncryptedSharedPreferences`.
+  - Mobile geral:
+    - Secoes com ids para navegacao do painel (`saldo-das-contas`, `extrato-mensal`, `grafico-mensal`).
+    - `Extrato mensal` integrado na propria tela mobile.
+  - Validacao tecnica:
+    - `npm run build` executado com sucesso apos alteracoes.
 
 ## Etapa atual
-- Objetivo: validar experiencia mobile em dispositivo real e garantir paridade de dados com o dashboard desktop.
+- Objetivo: validacao real no celular com o companion Android instalado.
 - Em andamento:
-  - [ ] Validar navegacao de mes em Android e iOS.
-  - [ ] Validar desempenho e leitura dos cards em telas pequenas.
-  - [ ] Confirmar consistencia dos numeros mobile x dashboard para o mesmo `month_ref`.
+  - [ ] Instalar `android-companion-min` em aparelho Android principal.
+  - [ ] Gerar token em `/mobile/pair` e validar primeiro envio real por notificacao de banco.
+  - [ ] Confirmar consistencia dos valores mobile x dashboard no mesmo `month_ref`.
 
 ## Proximas etapas
 - Curto prazo:
-  - [ ] Ajustar refinamentos visuais da tela mobile apos feedback de uso real.
-  - [ ] Revisar eventuais diferencas de user-agent (tablet vs celular) na regra de redirecionamento.
+  - [ ] Refinar visual do painel lateral para ficar ainda mais proximo da referencia.
+  - [ ] Adicionar opcao de `Desparear` dispositivo na tela `/mobile/pair`.
 - Medio prazo:
-  - [ ] Evoluir a tela mobile para incluir filtros rapidos por conta e categoria.
-  - [ ] Definir testes automatizados para fluxo de login + redirect mobile.
+  - [ ] Adicionar monitor de saude do companion (ultimo envio, fila pendente, taxa de sucesso).
+  - [ ] Cobrir fluxo com testes E2E (login mobile -> menu -> pareamento -> ingestao).
 - Longo prazo:
-  - [ ] Evoluir PWA mobile com experiencia offline para consulta de historico.
+  - [ ] Evoluir companion para distribuicao por release APK assinada.
 
 ## Observacoes importantes
 - Regra obrigatoria: **sempre atualizar os arquivos da pasta `/docs` apos qualquer mudanca no sistema**.
 - Regra obrigatoria: **sempre realizar commit + push apos alteracoes no sistema para acionar deploy automatico no Vercel**.
-- Registrar novas regras em `docs/decisoes.md`.
-- Registrar novas pendencias em `docs/pendencias.md`.
 - Antes de publicar, validar `npm run build`.

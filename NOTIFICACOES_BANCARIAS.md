@@ -1,44 +1,54 @@
-# Alimentação por notificações bancárias
+﻿# Alimentacao por notificacoes bancarias
 
-Nesta versão, o sistema registra transações a partir das notificações recebidas no celular.
+Nesta versao, o sistema registra transacoes a partir das notificacoes recebidas no celular Android.
 
 ## Fluxo
 
 ```txt
-Banco envia notificação
-        ↓
-App Android complementar captura
-        ↓
+Banco envia notificacao
+        ->
+App Android companion captura
+        ->
 POST para /api/notifications/ingest
-        ↓
-Parser identifica valor, descrição e categoria
-        ↓
-Transação é gravada no Supabase
+        ->
+Parser identifica valor, descricao e categoria
+        ->
+Transacao gravada no Supabase
 ```
+
+## Onboarding recomendado
+
+1. No celular, acesse `mobile/pair` no FinanceGO.
+2. Gere `Device Public ID` e `Device Token`.
+3. No companion Android (`android-companion-min/`), informe:
+   - URL base do FinanceGO
+   - Device Public ID
+   - Device Token
+4. Habilite permissao de notificacoes para o companion.
+5. Desative otimizacao de bateria do app.
 
 ## Vantagens
 
 - Custo praticamente zero.
-- Não depende de Notificações/Importação/Open Finance.
 - Registro quase imediato quando o banco envia push.
-- Bom para uso pessoal.
+- Nao depende de Open Finance para o fluxo diario.
 
-## Limitações
+## Limitacoes
 
 - Funciona melhor no Android.
-- iPhone não permite que apps comuns leiam notificações de outros apps automaticamente.
-- Depende da qualidade do texto da notificação do banco.
-- Nem toda transação gera notificação.
-- Pode haver duplicidade se o banco reenviar alertas.
+- iPhone nao permite leitura automatica ampla de notificacoes de outros apps.
+- Depende da qualidade do texto das notificacoes bancarias.
+- Nem toda transacao gera notificacao.
 
-## Endpoint
+## Endpoints
 
 ```txt
 POST /api/notifications/ingest
+POST /api/notifications/batch
 Header: x-device-token: SEU_SEGREDO
 ```
 
-## Payload
+## Payload base
 
 ```json
 {
@@ -46,14 +56,8 @@ Header: x-device-token: SEU_SEGREDO
   "appName": "Nubank",
   "title": "Compra aprovada",
   "text": "Compra de R$ 25,90 em PADARIA CENTRAL",
-  "bigText": "Compra de R$ 25,90 em PADARIA CENTRAL no cartão final 1234",
+  "bigText": "Compra de R$ 25,90 em PADARIA CENTRAL no cartao final 1234",
   "postedAt": "2026-05-11T10:00:00.000Z",
   "notificationId": "com.nu.production-100-1234567890"
 }
-```
-
-## Variável necessária
-
-```env
-Use /api/devices/pair para gerar x-device-token
 ```

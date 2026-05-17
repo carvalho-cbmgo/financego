@@ -2,17 +2,17 @@
 
 Referencia rapida para setup, execucao, validacao e publicacao.
 
-## Instalacao do projeto
+## Instalacao do projeto web
 ```bash
 npm install
 ```
 
-## Execucao em ambiente de desenvolvimento
+## Execucao web em desenvolvimento
 ```bash
 npm run dev
 ```
 
-## Build
+## Build web
 ```bash
 npm run build
 npm run start
@@ -35,20 +35,31 @@ npm run build
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
 ```
 
+## Fluxo mobile + pareamento
+```txt
+1) Acessar /login no celular
+2) Redirecionamento automatico para /mobile
+3) Menu lateral (icone tres barras)
+4) Configuracoes -> /mobile/pair
+5) Gerar Device Public ID + Device Token
+```
+
+## Companion Android minimo
+```bash
+# Abrir projeto Android no Android Studio
+android-companion-min/
+
+# Compilar e instalar no aparelho
+# Configurar URL base + Device Public ID + Device Token
+# Habilitar permissao de notificacoes
+```
+
 ## Git
 ```bash
 git status -sb
 git add -A
 git commit -m "mensagem objetiva"
 git push origin main
-```
-
-## Verificacao rapida da rota mobile
-```bash
-npm run build
-# Em dev, abrir:
-# /login (simular login mobile)
-# /mobile?month_ref=YYYY-MM
 ```
 
 ## Supabase

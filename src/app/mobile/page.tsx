@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { MobileMonthPicker } from "@/components/mobile-month-picker";
+import { MobileDrawerHeader } from "@/components/mobile-drawer-header";
 import { requireServerSession } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl, monthRef, shortDate } from "@/lib/format";
@@ -104,34 +103,12 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
     txs: consolidatedMonthTxs,
   });
   const sparkline = buildSparkline(dailyBalances);
+  const profileLabel = formatProfileLabel(user.email, user.id);
+  const lastSyncText = `Sincronizado em ${formatSyncDate(new Date())}`;
 
   return (
     <main className="fg-mobile-screen">
-      <header className="fg-mobile-topbar">
-        <div className="fg-mobile-topbar-row">
-          <Link href={`/dashboard?month_ref=${selectedMonthRef}`} className="fg-mobile-icon-btn" aria-label="Abrir menu">
-            {"\u2630"}
-          </Link>
-          <div className="fg-mobile-title">Visao geral</div>
-          <div className="fg-mobile-topbar-actions">
-            <Link
-              href={`/dashboard?tab=transactions&month_ref=${selectedMonthRef}`}
-              className="fg-mobile-icon-btn"
-              aria-label="Abrir transacoes"
-            >
-              {"\u{1F4C5}"}
-            </Link>
-            <Link href="/dashboard?tab=transactions" className="fg-mobile-icon-btn" aria-label="Buscar">
-              {"\u{1F50E}"}
-            </Link>
-            <Link href="/dashboard" className="fg-mobile-icon-btn" aria-label="Mais opcoes">
-              {"\u22EE"}
-            </Link>
-          </div>
-        </div>
-
-        <MobileMonthPicker value={selectedMonthRef} />
-      </header>
+      <MobileDrawerHeader monthRef={selectedMonthRef} profileLabel={profileLabel} lastSyncText={lastSyncText} />
 
       <section className="fg-mobile-content">
         <div className="fg-mobile-chip-row">
@@ -147,7 +124,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           </div>
         </article>
 
-        <section className="fg-mobile-section">
+        <section id="saldo-das-contas" className="fg-mobile-section">
           <h3 className="fg-mobile-section-title">Saldo das contas</h3>
           <article className="fg-mobile-card fg-mobile-card-balance">
             <div className="fg-mobile-balance-value">{brl(saldoContas)}</div>
@@ -201,7 +178,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           </article>
         </section>
 
-        <section className="fg-mobile-section">
+        <section id="grafico-mensal" className="fg-mobile-section">
           <h3 className="fg-mobile-section-title">Fluxo de caixa</h3>
           <article className="fg-mobile-card">
             <div className="fg-mobile-chart-wrap">
@@ -224,6 +201,32 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               <span>{sparkline.midLabel}</span>
               <span>{sparkline.endLabel}</span>
             </div>
+          </article>
+        </section>
+
+        <section id="extrato-mensal" className="fg-mobile-section">
+          <h3 className="fg-mobile-section-title">Extrato mensal</h3>
+          <article className="fg-mobile-card">
+            {monthTxs.length ? (
+              <ul className="fg-mobile-tx-list">
+                {[...monthTxs]
+                  .sort((a, b) => String(b.posted_at || "").localeCompare(String(a.posted_at || "")))
+                  .slice(0, 80)
+                  .map((tx) => (
+                    <li key={tx.id} className={`fg-mobile-tx-item ${tx.is_consolidated === false ? "is-pending" : ""}`}>
+                      <div>
+                        <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transacao")}</div>
+                        <div className="fg-mobile-tx-meta">
+                          {shortDate(tx.posted_at)} - {safeText(tx.app_category, "Outros")}
+                        </div>
+                      </div>
+                      <strong className={toAmount(tx.amount) < 0 ? "is-negative" : "is-positive"}>{brl(tx.amount || 0)}</strong>
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <div className="fg-mobile-empty">Sem transacoes no mes selecionado.</div>
+            )}
           </article>
         </section>
 
@@ -456,4 +459,19 @@ function labelMonth(ref: string) {
 function safeText(input: string | null | undefined, fallback: string) {
   const value = String(input || "").trim();
   return value || fallback;
+}
+
+function formatProfileLabel(email: string | null | undefined, userId: string) {
+  const seed = String(email || "").trim() || userId.slice(0, 12);
+  if (seed.length <= 22) return seed;
+  return `${seed.slice(0, 22)}...`;
+}
+
+function formatSyncDate(date: Date) {
+  const dayMonth = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" })
+    .format(date)
+    .replace(".", "")
+    .toLowerCase();
+  const hour = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(date);
+  return `${dayMonth}, ${hour}`;
 }

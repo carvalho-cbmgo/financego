@@ -3,20 +3,20 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Validar em dispositivo real (Android e iOS) o fluxo completo: login -> redirect automatico -> tela `/mobile`.
-- [ ] Validar consistencia de indicadores da tela `/mobile` com a tela `/dashboard` para o mesmo `month_ref`.
-- [ ] Revisar deteccao de user-agent para evitar classificacao incorreta em tablets.
+- [ ] Validar em aparelho Android real: notificacao recebida -> transacao criada automaticamente.
+- [ ] Confirmar que o companion continua ativo com tela bloqueada e apos reinicio do aparelho.
+- [ ] Validar que o menu lateral mobile atende navegacao esperada em diferentes tamanhos de tela.
 
 ## Pendencias importantes
-- [ ] Refinar microinteracoes da tela mobile (icones, densidade e feedback de clique).
-- [ ] Definir se a tela mobile deve oferecer filtros por conta/categoria na propria pagina.
-- [ ] Revisar textos para padronizacao final (acentuacao e nomenclatura).
-- [ ] Validar desempenho da tela mobile em aparelhos de entrada.
+- [ ] Implementar acao de desparear/desativar dispositivo direto em `/mobile/pair`.
+- [ ] Melhorar feedback visual de sucesso/erro no pareamento e no teste de envio.
+- [ ] Revisar deteccao de pacotes bancarios para ampliar cobertura de instituicoes.
+- [ ] Ajustar refinamentos do painel lateral para aproximacao visual final da referencia.
 
 ## Melhorias futuras
-- [ ] Adicionar navegacao secundaria mobile para abrir rapidamente transacoes/orcamento/graficos.
-- [ ] Evoluir grafico de fluxo de caixa mobile com tooltips por dia.
-- [ ] Criar testes E2E para fluxo mobile com Playwright/Cypress.
+- [ ] Exibir telemetria do companion (ultima sincronizacao, fila offline, ultimo erro).
+- [ ] Criar endpoint de healthcheck do dispositivo pareado.
+- [ ] Incluir estrategia de atualizacao simplificada do companion (versao/app update).
 
 ## Bugs conhecidos
 - ID: `TRX-001`

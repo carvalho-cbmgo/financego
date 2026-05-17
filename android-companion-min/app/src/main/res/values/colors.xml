@@ -1,0 +1,5 @@
+<resources>
+    <color name="fg_green">#2F8F3F</color>
+    <color name="fg_text_primary">#1F2937</color>
+    <color name="fg_text_muted">#667085</color>
+</resources>

@@ -4,37 +4,32 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
-- Decisao: criar rota dedicada `/mobile` com renderizacao server-side para experiencia de celular.
-- Motivo: separar experiencia mobile da desktop sem quebrar o dashboard atual.
-- Impacto: fluxo mobile ganhou pagina propria com componentes e metricas especificas.
+- Decisao: manter arquitetura de captura automatica baseada em notificacoes Android + backend FinanceGO.
+- Motivo: entregar registro quase imediato sem dependencia de Open Finance.
+- Impacto: fluxo operacional depende de companion Android ativo.
 
 - Data: `2026-05-17`
-- Decisao: usar deteccao de user-agent no login e no middleware para rotear usuarios autenticados.
-- Motivo: garantir entrada consistente no fluxo correto por dispositivo.
-- Impacto: celular autenticado segue para `/mobile`; desktop segue para `/dashboard`.
+- Decisao: implementar tela dedicada de pareamento em `mobile/pair` consumindo `POST /api/devices/pair`.
+- Motivo: simplificar onboarding de dispositivos e reduzir configuracao manual insegura.
+- Impacto: token e device public id passam a ser gerados no proprio produto.
 
 - Data: `2026-05-17`
-- Decisao: manter calculos da visao mobile alinhados ao dashboard (saldo acumulado pre-mes + consolidado no periodo).
-- Motivo: evitar divergencia de indicadores entre telas diferentes.
-- Impacto: maior confianca do usuario ao alternar entre mobile e desktop.
-
-- Data: `2026-05-17`
-- Decisao: usar componente client `mobile-month-picker` para navegacao mensal com setas e `input month`.
-- Motivo: agilizar troca de referencia temporal no celular sem navegao pesada.
-- Impacto: melhor usabilidade mobile na exploracao por mes.
+- Decisao: disponibilizar companion Android minimo como projeto Android Studio em `android-companion-min/`.
+- Motivo: acelerar uso diario real com base no backend ja existente de ingestao (`/api/notifications/ingest` e `/api/notifications/batch`).
+- Impacto: caminho oficial de uso no celular Android ficou completo ponta a ponta.
 
 ## Decisoes de interface
 - Data: `2026-05-17`
 - Tela: `mobile`
-- Decisao: adotar estrutura em cards verticais com cabecalho verde e blocos de KPI inspirados na referencia enviada.
-- Motivo: priorizar leitura rapida e uso com uma mao no celular.
-- Impacto: experiencia mobile distinta da interface desktop, sem reduzir informacao essencial.
+- Decisao: implementar painel lateral ao clicar no icone de tres barras no canto superior esquerdo.
+- Motivo: replicar navegacao solicitada para celular com foco em atalhos principais.
+- Impacto: usuario navega rapidamente para `Visao geral`, `Saldo das contas`, `Extrato mensal` e `Grafico mensal`.
 
 - Data: `2026-05-17`
 - Tela: `mobile`
-- Decisao: incluir atalhos `Ultimas alteracoes` e `Nao consolidadas` no topo da pagina.
-- Motivo: facilitar acesso imediato a movimentos recentes e pendencias.
-- Impacto: diminuicao de toques para tarefas frequentes.
+- Decisao: nao incluir `Metas` e `Sonhos` no painel lateral.
+- Motivo: requisito explicito da entrega atual.
+- Impacto: painel mobile permanece enxuto e alinhado ao escopo solicitado.
 
 ## Decisoes de processo
 - Data: `2026-05-17`
@@ -47,12 +42,7 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Motivo: manter ambiente publicado sempre sincronizado com o codigo validado localmente.
 - Impacto: reducao de divergencia entre local, GitHub e Vercel.
 
-- Data: `2026-05-17`
-- Decisao: usar certificados do sistema no Node/npm via `NODE_OPTIONS=--use-system-ca` no ambiente Windows local.
-- Motivo: corrigir falha TLS com npm (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`) sem desabilitar validacao SSL.
-- Impacto: `npm install` e `npm run build` funcionando com seguranca.
-
 ## Decisoes futuras
-- [ ] Definir cobertura de testes automatizados para fluxo mobile completo (login + redirect + metricas).
-- [ ] Definir regra final para tablets (tratar como mobile ou desktop).
-- [ ] Definir padrao unico de mensagens de erro e sucesso no frontend.
+- [ ] Definir UX final de gerenciamento de dispositivos (renomear, desativar, revogar token).
+- [ ] Definir politica de rotacao de token do companion Android.
+- [ ] Definir estrategia de distribuicao (APK interno vs Play Store).
