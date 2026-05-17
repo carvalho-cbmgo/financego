@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: reforcar feedback no APK apos `Salvar configuracao` com validacao de campos e teste automatico de conectividade.
+- Motivo: evitar percepcao de "nada aconteceu" ao salvar e reduzir erro de configuracao silencioso.
+- Impacto: onboarding no app ficou mais claro e autoexplicativo.
+
+- Data: `2026-05-17`
 - Decisao: manter companion Android como caminho principal para captura automatica no celular.
 - Motivo: entrega registro quase imediato de transacoes por notificacao sem depender de Android Studio para uso final.
 - Impacto: usuario final instala APK pronto e configura token de pareamento.

@@ -11,6 +11,14 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Build web validado.
   - APKs gerados para teste (`debug` e `release` assinado).
 
+- Objetivo: corrigir experiencia no APK quando o usuario salva configuracao e nao percebe retorno.
+- Prompt base: "Fiz as configurações, mas após apertar 'Salvar configuração' no apk, nada aconteceu..."
+- Resultado:
+  - Validacao de campos obrigatorios no app companion.
+  - Toasts e mensagens de status explicitas no salvar.
+  - Teste automatico de conectividade apos salvar configuracao.
+  - Novo APK de compatibilidade gerado para reteste.
+
 - Objetivo: implementar menu lateral mobile e pareamento Android.
 - Prompt base: "Quando o sistema for acessado de um celular... Pode implementar o proximo passo: tela de pareamento + app Android companion minimo..."
 - Resultado:

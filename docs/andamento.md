@@ -4,8 +4,13 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: ajuste da home mobile + geracao de APK pronto para testes.
+- Entrega principal: melhoria do fluxo de configuracao no APK + nova rodada de APK de compatibilidade.
 - Resultado entregue:
+  - UX de configuracao no APK:
+    - Botao `Salvar configuracao` agora valida campos obrigatorios.
+    - Exibe mensagens claras (toast + status na tela).
+    - Executa teste de conectividade automaticamente apos salvar.
+    - Informa erro de URL/token/rede sem ficar "silencioso".
   - Home mobile (`/mobile`):
     - Removido o componente/banner com o texto `Nova experiencia`.
     - Mantida a estrutura principal da tela com menu lateral, saldo, resultado, grafico e extrato.
@@ -16,6 +21,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - APK debug gerado: `build-artifacts/financego-companion-debug.apk` (instalavel para teste).
     - APK release assinado gerado: `build-artifacts/financego-companion-release-signed.apk` (instalavel).
     - APK release nao assinado tambem gerado: `build-artifacts/financego-companion-release-unsigned.apk`.
+    - APK compat atualizado para instalacao/teste em aparelhos mais restritivos: `build-artifacts/financego-companion-compat-v2-signed.apk`.
 
 ## Etapa atual
 - Objetivo: validar fluxo fim a fim no celular com APK pronto.

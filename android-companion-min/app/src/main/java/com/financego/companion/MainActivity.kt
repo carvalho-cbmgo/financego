@@ -6,6 +6,7 @@ import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -50,17 +51,55 @@ class MainActivity : AppCompatActivity() {
   }
 
   private fun saveConfig() {
+    val rawBaseUrl = baseUrlInput.text.toString().trim()
+    val normalizedBaseUrl = normalizeBaseUrl(rawBaseUrl)
+    val devicePublicId = devicePublicIdInput.text.toString().trim()
+    val deviceToken = deviceTokenInput.text.toString().trim()
+
+    if (normalizedBaseUrl.isBlank()) {
+      baseUrlInput.error = "Informe a URL base"
+      toast("Preencha a URL base do FinanceGO.")
+      updateStatus("Configuracao incompleta: URL base vazia.")
+      return
+    }
+
+    if (!normalizedBaseUrl.startsWith("https://") && !normalizedBaseUrl.startsWith("http://")) {
+      baseUrlInput.error = "URL invalida"
+      toast("A URL deve comecar com http:// ou https://")
+      updateStatus("Configuracao invalida: URL base mal formatada.")
+      return
+    }
+
+    if (devicePublicId.isBlank()) {
+      devicePublicIdInput.error = "Informe o Device Public ID"
+      toast("Preencha o Device Public ID.")
+      updateStatus("Configuracao incompleta: Device Public ID vazio.")
+      return
+    }
+
+    if (deviceToken.isBlank()) {
+      deviceTokenInput.error = "Informe o Device Token"
+      toast("Preencha o Device Token.")
+      updateStatus("Configuracao incompleta: Device Token vazio.")
+      return
+    }
+
+    baseUrlInput.setText(normalizedBaseUrl)
+
     val config = CompanionConfig(
-      baseUrl = baseUrlInput.text.toString(),
-      devicePublicId = devicePublicIdInput.text.toString(),
+      baseUrl = normalizedBaseUrl,
+      devicePublicId = devicePublicId,
       deviceName = deviceNameInput.text.toString().ifBlank { android.os.Build.MODEL },
     )
     CompanionPrefs.save(this, config)
-    SecureTokenStore.save(this, deviceTokenInput.text.toString())
+    SecureTokenStore.save(this, deviceToken)
 
     AppWorkScheduler.ensurePeriodicSync(this)
     AppWorkScheduler.enqueueOneTimeSync(this)
-    updateStatus("Configuracao salva. Agora habilite a permissao de notificacoes.")
+
+    toast("Configuracao salva com sucesso.")
+    updateStatus("Configuracao salva. Testando conectividade...")
+    sendConnectivityTestAfterSave(config, deviceToken)
   }
 
   private fun openNotificationAccess() {
@@ -73,9 +112,10 @@ class MainActivity : AppCompatActivity() {
 
   private fun sendTestEvent() {
     val config = CompanionPrefs.load(this)
-    val token = SecureTokenStore.get(this)
-    if (config.baseUrl.isBlank() || token.isBlank()) {
-      updateStatus("Informe URL base e token antes de testar.")
+    val token = SecureTokenStore.get(this).trim()
+    if (config.baseUrl.isBlank() || token.isBlank() || config.devicePublicId.isBlank()) {
+      updateStatus("Informe URL base, Device Public ID e token antes de testar.")
+      toast("Preencha URL, Device Public ID e token antes do teste.")
       return
     }
 
@@ -91,10 +131,12 @@ class MainActivity : AppCompatActivity() {
 
       if (result) {
         updateStatus("Evento de teste enviado com sucesso.")
+        toast("Teste enviado com sucesso.")
       } else {
         updateStatus("Falha no envio. Evento foi colocado na fila offline.")
         OfflineQueue(applicationContext).enqueue(buildTestPayload(config.devicePublicId))
         AppWorkScheduler.enqueueOneTimeSync(applicationContext)
+        toast("Falha no envio agora. Evento ficou na fila offline.")
       }
     }
   }
@@ -116,5 +158,39 @@ class MainActivity : AppCompatActivity() {
   private fun updateStatus(text: String) {
     val queueSize = OfflineQueue(applicationContext).size()
     statusText.text = "$text\nFila offline: $queueSize"
+  }
+
+  private fun sendConnectivityTestAfterSave(config: CompanionConfig, token: String) {
+    lifecycleScope.launch {
+      val result = withContext(Dispatchers.IO) {
+        NotificationApi.sendIngest(
+          baseUrl = config.baseUrl,
+          deviceToken = token,
+          payload = buildTestPayload(config.devicePublicId),
+        )
+      }
+
+      if (result) {
+        updateStatus("Configuracao salva e conectividade validada com sucesso.")
+        toast("Conexao validada. Pode habilitar notificacoes.")
+      } else {
+        updateStatus("Configuracao salva, mas teste falhou. Verifique URL/token ou rede.")
+        toast("Nao foi possivel validar conexao agora.")
+      }
+    }
+  }
+
+  private fun normalizeBaseUrl(input: String): String {
+    var value = input.trim()
+    if (value.isBlank()) return ""
+    if (!value.startsWith("http://") && !value.startsWith("https://")) {
+      value = "https://$value"
+    }
+    if (value.endsWith("/")) value = value.dropLast(1)
+    return value
+  }
+
+  private fun toast(text: String) {
+    Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
   }
 }
