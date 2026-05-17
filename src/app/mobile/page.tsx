@@ -116,14 +116,6 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           <a href="#nao-consolidadas" className="fg-mobile-chip">Nao consolidadas ({pendingMonthTxs.length})</a>
         </div>
 
-        <article className="fg-mobile-banner">
-          <div className="fg-mobile-banner-icon">|||</div>
-          <div>
-            <h2>Nova experiencia</h2>
-            <p>Use a visao mobile para acompanhar saldos, periodo e categorias do mes.</p>
-          </div>
-        </article>
-
         <section id="saldo-das-contas" className="fg-mobile-section">
           <h3 className="fg-mobile-section-title">Saldo das contas</h3>
           <article className="fg-mobile-card fg-mobile-card-balance">

@@ -4,45 +4,35 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: navegacao lateral mobile + pareamento Android + companion minimo.
+- Entrega principal: ajuste da home mobile + geracao de APK pronto para testes.
 - Resultado entregue:
-  - Menu lateral mobile na tela inicial apos login (`/mobile`):
-    - Clique no icone de tres barras abre painel lateral.
-    - Opcoes implementadas no painel: `Visao geral`, `Saldo das contas`, `Extrato mensal`, `Grafico mensal`.
-    - `Metas` e `Sonhos` nao foram implementados no painel, conforme solicitado.
-    - Rodape do painel com `Configuracoes` apontando para pareamento Android.
-  - Tela de pareamento no FinanceGO:
-    - Nova rota: `src/app/mobile/pair/page.tsx`.
-    - Gera `Device Public ID` + `Device Token` consumindo `POST /api/devices/pair`.
-    - Exibe historico de dispositivos pareados (`sync_devices`).
-  - Companion Android minimo operacional:
-    - Novo projeto em `android-companion-min/` (Android Studio).
-    - Captura notificacoes bancarias via `NotificationListenerService`.
-    - Envio imediato para `/api/notifications/ingest`.
-    - Fila offline + reenvio em lote via WorkManager para `/api/notifications/batch`.
-    - Token salvo com `EncryptedSharedPreferences`.
-  - Mobile geral:
-    - Secoes com ids para navegacao do painel (`saldo-das-contas`, `extrato-mensal`, `grafico-mensal`).
-    - `Extrato mensal` integrado na propria tela mobile.
-  - Validacao tecnica:
-    - `npm run build` executado com sucesso apos alteracoes.
+  - Home mobile (`/mobile`):
+    - Removido o componente/banner com o texto `Nova experiencia`.
+    - Mantida a estrutura principal da tela com menu lateral, saldo, resultado, grafico e extrato.
+  - Build web:
+    - `npm run build` executado com sucesso apos a remocao do componente.
+  - APK Android companion:
+    - Build Android realizado localmente com sucesso.
+    - APK debug gerado: `build-artifacts/financego-companion-debug.apk` (instalavel para teste).
+    - APK release assinado gerado: `build-artifacts/financego-companion-release-signed.apk` (instalavel).
+    - APK release nao assinado tambem gerado: `build-artifacts/financego-companion-release-unsigned.apk`.
 
 ## Etapa atual
-- Objetivo: validacao real no celular com o companion Android instalado.
+- Objetivo: validar fluxo fim a fim no celular com APK pronto.
 - Em andamento:
-  - [ ] Instalar `android-companion-min` em aparelho Android principal.
-  - [ ] Gerar token em `/mobile/pair` e validar primeiro envio real por notificacao de banco.
-  - [ ] Confirmar consistencia dos valores mobile x dashboard no mesmo `month_ref`.
+  - [ ] Instalar APK no Android e conceder permissao de notificacoes.
+  - [ ] Gerar token em `/mobile/pair` e configurar no companion.
+  - [ ] Validar ingestao real de notificacao bancaria (`/api/notifications/ingest`).
 
 ## Proximas etapas
 - Curto prazo:
-  - [ ] Refinar visual do painel lateral para ficar ainda mais proximo da referencia.
-  - [ ] Adicionar opcao de `Desparear` dispositivo na tela `/mobile/pair`.
+  - [ ] Adicionar acao de desparear dispositivo na tela `/mobile/pair`.
+  - [ ] Refinar visual do menu lateral mobile conforme feedback de uso.
 - Medio prazo:
-  - [ ] Adicionar monitor de saude do companion (ultimo envio, fila pendente, taxa de sucesso).
-  - [ ] Cobrir fluxo com testes E2E (login mobile -> menu -> pareamento -> ingestao).
+  - [ ] Publicar rotina simplificada de distribuicao de APK (release interna).
+  - [ ] Criar monitor de saude do companion (fila offline, ultimo envio, erros).
 - Longo prazo:
-  - [ ] Evoluir companion para distribuicao por release APK assinada.
+  - [ ] Evoluir estrategia de distribuicao (assinatura definitiva e canal de release).
 
 ## Observacoes importantes
 - Regra obrigatoria: **sempre atualizar os arquivos da pasta `/docs` apos qualquer mudanca no sistema**.

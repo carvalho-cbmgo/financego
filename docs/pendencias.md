@@ -3,20 +3,20 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Validar em aparelho Android real: notificacao recebida -> transacao criada automaticamente.
-- [ ] Confirmar que o companion continua ativo com tela bloqueada e apos reinicio do aparelho.
-- [ ] Validar que o menu lateral mobile atende navegacao esperada em diferentes tamanhos de tela.
+- [ ] Testar instalacao e execucao do APK release assinado em pelo menos 2 aparelhos Android.
+- [ ] Validar fluxo real: notificacao bancaria recebida -> transacao criada automaticamente no FinanceGO.
+- [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
 - [ ] Implementar acao de desparear/desativar dispositivo direto em `/mobile/pair`.
-- [ ] Melhorar feedback visual de sucesso/erro no pareamento e no teste de envio.
-- [ ] Revisar deteccao de pacotes bancarios para ampliar cobertura de instituicoes.
-- [ ] Ajustar refinamentos do painel lateral para aproximacao visual final da referencia.
+- [ ] Melhorar feedback visual da tela de pareamento (status de token ativo e ultimo envio).
+- [ ] Refinar visual do menu lateral mobile para aproximacao final da referencia.
+- [ ] Definir rotina de publicacao recorrente de APK para teste interno.
 
 ## Melhorias futuras
-- [ ] Exibir telemetria do companion (ultima sincronizacao, fila offline, ultimo erro).
-- [ ] Criar endpoint de healthcheck do dispositivo pareado.
-- [ ] Incluir estrategia de atualizacao simplificada do companion (versao/app update).
+- [ ] Incluir verificacao de conectividade e fila offline no UI do companion.
+- [ ] Adicionar endpoint de healthcheck para cada dispositivo pareado.
+- [ ] Criar pipeline de build Android automatizado (CI) para gerar APK por commit/tag.
 
 ## Bugs conhecidos
 - ID: `TRX-001`

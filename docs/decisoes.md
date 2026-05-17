@@ -4,32 +4,27 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
-- Decisao: manter arquitetura de captura automatica baseada em notificacoes Android + backend FinanceGO.
-- Motivo: entregar registro quase imediato sem dependencia de Open Finance.
-- Impacto: fluxo operacional depende de companion Android ativo.
+- Decisao: manter companion Android como caminho principal para captura automatica no celular.
+- Motivo: entrega registro quase imediato de transacoes por notificacao sem depender de Android Studio para uso final.
+- Impacto: usuario final instala APK pronto e configura token de pareamento.
 
 - Data: `2026-05-17`
-- Decisao: implementar tela dedicada de pareamento em `mobile/pair` consumindo `POST /api/devices/pair`.
-- Motivo: simplificar onboarding de dispositivos e reduzir configuracao manual insegura.
-- Impacto: token e device public id passam a ser gerados no proprio produto.
-
-- Data: `2026-05-17`
-- Decisao: disponibilizar companion Android minimo como projeto Android Studio em `android-companion-min/`.
-- Motivo: acelerar uso diario real com base no backend ja existente de ingestao (`/api/notifications/ingest` e `/api/notifications/batch`).
-- Impacto: caminho oficial de uso no celular Android ficou completo ponta a ponta.
+- Decisao: gerar e disponibilizar APK de teste (debug e release assinado) como artefato local.
+- Motivo: acelerar testes em dispositivo real sem necessidade de abrir Android Studio no uso diario.
+- Impacto: validação em campo ficou direta e imediata.
 
 ## Decisoes de interface
 - Data: `2026-05-17`
 - Tela: `mobile`
-- Decisao: implementar painel lateral ao clicar no icone de tres barras no canto superior esquerdo.
-- Motivo: replicar navegacao solicitada para celular com foco em atalhos principais.
-- Impacto: usuario navega rapidamente para `Visao geral`, `Saldo das contas`, `Extrato mensal` e `Grafico mensal`.
+- Decisao: remover o componente/banner com texto `Nova experiencia` da tela principal mobile.
+- Motivo: alinhamento com solicitacao do produto para simplificar a home no celular.
+- Impacto: interface mais limpa e foco direto nos indicadores e no extrato.
 
 - Data: `2026-05-17`
 - Tela: `mobile`
-- Decisao: nao incluir `Metas` e `Sonhos` no painel lateral.
-- Motivo: requisito explicito da entrega atual.
-- Impacto: painel mobile permanece enxuto e alinhado ao escopo solicitado.
+- Decisao: manter painel lateral com `Visao geral`, `Saldo das contas`, `Extrato mensal` e `Grafico mensal`, sem `Metas`/`Sonhos`.
+- Motivo: seguir escopo funcional definido para navegacao mobile.
+- Impacto: menu objetivo e orientado ao uso financeiro diario.
 
 ## Decisoes de processo
 - Data: `2026-05-17`
@@ -43,6 +38,6 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Impacto: reducao de divergencia entre local, GitHub e Vercel.
 
 ## Decisoes futuras
-- [ ] Definir UX final de gerenciamento de dispositivos (renomear, desativar, revogar token).
-- [ ] Definir politica de rotacao de token do companion Android.
-- [ ] Definir estrategia de distribuicao (APK interno vs Play Store).
+- [ ] Definir processo oficial de distribuicao de APK para usuarios (canal interno ou store privada).
+- [ ] Definir politica de assinatura de release final (keystore de producao).
+- [ ] Definir estrategia de atualizacao automatica do companion no dispositivo.

@@ -18,21 +18,27 @@ npm run build
 npm run start
 ```
 
-## Ajuste de ambiente local (Windows)
+## Build do companion Android (APK)
 ```powershell
-# Se houver erro TLS no npm (UNABLE_TO_VERIFY_LEAF_SIGNATURE),
-# configure o Node para usar certificados do sistema:
-setx NODE_OPTIONS "--use-system-ca"
+# Definir Java do Android Studio na sessao atual
+$env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
+$env:PATH="$env:JAVA_HOME\bin;$env:PATH"
+$env:ANDROID_HOME="$env:LOCALAPPDATA\Android\Sdk"
+$env:ANDROID_SDK_ROOT="$env:LOCALAPPDATA\Android\Sdk"
 
-# Em novas sessoes do PowerShell:
-npm ping
-npm ci
-npm run build
+# Entrar na pasta do companion
+cd android-companion-min
+
+# Exemplo usando Gradle local (quando gradle nao esta no PATH)
+C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleDebug
+C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleRelease
 ```
 
-```powershell
-# Se o PowerShell bloquear npm.ps1:
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
+## Artefatos de APK gerados nesta etapa
+```txt
+build-artifacts/financego-companion-debug.apk
+build-artifacts/financego-companion-release-signed.apk
+build-artifacts/financego-companion-release-unsigned.apk
 ```
 
 ## Fluxo mobile + pareamento
@@ -42,16 +48,6 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
 3) Menu lateral (icone tres barras)
 4) Configuracoes -> /mobile/pair
 5) Gerar Device Public ID + Device Token
-```
-
-## Companion Android minimo
-```bash
-# Abrir projeto Android no Android Studio
-android-companion-min/
-
-# Compilar e instalar no aparelho
-# Configurar URL base + Device Public ID + Device Token
-# Habilitar permissao de notificacoes
 ```
 
 ## Git

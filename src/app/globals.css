@@ -1959,34 +1959,6 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   padding: 0 10px;
 }
 
-.fg-mobile-banner {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: center;
-  background: #2f8f3f;
-  color: #f7fcf8;
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.fg-mobile-banner h2 {
-  margin: 0;
-  font-size: 20px;
-  line-height: 1.1;
-}
-
-.fg-mobile-banner p {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 1.3;
-}
-
-.fg-mobile-banner-icon {
-  font-size: 19px;
-  letter-spacing: 2px;
-}
-
 .fg-mobile-section {
   display: grid;
   gap: 8px;
