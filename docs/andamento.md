@@ -4,34 +4,25 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: pareamento automatico sem digitacao + APK com deep link.
+- Entrega principal: exclusao de conta em `accounts` + correcao de saldo exibido em `transactions`.
 - Resultado entregue:
-  - Pareamento sem digitacao:
-    - Botao `Conectar app automaticamente` adicionado em `/mobile/pair`.
-    - Web gera o token e abre o APK via deep link `financego-companion://pair?...`.
-    - APK recebe os dados, salva automaticamente e testa conectividade.
-  - UX de configuracao no APK:
-    - Botao `Salvar configuracao` agora valida campos obrigatorios.
-    - Exibe mensagens claras (toast + status na tela).
-    - Executa teste de conectividade automaticamente apos salvar.
-    - Informa erro de URL/token/rede sem ficar "silencioso".
-  - Home mobile (`/mobile`):
-    - Removido o componente/banner com o texto `Nova experiencia`.
-    - Mantida a estrutura principal da tela com menu lateral, saldo, resultado, grafico e extrato.
+  - Pagina `accounts`:
+    - Inclusao da acao `Excluir` por conta na tabela de `Visao por conta`.
+    - Fluxo de confirmacao de exclusao criado na propria pagina.
+    - Nova rota `POST /api/accounts/delete` implementada com validacao de usuario e ownership.
+    - Exclusao remove a conta e transacoes vinculadas (cascade no banco).
+  - Pagina `transactions`:
+    - Correcao do saldo exibido no painel lateral de contas.
+    - Removida a soma historica de transacoes para compor saldo do card de conta.
+    - O valor agora usa o saldo persistido da conta (`accounts.balance`), eliminando distorcoes como o negativo incorreto do `NUBANK Cartao`.
   - Build web:
-    - `npm run build` executado com sucesso apos a remocao do componente.
-  - APK Android companion:
-    - Build Android realizado localmente com sucesso.
-    - APK debug gerado: `build-artifacts/financego-companion-debug.apk` (instalavel para teste).
-    - APK release assinado gerado: `build-artifacts/financego-companion-release-signed.apk` (instalavel).
-    - APK release nao assinado tambem gerado: `build-artifacts/financego-companion-release-unsigned.apk`.
-    - APK compat atualizado com auto-pair: `build-artifacts/financego-companion-compat-v3-signed.apk`.
+    - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validar fluxo fim a fim no celular com APK pronto.
+- Objetivo: validacao funcional em dados reais apos ajustes de conta/saldo e continuidade do fluxo mobile.
 - Em andamento:
-  - [ ] Instalar APK no Android e conceder permissao de notificacoes.
-  - [ ] Gerar token em `/mobile/pair` e configurar no companion.
+  - [ ] Validar exclusao de conta em ambiente real com conta que possui historico.
+  - [ ] Confirmar saldo correto do `NUBANK Cartao` na tela de transacoes apos deploy.
   - [ ] Validar ingestao real de notificacao bancaria (`/api/notifications/ingest`).
 
 ## Proximas etapas

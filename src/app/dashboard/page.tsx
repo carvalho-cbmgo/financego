@@ -63,7 +63,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const monthStart = `${selectedMonthRef}-01T00:00:00.000Z`;
   const monthEnd = `${nextMonthRef(selectedMonthRef)}-01T00:00:00.000Z`;
 
-  const [{ data: banks }, { data: accounts }, categoriesCatalogResponse, accountBalancesResponse] = await Promise.all([
+  const [{ data: banks }, { data: accounts }, categoriesCatalogResponse] = await Promise.all([
     supabaseAdmin
       .from("banks")
       .select("id, name, code")
@@ -78,24 +78,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .from("categories")
       .select("id, name, parent_id")
       .eq("profile_id", user.id),
-    supabaseAdmin
-      .from("transactions")
-      .select("account_id, amount")
-      .eq("profile_id", user.id),
   ]);
 
   const categoriesCatalog = categoriesCatalogResponse.error
     ? []
     : buildCategoryCatalog(categoriesCatalogResponse.data || []);
-  const accountBalanceById = new Map<string, number>();
-  for (const row of accountBalancesResponse.data || []) {
-    const accountId = String((row as any)?.account_id || "").trim();
-    if (!accountId) continue;
-    const amount = Number((row as any)?.amount || 0);
-    if (!Number.isFinite(amount)) continue;
-    accountBalanceById.set(accountId, (accountBalanceById.get(accountId) || 0) + amount);
-  }
-
   const bankById = new Map<string, any>((banks || []).map((bank: any) => [String(bank.id), bank]));
   const accountById = new Map<string, any>((accounts || []).map((acc: any) => [String(acc.id), acc]));
 
@@ -256,7 +243,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <AccountsSidePanel
               accounts={accounts || []}
               bankById={bankById}
-              accountBalanceById={accountBalanceById}
               selectedAccountIds={selectedAccountIds}
               selectedBankId={selectedBankId}
               currentTab={currentTab}
@@ -384,19 +370,17 @@ function SummaryRow({ label, value, tone }: { label: string; value: string; tone
 function AccountsSidePanel(input: {
   accounts: any[];
   bankById: Map<string, any>;
-  accountBalanceById: Map<string, number>;
   selectedAccountIds: string[];
   selectedBankId: string;
   currentTab: "overview" | "transactions";
 }) {
   const rows = input.accounts.map((account: any) => {
     const accountId = String(account.id || "");
-    const computedBalance = input.accountBalanceById.get(accountId);
     const bank = input.bankById.get(String(account.bank_id || ""));
     return {
       id: accountId,
       name: String(account.name || ""),
-      balance: Number.isFinite(Number(computedBalance)) ? Number(computedBalance) : Number(account.balance || 0),
+      balance: Number(account.balance || 0),
       type: account.type || null,
       bankName: String(bank?.name || account.institution_name || "Sem banco"),
     };

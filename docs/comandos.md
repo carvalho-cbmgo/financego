@@ -85,6 +85,15 @@ rg --files
 git log --oneline -n 12
 ```
 
+## Teste rapido das ultimas correcoes
+```bash
+# Build de validacao geral
+npm run build
+
+# Conferir arquivos alterados antes de versionar
+git status --short
+```
+
 ## Rotina obrigatoria apos mudancas no sistema
 ```bash
 # 1) Atualizar documentacao do estado do projeto

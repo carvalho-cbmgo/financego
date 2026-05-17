@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: habilitar exclusao de conta e corrigir saldo incorreto na tela de transacoes.
+- Prompt base: "A pagina accounts deve permitir que o usuario possa deletar uma determinada conta... Corrigir saldo negativo incorreto da conta NUBANK Cartao."
+- Resultado:
+  - Acao de exclusao de conta adicionada na pagina `accounts`.
+  - Nova rota `POST /api/accounts/delete` criada com validacao de ownership.
+  - Correcao do saldo lateral em `transactions` para usar `accounts.balance`.
+  - Build validado com sucesso.
+
 - Objetivo: simplificar a home mobile e preparar teste real no Android sem Android Studio para usuario final.
 - Prompt base: "Vamo fazer pelo APK Pronto então. Mudar a página principal do sistema para celular retirando o componente que envolve o texto 'Nova experiencia'..."
 - Resultado:

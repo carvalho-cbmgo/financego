@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: usar `accounts.balance` como fonte do saldo exibido no painel lateral de contas da pagina `transactions`.
+- Motivo: a soma historica de transacoes estava distorcendo o saldo de contas (ex.: `NUBANK Cartao` negativo incorreto).
+- Impacto: saldo apresentado ao usuario fica alinhado ao valor persistido da conta e evita divergencias por parcelas/planejadas historicas.
+
+- Data: `2026-05-17`
+- Decisao: implementar exclusao de conta via rota dedicada `POST /api/accounts/delete` com etapa explicita de confirmacao na UI.
+- Motivo: permitir manutencao completa das contas diretamente na tela `accounts`.
+- Impacto: usuario consegue remover contas sem manipulacao manual no banco; transacoes vinculadas sao removidas por cascade.
+
+- Data: `2026-05-17`
 - Decisao: implementar pareamento automatico via deep link (`financego-companion://pair`) entre `/mobile/pair` e APK.
 - Motivo: eliminar digitacao manual de URL/ID/token no app companion.
 - Impacto: onboarding em 1 toque no celular quando app estiver instalado.

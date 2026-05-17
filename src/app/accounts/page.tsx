@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 type AccountsParams = {
   edit_bank?: string;
   edit_account?: string;
+  delete_account?: string;
   ok?: string;
   error?: string;
 };
@@ -64,9 +65,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
 
   const selectedEditBankId = String(params.edit_bank || "").trim();
   const selectedEditAccountId = String(params.edit_account || "").trim();
+  const selectedDeleteAccountId = String(params.delete_account || "").trim();
 
   const editingBank = (banks || []).find((bank: any) => String(bank.id) === selectedEditBankId) || null;
   const editingAccount = (accounts || []).find((account: any) => String(account.id) === selectedEditAccountId) || null;
+  const deletingAccount = (accounts || []).find((account: any) => String(account.id) === selectedDeleteAccountId) || null;
   const editingAccountTypeLabel = accountTypeLabel(editingAccount?.type);
   const status = buildStatusMessage(params.ok, params.error);
 
@@ -202,6 +205,23 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           </Card>
         ) : null}
 
+        {deletingAccount ? (
+          <Card title={`Excluir conta: ${deletingAccount.name || "Sem nome"}`}>
+            <div className="fg-stack">
+              <p>
+                Esta acao exclui a conta selecionada e as transacoes vinculadas. Esta operacao nao pode ser desfeita.
+              </p>
+              <form action="/api/accounts/delete" method="post" className="fg-form">
+                <input type="hidden" name="id" value={deletingAccount.id} />
+                <div className="fg-account-actions">
+                  <button className="fg-btn-danger">Confirmar exclusao</button>
+                  <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
+                </div>
+              </form>
+            </div>
+          </Card>
+        ) : null}
+
         <div className="fg-accounts-table-grid">
           <Card title="Visao por banco">
             <div className="fg-table-wrap">
@@ -274,6 +294,8 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                         <td>{brl(row.consolidatedIncome)}</td>
                         <td>
                           <Link href={editLink("edit_account", row.id)} className="fg-link fg-accounts-inline-action">Editar</Link>
+                          {" "}
+                          <Link href={editLink("delete_account", row.id)} className="fg-link fg-accounts-inline-action">Excluir</Link>
                         </td>
                       </tr>
                     );
@@ -288,7 +310,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   );
 }
 
-function editLink(param: "edit_bank" | "edit_account", value: string) {
+function editLink(param: "edit_bank" | "edit_account" | "delete_account", value: string) {
   return `/accounts?${param}=${encodeURIComponent(value)}`;
 }
 
@@ -297,6 +319,7 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
     "1": "Conta salva com sucesso.",
     bank_saved: "Banco salvo com sucesso.",
     bank_updated: "Banco atualizado com sucesso.",
+    account_deleted: "Conta excluida com sucesso.",
   };
 
   const errorMap: Record<string, string> = {
@@ -304,6 +327,9 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
     missing_bank_name: "Informe o nome do banco.",
     invalid_bank: "Banco invalido para esta conta.",
     bank_not_found: "Banco nao encontrado para edicao.",
+    missing_account: "Conta invalida para exclusao.",
+    account_not_found: "Conta nao encontrada para exclusao.",
+    delete_failed: "Nao foi possivel excluir a conta agora.",
   };
 
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
