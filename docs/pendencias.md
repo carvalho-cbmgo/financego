@@ -1,23 +1,22 @@
-# Pendencias do Projeto
+﻿# Pendencias do Projeto
 
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Validar em producao (Vercel) os 3 modos de recorrencia na criacao e na edicao.
-- [ ] Confirmar que exclusao por escopo nao reintroduz transacoes em sincronizacoes futuras.
-- [ ] Validar o calculo de saldo anterior na aba `transactions` com combinacoes de filtros (conta/banco/categoria).
-- [ ] Validar parcelamento mensal com datas de fim de mes (28/29/30/31) em cenarios reais.
+- [ ] Validar em dispositivo real (Android e iOS) o fluxo completo: login -> redirect automatico -> tela `/mobile`.
+- [ ] Validar consistencia de indicadores da tela `/mobile` com a tela `/dashboard` para o mesmo `month_ref`.
+- [ ] Revisar deteccao de user-agent para evitar classificacao incorreta em tablets.
 
 ## Pendencias importantes
-- [ ] Revisar responsividade da area `Adicionar transacao` em larguras menores.
-- [ ] Avaliar permitir selecao de conta no bloco de criacao sem comprometer layout em linha.
-- [ ] Revisar rotulos/textos para padronizacao (acentuacao e nomenclatura).
-- [ ] Definir comportamento desejado de `Saldo com as transacoes exibidas` quando houver filtro por categoria.
+- [ ] Refinar microinteracoes da tela mobile (icones, densidade e feedback de clique).
+- [ ] Definir se a tela mobile deve oferecer filtros por conta/categoria na propria pagina.
+- [ ] Revisar textos para padronizacao final (acentuacao e nomenclatura).
+- [ ] Validar desempenho da tela mobile em aparelhos de entrada.
 
 ## Melhorias futuras
-- [ ] Adicionar acao de alterar categoria em lote de forma funcional (hoje apenas seletor visual).
-- [ ] Criar resumo de validacao mensal (entradas, saidas, saldo) na propria aba `transactions`.
-- [ ] Evoluir experiencia de filtros com presets salvos por usuario.
+- [ ] Adicionar navegacao secundaria mobile para abrir rapidamente transacoes/orcamento/graficos.
+- [ ] Evoluir grafico de fluxo de caixa mobile com tooltips por dia.
+- [ ] Criar testes E2E para fluxo mobile com Playwright/Cypress.
 
 ## Bugs conhecidos
 - ID: `TRX-001`

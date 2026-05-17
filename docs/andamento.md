@@ -1,54 +1,48 @@
-# Andamento do Projeto
+﻿# Andamento do Projeto
 
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: estabilizacao funcional e visual da aba `transactions`.
+- Entrega principal: interface mobile dedicada com redirecionamento automatico apos login.
 - Resultado entregue:
-  - Formulario de criacao:
-    - Ordem da acao ajustada para `Despesa`, `Receita`, `Transferencia`.
-    - Botoes `Salvar` e `Cancelar` alinhados a esquerda.
-    - Area de `Observacao` adicionada na criacao e mantida na edicao.
-  - Recorrencia:
-    - Correcao da geracao de parcelas para nao perder a ultima parcela em cenarios mensais.
-    - Ajuste de data mensal para meses curtos (28/29/30/31) sem pular parcela.
-    - `R$ Total` do `Parcelamento (mensal)` passou a ser calculado dinamicamente no frontend.
-    - Removido sufixo automatico de parcela/recorrencia da descricao (`1 de 10`, etc), mantendo apenas indicador visual.
-  - Tabela de transacoes:
-    - Transacoes nao consolidadas agora ficam em negrito; consolidadas em fonte normal.
-    - Alinhamento das colunas `Descricao`, `Categoria`, `Conta`, `Valor (R$)` e `C` ajustado para bater com os valores por linha.
-    - Checkbox `Incluir saldo anterior` incluido acima de `Saldo sem as transacoes exibidas`, alinhado a direita.
-  - Saldos da aba `transactions`:
-    - `Saldo sem as transacoes exibidas` agora usa saldo acumulado antes do mes de referencia (quando o checkbox esta marcado).
-    - Quando desmarcado, `Saldo sem as transacoes exibidas` passa a `0`.
-    - `Saldo com as transacoes exibidas` passou a considerar `saldo base + transacoes exibidas`.
-  - Navegacao de mes:
-    - Setas adicionadas no seletor de mes para navegar para mes anterior/posterior com clique.
-  - Ambiente local:
-    - Corrigido bloqueio de `npm install`/`npm run build` por erro de certificado TLS (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`).
-    - `next` reinstalado com sucesso via `npm ci`.
-    - Build local validado com sucesso no PowerShell apos ajuste de ambiente (`NODE_OPTIONS=--use-system-ca`).
+  - Fluxo mobile:
+    - `middleware.ts` passou a proteger e rotear `/mobile`.
+    - Usuario autenticado em celular e redirecionado automaticamente para `/mobile`.
+    - Usuario autenticado em desktop continua no fluxo `/dashboard`.
+  - Login:
+    - `src/app/login/page.tsx` identifica dispositivo no client e direciona para `/mobile` (celular) ou `/dashboard` (desktop).
+  - Nova tela mobile:
+    - Nova rota `src/app/mobile/page.tsx` com visao geral otimizada para celular.
+    - Blocos implementados: saldo das contas, resultado do periodo, comparativo de saidas, fluxo de caixa e despesas por categoria.
+    - Atalhos visuais: `Ultimas alteracoes` e `Nao consolidadas`.
+  - Navegacao de mes no mobile:
+    - Novo componente `src/components/mobile-month-picker.tsx` com setas anterior/proximo e seletor de mes.
+  - Estilizacao:
+    - Novas classes `fg-mobile-*` no `src/app/globals.css` para layout e identidade visual mobile.
+  - Validacao:
+    - `npm run build` executado com sucesso apos as alteracoes.
 
 ## Etapa atual
-- Objetivo: validacao final ponta a ponta da aba `transactions` apos os ajustes de recorrencia e saldo.
+- Objetivo: validar experiencia mobile em dispositivo real e garantir paridade de dados com o dashboard desktop.
 - Em andamento:
-  - [ ] Validar saldo anterior em diferentes filtros (conta unica, multiplas contas, banco).
-  - [ ] Validar criacao de parcelamento com datas no fim do mes (29, 30 e 31).
-  - [ ] Validar experiencia em mobile da tabela e do bloco de criacao.
+  - [ ] Validar navegacao de mes em Android e iOS.
+  - [ ] Validar desempenho e leitura dos cards em telas pequenas.
+  - [ ] Confirmar consistencia dos numeros mobile x dashboard para o mesmo `month_ref`.
 
 ## Proximas etapas
 - Curto prazo:
-  - [ ] Criar checklist de regressao especifico para `transactions` (saldo, recorrencia, consolidacao).
-  - [ ] Padronizar textos/acentuacao da interface para consistencia.
+  - [ ] Ajustar refinamentos visuais da tela mobile apos feedback de uso real.
+  - [ ] Revisar eventuais diferencas de user-agent (tablet vs celular) na regra de redirecionamento.
 - Medio prazo:
-  - [ ] Expandir testes automatizados para fluxos de recorrencia e saldos.
-  - [ ] Melhorar feedbacks de erro/sucesso no frontend.
+  - [ ] Evoluir a tela mobile para incluir filtros rapidos por conta e categoria.
+  - [ ] Definir testes automatizados para fluxo de login + redirect mobile.
 - Longo prazo:
-  - [ ] Evoluir analises e graficos por conta, banco e periodo.
+  - [ ] Evoluir PWA mobile com experiencia offline para consulta de historico.
 
 ## Observacoes importantes
 - Regra obrigatoria: **sempre atualizar os arquivos da pasta `/docs` apos qualquer mudanca no sistema**.
+- Regra obrigatoria: **sempre realizar commit + push apos alteracoes no sistema para acionar deploy automatico no Vercel**.
 - Registrar novas regras em `docs/decisoes.md`.
 - Registrar novas pendencias em `docs/pendencias.md`.
-- Antes de publicar, validar `npm run build` e fluxo de deploy.
+- Antes de publicar, validar `npm run build`.

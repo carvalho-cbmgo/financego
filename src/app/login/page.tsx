@@ -4,6 +4,12 @@ import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
+function isMobileClient() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent.toLowerCase();
+  return /android|iphone|ipad|ipod|mobile|blackberry|iemobile|opera mini/.test(ua);
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -44,7 +50,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(isMobileClient() ? "/mobile" : "/dashboard");
     } catch (err: any) {
       setMessage(err?.message || "Ocorreu um erro inesperado.");
     } finally {

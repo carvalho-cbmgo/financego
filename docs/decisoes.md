@@ -1,46 +1,40 @@
-# Decisoes do Projeto
+﻿# Decisoes do Projeto
 
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
-- Decisao: calcular `Saldo sem as transacoes exibidas` na aba `transactions` a partir do acumulado anterior ao mes de referencia.
-- Motivo: garantir consistencia temporal do saldo-base da tela.
-- Impacto: saldo-base deixa de depender do total atual de contas e passa a refletir o periodo exibido.
+- Decisao: criar rota dedicada `/mobile` com renderizacao server-side para experiencia de celular.
+- Motivo: separar experiencia mobile da desktop sem quebrar o dashboard atual.
+- Impacto: fluxo mobile ganhou pagina propria com componentes e metricas especificas.
 
 - Data: `2026-05-17`
-- Decisao: incluir toggle `Incluir saldo anterior` na propria tabela de transacoes.
-- Motivo: permitir comparacao rapida entre visao com base acumulada e visao zerada.
-- Impacto: quando desligado, saldo-base vira `0`; quando ligado, usa acumulado pre-mes.
+- Decisao: usar deteccao de user-agent no login e no middleware para rotear usuarios autenticados.
+- Motivo: garantir entrada consistente no fluxo correto por dispositivo.
+- Impacto: celular autenticado segue para `/mobile`; desktop segue para `/dashboard`.
 
 - Data: `2026-05-17`
-- Decisao: ajustar geracao de recorrencia mensal para respeitar meses curtos sem perder ocorrencias.
-- Motivo: corrigir falha de parcelamentos onde a ultima parcela podia nao ser criada em casos de fim de mes.
-- Impacto: maior previsibilidade de parcelas e consistencia de calendario.
+- Decisao: manter calculos da visao mobile alinhados ao dashboard (saldo acumulado pre-mes + consolidado no periodo).
+- Motivo: evitar divergencia de indicadores entre telas diferentes.
+- Impacto: maior confianca do usuario ao alternar entre mobile e desktop.
 
 - Data: `2026-05-17`
-- Decisao: remover sufixos de parcela/recorrencia da descricao das transacoes geradas.
-- Motivo: ja existe indicador visual de parcela na listagem.
-- Impacto: descricao mais limpa e sem redundancia.
+- Decisao: usar componente client `mobile-month-picker` para navegacao mensal com setas e `input month`.
+- Motivo: agilizar troca de referencia temporal no celular sem navegao pesada.
+- Impacto: melhor usabilidade mobile na exploracao por mes.
 
 ## Decisoes de interface
 - Data: `2026-05-17`
-- Tela: `transactions`
-- Decisao: exibir transacoes nao consolidadas em negrito e consolidadas em fonte normal.
-- Motivo: destacar pendencias operacionais de forma direta.
-- Impacto: leitura mais rapida do que ainda nao foi consolidado.
+- Tela: `mobile`
+- Decisao: adotar estrutura em cards verticais com cabecalho verde e blocos de KPI inspirados na referencia enviada.
+- Motivo: priorizar leitura rapida e uso com uma mao no celular.
+- Impacto: experiencia mobile distinta da interface desktop, sem reduzir informacao essencial.
 
 - Data: `2026-05-17`
-- Tela: `transactions`
-- Decisao: alinhar explicitamente cabecalhos e celulas das colunas `Descricao`, `Categoria`, `Conta`, `Valor (R$)` e `C`.
-- Motivo: eliminar ambiguidade visual na leitura linha a linha.
-- Impacto: tabela mais clara e consistente.
-
-- Data: `2026-05-17`
-- Tela: `transactions`
-- Decisao: manter setas de navegacao mensal ao lado do seletor de mes.
-- Motivo: facilitar navegacao por periodo sem abrir seletor manualmente.
-- Impacto: fluxo de uso mais rapido.
+- Tela: `mobile`
+- Decisao: incluir atalhos `Ultimas alteracoes` e `Nao consolidadas` no topo da pagina.
+- Motivo: facilitar acesso imediato a movimentos recentes e pendencias.
+- Impacto: diminuicao de toques para tarefas frequentes.
 
 ## Decisoes de processo
 - Data: `2026-05-17`
@@ -49,11 +43,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Impacto: rastreabilidade maior de estado, pendencias e decisoes.
 
 - Data: `2026-05-17`
+- Decisao: tornar obrigatorio commit + push apos alteracoes para acionar deploy automatico no Vercel.
+- Motivo: manter ambiente publicado sempre sincronizado com o codigo validado localmente.
+- Impacto: reducao de divergencia entre local, GitHub e Vercel.
+
+- Data: `2026-05-17`
 - Decisao: usar certificados do sistema no Node/npm via `NODE_OPTIONS=--use-system-ca` no ambiente Windows local.
 - Motivo: corrigir falha TLS com npm (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`) sem desabilitar validacao SSL.
-- Impacto: `npm install` e `npm run build` voltaram a funcionar com seguranca.
+- Impacto: `npm install` e `npm run build` funcionando com seguranca.
 
 ## Decisoes futuras
-- [ ] Definir cobertura de testes automatizados para saldos por periodo e filtros combinados.
-- [ ] Definir estrategia final da selecao de conta no bloco de criacao sem perder layout compacto.
+- [ ] Definir cobertura de testes automatizados para fluxo mobile completo (login + redirect + metricas).
+- [ ] Definir regra final para tablets (tratar como mobile ou desktop).
 - [ ] Definir padrao unico de mensagens de erro e sucesso no frontend.

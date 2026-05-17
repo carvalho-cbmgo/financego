@@ -1,4 +1,4 @@
-# Comandos do Projeto
+﻿# Comandos do Projeto
 
 Referencia rapida para setup, execucao, validacao e publicacao.
 
@@ -43,6 +43,14 @@ git commit -m "mensagem objetiva"
 git push origin main
 ```
 
+## Verificacao rapida da rota mobile
+```bash
+npm run build
+# Em dev, abrir:
+# /login (simular login mobile)
+# /mobile?month_ref=YYYY-MM
+```
+
 ## Supabase
 > Use se o Supabase CLI estiver instalado e configurado.
 
@@ -78,8 +86,9 @@ git log --oneline -n 12
 # 2) Validar build
 npm run build
 
-# 3) Versionar
+# 3) Versionar e publicar
 git add -A
 git commit -m "descricao da entrega"
 git push origin main
+# (push em main aciona deploy automatico no Vercel)
 ```
