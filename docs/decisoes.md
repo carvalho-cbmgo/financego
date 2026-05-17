@@ -4,6 +4,21 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: remodelar `budgets` para um fluxo guiado por `mes de referencia`, com selecao dinamica de categorias e limite individual por categoria.
+- Motivo: o formulario fixo anterior nao representava o uso real e nao permitia flexibilidade por mes.
+- Impacto: a gestao de orcamento virou um processo mensal interativo, com persistencia exata por mes/categoria.
+
+- Data: `2026-05-17`
+- Decisao: no monitoramento de `budgets`, considerar apenas gastos consolidados (`is_consolidated !== false`) para medir consumo de orcamento.
+- Motivo: previsoes e pendencias nao devem distorcer percentual de execucao do orcamento mensal realizado.
+- Impacto: indicadores de consumo (% e R$) ficam alinhados ao realizado no periodo.
+
+- Data: `2026-05-17`
+- Decisao: ajustar `POST /api/budgets/save` para sincronizar integralmente as categorias do mes (upsert das selecionadas + remocao das desmarcadas).
+- Motivo: evitar sobras de categorias antigas quando o usuario replaneja o mesmo mes.
+- Impacto: estado salvo no backend passa a refletir exatamente o conjunto de categorias selecionadas na UI.
+
+- Data: `2026-05-17`
 - Decisao: saldos de conta no `dashboard`/`transactions` devem considerar apenas transacoes consolidadas na composicao dinamica.
 - Motivo: evitar inflar saldo com despesas previstas (`is_consolidated = false`) e corrigir divergencias como a do `NUBANK Cartao`.
 - Impacto: o painel de contas volta a refletir saldo real consolidado, mantendo previsoes separadas em indicadores proprios.

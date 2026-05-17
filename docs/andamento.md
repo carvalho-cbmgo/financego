@@ -4,27 +4,31 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: recalculo de saldo por conta com base em transacoes consolidadas (sem inflar com previstas).
+- Entrega principal: remodelagem completa da pagina `budgets` com fluxo mensal por categoria.
 - Resultado entregue:
-  - Pagina `dashboard` e aba `transactions`:
-    - Reintroduzido calculo dinamico de saldo por conta, sem depender apenas de `accounts.balance`.
-    - Regra aplicada:
-      - Se `last_balance_at` existir: usa `accounts.balance` como snapshot.
-      - Caso contrario: usa `accounts.balance` (quando nao-zero) + soma de transacoes consolidadas.
-      - Se saldo base estiver zerado/nulo: usa somente soma de transacoes consolidadas.
-    - Resultado: saldos deixaram de aparecer nulos e passaram a refletir o historico consolidado real.
-  - Pagina `accounts`:
-    - Mesmo criterio de saldo aplicado em `Saldo total`, `Visao por banco` e `Visao por conta`.
-    - `Despesa prevista` continua separada, baseada em transacoes nao consolidadas.
+  - Pagina `budgets`:
+    - Usuario escolhe o `mes de referencia` (input mes + setas de navegacao lateral).
+    - Usuario seleciona as categorias que deseja orcar (catalogo + inclusao de categoria personalizada).
+    - Usuario define um orcamento individual para cada categoria selecionada.
+    - Tudo permanece salvo por `mes_ref + categoria` e volta preenchido ao reabrir o mesmo mes.
+    - Painel da propria pagina mostra monitoramento por categoria:
+      - Orcado (R$)
+      - Gasto consolidado no mes (R$)
+      - Saldo (R$)
+      - Consumo (%), incluindo barra de progresso visual.
+  - API de orcamentos:
+    - `POST /api/budgets/save` passou a salvar/atualizar categorias selecionadas do mes.
+    - Categorias removidas da selecao passam a ser removidas daquele mes de referencia.
+    - Redirecionamento preserva `month_ref` e retorna status de sucesso/erro na tela.
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validacao funcional dos novos calculos de saldo e reconciliacao do `NUBANK Cartao`.
+- Objetivo: validacao funcional da nova experiencia de orcamento mensal por categoria.
 - Em andamento:
-  - [ ] Confirmar saldo do `NUBANK Cartao` em `accounts` e `transactions` apos deploy.
-  - [ ] Validar exclusao de conta em ambiente real com conta que possui historico.
-  - [ ] Validar ingestao real de notificacao bancaria (`/api/notifications/ingest`).
+  - [ ] Validar ciclo completo: selecionar categorias -> salvar -> voltar no mesmo mes com dados persistidos.
+  - [ ] Validar monitoramento em `%` e `R$` com gastos reais no mes de referencia.
+  - [ ] Validar comportamento quando nenhuma categoria for selecionada e salvo (mes sem orcamento).
 
 ## Proximas etapas
 - Curto prazo:

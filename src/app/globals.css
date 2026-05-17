@@ -2442,6 +2442,112 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   color: #6b7280;
 }
 
+.fg-budgets-page {
+  max-width: 1180px;
+}
+
+.fg-budgets-month-wrap {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fg-budgets-main-grid {
+  align-items: start;
+}
+
+.fg-budgets-summary-stack {
+  display: grid;
+  gap: 6px;
+}
+
+.fg-budgets-form {
+  gap: 10px;
+}
+
+.fg-budgets-selector {
+  border: 1px solid #d0d4db;
+  background: #fdfefe;
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.fg-budgets-selector-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.fg-budgets-selector-head span {
+  color: #586170;
+}
+
+.fg-budgets-selector-tools {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.fg-budgets-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 6px;
+}
+
+.fg-budgets-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  border: 1px solid #cfd6df;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 4px 9px;
+  font-size: 11px;
+}
+
+.fg-budgets-category-pill.is-active {
+  border-color: #95af37;
+  background: #f2f8e3;
+  color: #39541c;
+}
+
+.fg-budgets-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fg-budgets-progress-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 190px;
+}
+
+.fg-budgets-progress {
+  width: 100%;
+  height: 8px;
+  border: 1px solid #ccd3dd;
+  background: #ecf0f5;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fg-budgets-progress > div {
+  height: 100%;
+  background: #5f9f2e;
+}
+
+.fg-budgets-progress.is-alert > div {
+  background: #d6921f;
+}
+
+.fg-budgets-progress.is-over > div {
+  background: #c13c3c;
+}
+
 @media (min-width: 821px) {
   .fg-mobile-content {
     max-width: 760px;
@@ -2449,5 +2555,15 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
   .fg-mobile-section-title {
     font-size: 17px;
+  }
+}
+
+@media (max-width: 920px) {
+  .fg-budgets-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fg-budgets-categories-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }

@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: remodelar completamente `budgets` para planejamento mensal por categorias selecionadas pelo usuario com monitoramento por `%` e `R$`.
+- Prompt base: "A pagina budgets deve ser completamente remodelada... escolher mes de referencia... selecionar categorias... estabelecer orcamento individual... monitorar gastos por percentual e R$."
+- Resultado:
+  - Tela de `budgets` refeita com seletor de mes + categorias dinamicas + valores por categoria.
+  - API `budgets/save` adaptada para sincronizar o conjunto de categorias do mes.
+  - Monitoramento no proprio `budgets` com tabela de orcado, gasto, saldo e barra de consumo percentual.
+  - Build validado com sucesso.
+
 - Objetivo: corrigir saldo nulo no painel de contas e separar previsto de saldo consolidado.
 - Prompt base: "Na pagina accounts... despesa prevista... e no dashboard/transactions os saldos estao nulos."
 - Resultado:

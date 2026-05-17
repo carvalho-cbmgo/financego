@@ -8,6 +8,9 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Ajustar ordenacao opcional no monitoramento de `budgets` (maior consumo, maior excesso, alfabetica).
+- [ ] Avaliar inclusao de modo "copiar orcamento do mes anterior" na tela de `budgets`.
+- [ ] Definir se categorias com orcamento zero devem permanecer visiveis ou serem ocultadas automaticamente.
 - [ ] Validar UX da exclusao de conta com mensagem de impacto (conta + transacoes vinculadas).
 - [ ] Definir se no futuro o saldo de contas na lateral de `transactions` deve ser dinamico por mes de referencia ou sempre saldo persistido.
 - [ ] Implementar acao de desparear/desativar dispositivo direto em `/mobile/pair`.
@@ -47,5 +50,12 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Descricao: apos ajuste anterior, painel de contas no `dashboard`/`transactions` passou a mostrar saldos nulos por depender apenas de `accounts.balance`.
 - Severidade: alta
 - Como reproduzir: abrir painel de contas com contas manuais sem snapshot atualizado.
+- Status: resolvido em `2026-05-17`
+- Responsavel: time de desenvolvimento
+
+- ID: `BUD-005`
+- Descricao: pagina `budgets` antiga com categorias fixas nao permitia selecao flexivel por mes nem monitoramento completo por percentual e R$ no mesmo fluxo.
+- Severidade: media
+- Como reproduzir: abrir `budgets` antes da remodelagem e tentar montar orcamento customizado por mes.
 - Status: resolvido em `2026-05-17`
 - Responsavel: time de desenvolvimento
