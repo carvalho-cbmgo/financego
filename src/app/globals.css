@@ -1411,6 +1411,24 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   font-weight: 700;
 }
 
+.fg-legacy-month-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fg-legacy-month-shift {
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+}
+
 .fg-legacy-date-box {
   display: grid;
   justify-items: end;
@@ -1602,7 +1620,7 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-legacy-create-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -1612,6 +1630,15 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-create-cancel {
   min-width: 96px;
+}
+
+.fg-legacy-create-note-wrap {
+  gap: 4px;
+}
+
+.fg-legacy-create-note {
+  min-height: 62px;
+  resize: vertical;
 }
 
 .fg-legacy-transactions-table .fg-legacy-group-row td {
@@ -1629,8 +1656,42 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   text-align: right;
 }
 
+.fg-legacy-balance-head-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 3px;
+}
+
+.fg-legacy-balance-head-value {
+  text-align: right;
+}
+
 .fg-legacy-tx-row td {
   vertical-align: middle;
+}
+
+.fg-legacy-tx-row.is-unconsolidated td {
+  font-weight: 700;
+}
+
+.fg-legacy-col-select {
+  width: 34px;
+  text-align: center;
+}
+
+.fg-legacy-col-desc,
+.fg-legacy-col-category,
+.fg-legacy-col-account {
+  text-align: left;
+}
+
+.fg-legacy-col-value {
+  text-align: right;
+}
+
+.fg-legacy-col-status {
+  width: 44px;
+  text-align: center;
 }
 
 .fg-legacy-tx-row.is-active td {
@@ -1671,13 +1732,11 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-legacy-value-neg {
   color: var(--danger);
   text-align: right;
-  font-weight: 700;
 }
 
 .fg-legacy-value-pos {
   color: var(--success);
   text-align: right;
-  font-weight: 700;
 }
 
 .fg-global-loading {

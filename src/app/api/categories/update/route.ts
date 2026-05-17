@@ -54,12 +54,15 @@ function addByRepeat(date: Date, repeatEvery: RepeatEvery, step: number) {
     next.setUTCDate(next.getUTCDate() + step * 7);
     return next;
   }
-  if (repeatEvery === "year") {
-    next.setUTCFullYear(next.getUTCFullYear() + step);
-    return next;
-  }
-  next.setUTCMonth(next.getUTCMonth() + step);
-  return next;
+  const baseYear = next.getUTCFullYear();
+  const baseMonth = next.getUTCMonth();
+  const baseDay = next.getUTCDate();
+  const targetMonthOffset = repeatEvery === "year" ? step * 12 : step;
+  const totalMonths = baseYear * 12 + baseMonth + targetMonthOffset;
+  const targetYear = Math.floor(totalMonths / 12);
+  const targetMonth = ((totalMonths % 12) + 12) % 12;
+  const targetDay = Math.min(baseDay, daysInUtcMonth(targetYear, targetMonth));
+  return new Date(Date.UTC(targetYear, targetMonth, targetDay, 12, 0, 0, 0));
 }
 
 function toIsoDate(date: Date) {
@@ -79,16 +82,16 @@ function splitAmount(total: number, count: number) {
   return pieces;
 }
 
-function appendInstallmentSuffix(description: string, current: number, total: number) {
-  const base = String(description || "").trim();
-  const cleaned = base.replace(/\s*-\s*\d+\s+de\s+\d+\s*$/i, "").trim();
-  return `${cleaned} - ${current} de ${total}`.trim();
+function daysInUtcMonth(year: number, monthIndex: number) {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 }
 
-function appendRecurringSuffix(description: string, index: number) {
+function stripRecurrenceSuffix(description: string) {
   const base = String(description || "").trim();
-  if (/recorr/i.test(base)) return base;
-  return `${base} - recorrÃªncia #${index}`.trim();
+  return base
+    .replace(/\s*-\s*\d+\s+de\s+\d+\s*$/i, "")
+    .replace(/\s*-\s*recorr\w*\s*#\d+\s*$/i, "")
+    .trim();
 }
 
 function buildRecurringOccurrences(input: {
@@ -104,6 +107,7 @@ function buildRecurringOccurrences(input: {
   repeatForever: boolean;
 }) {
   const firstDate = new Date(`${input.postedAtDate}T12:00:00.000Z`);
+  const normalizedDescription = stripRecurrenceSuffix(input.description) || String(input.description || "").trim();
 
   if (input.mode === "none") {
     return {
@@ -124,11 +128,11 @@ function buildRecurringOccurrences(input: {
   if (input.mode === "installment") {
     const current = Math.max(1, input.installmentCurrent);
     const total = Math.max(current, input.installmentTotal);
+    const remainingCount = Math.max(1, total - current + 1);
     const fullTotalAbs = Number.isFinite(Number(input.installmentTotalAmount)) && Number(input.installmentTotalAmount) > 0
       ? Number(input.installmentTotalAmount)
-      : Math.abs(input.baseAmount) * total;
-    const perInstallment = splitAmount(fullTotalAbs, total);
-    const startIndex = current - 1;
+      : Math.abs(input.baseAmount) * remainingCount;
+    const perInstallment = splitAmount(fullTotalAbs, remainingCount);
     const items: Array<{
       postedAtDate: string;
       description: string;
@@ -140,10 +144,11 @@ function buildRecurringOccurrences(input: {
     for (let installment = current; installment <= total; installment++) {
       const step = installment - current;
       const date = addByRepeat(firstDate, "month", step);
-      const signedAmount = computeAmountByAction(input.type, perInstallment[installment - 1] || perInstallment[startIndex] || 0);
+      const idx = installment - current;
+      const signedAmount = computeAmountByAction(input.type, perInstallment[idx] || perInstallment[remainingCount - 1] || 0);
       items.push({
         postedAtDate: toIsoDate(date),
-        description: appendInstallmentSuffix(input.description, installment, total),
+        description: normalizedDescription,
         amount: signedAmount,
         installmentCurrent: installment,
         installmentTotal: total,
@@ -178,9 +183,7 @@ function buildRecurringOccurrences(input: {
   for (let idx = 0; idx < totalItems; idx++) {
     const installment = current + idx;
     const date = addByRepeat(firstDate, input.repeatEvery, idx);
-    const description = input.repeatForever
-      ? appendRecurringSuffix(input.description, installment)
-      : appendInstallmentSuffix(input.description, installment, total);
+    const description = normalizedDescription;
 
     items.push({
       postedAtDate: toIsoDate(date),
@@ -232,6 +235,7 @@ export async function POST(req: Request) {
   const installmentTotalAmount = Number.isFinite(installmentTotalAmountRaw) && installmentTotalAmountRaw > 0
     ? installmentTotalAmountRaw
     : null;
+  const note = String(form.get("note") || "").trim();
 
   if (!id) {
     return NextResponse.redirect(new URL(returnUrl, req.url));
@@ -350,6 +354,7 @@ export async function POST(req: Request) {
         raw: {
           source: "manual_edit",
           recurrence: recurrence.metadata,
+          note: note || null,
         },
       })
       .eq("id", id)
@@ -388,6 +393,7 @@ export async function POST(req: Request) {
       raw: {
         source: "manual_edit",
         recurrence: recurrence.metadata,
+        note: note || null,
       },
     })
     .eq("id", id)
@@ -414,6 +420,7 @@ export async function POST(req: Request) {
     raw: {
       source: "manual_edit",
       recurrence: recurrence.metadata,
+      note: note || null,
     },
   }));
 
@@ -423,3 +430,4 @@ export async function POST(req: Request) {
 
   return NextResponse.redirect(new URL(returnUrl, req.url));
 }
+

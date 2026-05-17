@@ -3,54 +3,57 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
-- Data: `2026-05-15`
-- Decisao: recorrencia de transacoes gerada no backend com vinculo por `installment_group_key`.
-- Motivo: suportar parcelamento e recorrencia avancada com rastreabilidade.
-- Impacto: criacao/edicao/exclusao por escopo no mesmo grupo de recorrencia.
-- Referencia: `b0a7711`.
+- Data: `2026-05-17`
+- Decisao: calcular `Saldo sem as transacoes exibidas` na aba `transactions` a partir do acumulado anterior ao mes de referencia.
+- Motivo: garantir consistencia temporal do saldo-base da tela.
+- Impacto: saldo-base deixa de depender do total atual de contas e passa a refletir o periodo exibido.
 
-- Data: `2026-05-16`
-- Decisao: reutilizar padrao de recorrencia no formulario de `Adicionar transacao`.
-- Motivo: manter consistencia entre criar e editar.
-- Impacto: menos ambiguidade de uso e menor curva de aprendizado.
-- Referencia: `310b3c4`.
+- Data: `2026-05-17`
+- Decisao: incluir toggle `Incluir saldo anterior` na propria tabela de transacoes.
+- Motivo: permitir comparacao rapida entre visao com base acumulada e visao zerada.
+- Impacto: quando desligado, saldo-base vira `0`; quando ligado, usa acumulado pre-mes.
+
+- Data: `2026-05-17`
+- Decisao: ajustar geracao de recorrencia mensal para respeitar meses curtos sem perder ocorrencias.
+- Motivo: corrigir falha de parcelamentos onde a ultima parcela podia nao ser criada em casos de fim de mes.
+- Impacto: maior previsibilidade de parcelas e consistencia de calendario.
+
+- Data: `2026-05-17`
+- Decisao: remover sufixos de parcela/recorrencia da descricao das transacoes geradas.
+- Motivo: ja existe indicador visual de parcela na listagem.
+- Impacto: descricao mais limpa e sem redundancia.
 
 ## Decisoes de interface
-- Data: `2026-05-16`
+- Data: `2026-05-17`
 - Tela: `transactions`
-- Decisao: reorganizar a barra de acoes com `Adicionar transacao` a esquerda e acoes em lote a direita.
-- Motivo: melhorar hierarquia visual e foco de uso.
-- Impacto: interface mais limpa e previsivel.
-- Referencias: `516ccbd`, `c8a502b`.
+- Decisao: exibir transacoes nao consolidadas em negrito e consolidadas em fonte normal.
+- Motivo: destacar pendencias operacionais de forma direta.
+- Impacto: leitura mais rapida do que ainda nao foi consolidado.
 
-- Data: `2026-05-16`
+- Data: `2026-05-17`
 - Tela: `transactions`
-- Decisao: remover `Clique na linha para editar`, remover linha `Todos` e remover `Exportar` da barra principal.
-- Motivo: reduzir ruido visual e priorizar fluxo operacional.
-- Impacto: area de transacoes mais objetiva.
-- Referencia: `c8a502b`.
+- Decisao: alinhar explicitamente cabecalhos e celulas das colunas `Descricao`, `Categoria`, `Conta`, `Valor (R$)` e `C`.
+- Motivo: eliminar ambiguidade visual na leitura linha a linha.
+- Impacto: tabela mais clara e consistente.
 
-- Data: `2026-05-16`
+- Data: `2026-05-17`
 - Tela: `transactions`
-- Decisao: incluir linha de saldo antes do cabecalho e apos ultima transacao.
-- Motivo: dar contexto de saldo antes/depois do conjunto exibido.
-- Impacto: leitura financeira imediata sem depender de outra tela.
-- Referencia: `c8a502b`.
+- Decisao: manter setas de navegacao mensal ao lado do seletor de mes.
+- Motivo: facilitar navegacao por periodo sem abrir seletor manualmente.
+- Impacto: fluxo de uso mais rapido.
 
-## Decisoes de banco de dados
-- Data: `2026-05-15`
-- Entidade: `transactions`
-- Decisao: manter campos `installment_current`, `installment_total`, `installment_group_key` e `raw.recurrence`.
-- Motivo: permitir recorrencia com metadata sem quebrar compatibilidade.
-- Impacto: flexibilidade de modelagem e controle de exclusao por escopo.
+## Decisoes de processo
+- Data: `2026-05-17`
+- Decisao: tornar obrigatoria a atualizacao da pasta `/docs` a cada mudanca no sistema.
+- Motivo: preservar contexto e continuidade entre sessoes.
+- Impacto: rastreabilidade maior de estado, pendencias e decisoes.
 
-- Data: `2026-05-16`
-- Entidade: `transactions`
-- Decisao: sem nova migracao de schema nos refinamentos recentes de UI.
-- Motivo: mudancas focadas em layout/UX e reaproveitamento da base existente.
-- Impacto: deploy mais simples e menor risco de regressao em dados.
+- Data: `2026-05-17`
+- Decisao: usar certificados do sistema no Node/npm via `NODE_OPTIONS=--use-system-ca` no ambiente Windows local.
+- Motivo: corrigir falha TLS com npm (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`) sem desabilitar validacao SSL.
+- Impacto: `npm install` e `npm run build` voltaram a funcionar com seguranca.
 
 ## Decisoes futuras
-- [ ] Definir testes automatizados para fluxos de recorrencia (`none/installment/advanced`).
-- [ ] Definir estrategia de selecao de conta no formulario de adicao sem perder layout compacto.
+- [ ] Definir cobertura de testes automatizados para saldos por periodo e filtros combinados.
+- [ ] Definir estrategia final da selecao de conta no bloco de criacao sem perder layout compacto.
 - [ ] Definir padrao unico de mensagens de erro e sucesso no frontend.

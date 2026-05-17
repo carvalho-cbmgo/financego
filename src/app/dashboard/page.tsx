@@ -195,13 +195,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     : selectedBankId
       ? (accounts || []).filter((a: any) => String(a.bank_id || "") === selectedBankId)
       : (accounts || []);
-  const selectedAccountsTotalBalance = selectedAccounts.reduce((sum: number, account: any) => {
-    const accountId = String(account.id || "");
-    const computedBalance = accountBalanceById.get(accountId);
-    if (Number.isFinite(Number(computedBalance))) return sum + Number(computedBalance);
-    return sum + Number(account.balance || 0);
-  }, 0);
-
   const consolidatedMonthTxs = (monthTxs || []).filter((t: any) => t.is_consolidated !== false);
   const plannedMonthTxs = (monthTxs || []).filter((t: any) => t.is_consolidated === false);
 
@@ -250,6 +243,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   else if (selectedAccountId) returnParams.set("account_id", selectedAccountId);
   if (selectedCategoryNames.length) returnParams.set("categories", selectedCategoryNames.join(","));
   returnParams.set("month_ref", selectedMonthRef);
+  if (!includePreviousBalance) returnParams.set("include_previous_balance", "0");
   const returnUrl = `/dashboard?${returnParams.toString()}`;
 
   const dateInfo = formatCurrentDateInfo();
@@ -296,7 +290,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 txs={txs || []}
                 banks={banks || []}
                 accounts={accounts || []}
-                accountsTotalBalance={selectedAccountsTotalBalance}
+                previousBalance={previousBalance}
+                includePreviousBalance={includePreviousBalance}
                 categoryOptions={categoryOptions}
                 returnUrl={returnUrl}
                 selectedEditTxId={selectedEditTxId}

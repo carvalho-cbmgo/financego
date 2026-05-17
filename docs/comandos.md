@@ -18,6 +18,23 @@ npm run build
 npm run start
 ```
 
+## Ajuste de ambiente local (Windows)
+```powershell
+# Se houver erro TLS no npm (UNABLE_TO_VERIFY_LEAF_SIGNATURE),
+# configure o Node para usar certificados do sistema:
+setx NODE_OPTIONS "--use-system-ca"
+
+# Em novas sessoes do PowerShell:
+npm ping
+npm ci
+npm run build
+```
+
+```powershell
+# Se o PowerShell bloquear npm.ps1:
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force
+```
+
 ## Git
 ```bash
 git status -sb
@@ -50,10 +67,18 @@ rg --files
 git log --oneline -n 12
 ```
 
-## Rotina recomendada antes de deploy
+## Rotina obrigatoria apos mudancas no sistema
 ```bash
-git status -sb
+# 1) Atualizar documentacao do estado do projeto
+# docs/andamento.md
+# docs/pendencias.md
+# docs/decisoes.md
+# docs/prompts-importantes.md
+
+# 2) Validar build
 npm run build
+
+# 3) Versionar
 git add -A
 git commit -m "descricao da entrega"
 git push origin main

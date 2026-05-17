@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
+import { PreviousBalanceToggle } from "@/components/previous-balance-toggle";
 import { accountTypeLabel } from "@/lib/accounts";
 import { notifyGlobalLoading } from "@/components/global-loading-overlay";
 
@@ -31,7 +32,8 @@ export function TransactionsTable(input: {
   txs: any[];
   banks: any[];
   accounts: any[];
-  accountsTotalBalance: number;
+  previousBalance: number;
+  includePreviousBalance: boolean;
   categoryOptions: CategorySelectOption[];
   returnUrl: string;
   selectedEditTxId: string;
@@ -56,8 +58,9 @@ export function TransactionsTable(input: {
     () => (input.txs || []).reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0),
     [input.txs],
   );
-  const balanceBeforeDisplayed = Number(input.accountsTotalBalance || 0) - displayedAmount;
-  const balanceWithDisplayed = Number(input.accountsTotalBalance || 0);
+  const baseBalance = input.includePreviousBalance ? Number(input.previousBalance || 0) : 0;
+  const balanceBeforeDisplayed = baseBalance;
+  const balanceWithDisplayed = baseBalance + displayedAmount;
   const displayedTxIds = useMemo(() => (input.txs || []).map((tx: any) => String(tx.id)), [input.txs]);
   const allDisplayedSelected = displayedTxIds.length > 0 && displayedTxIds.every((id) => selectedTxIds.includes(id));
   const categoryOptions = useMemo(() => dedupeCategoryOptions(input.categoryOptions || []), [input.categoryOptions]);
@@ -199,16 +202,21 @@ export function TransactionsTable(input: {
           <thead>
             <tr className="fg-legacy-balance-head-row">
               <th colSpan={6}>
-                Saldo sem as transacoes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
+                <div className="fg-legacy-balance-head-top">
+                  <PreviousBalanceToggle checked={input.includePreviousBalance} label="Incluir saldo anterior" />
+                </div>
+                <div className="fg-legacy-balance-head-value">
+                  Saldo sem as transacoes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
+                </div>
               </th>
             </tr>
             <tr>
-              <th></th>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Conta</th>
-              <th>Valor (R$)</th>
-              <th>C</th>
+              <th className="fg-legacy-col-select"></th>
+              <th className="fg-legacy-col-desc">Descrição</th>
+              <th className="fg-legacy-col-category">Categoria</th>
+              <th className="fg-legacy-col-account">Conta</th>
+              <th className="fg-legacy-col-value">Valor (R$)</th>
+              <th className="fg-legacy-col-status">C</th>
             </tr>
           </thead>
           <tbody>
@@ -226,6 +234,7 @@ export function TransactionsTable(input: {
                   const selectedAccountId = String(tx.account_id || "") || String(input.accounts[0]?.id || "");
                   const selectedBankId = String(account?.bank_id || input.banks[0]?.id || "");
                   const currentCategory = String(tx.app_category || "Outros");
+                  const currentNote = extractRawNote(tx.raw);
                   const txAmount = Number(tx.amount || 0);
                   const amountInputDefault = tx.type === "transfer"
                     ? (Number.isFinite(txAmount) ? txAmount.toFixed(2) : "0.00")
@@ -237,12 +246,13 @@ export function TransactionsTable(input: {
                   const editUrl = buildEditUrl(input.returnUrl, txId);
                   const isEditing = input.selectedEditTxId === txId;
                   const checked = selectedTxIds.includes(txId);
+                  const isUnconsolidated = tx.is_consolidated === false;
                   const recurrenceInfo = getRecurrenceInfo(tx);
 
                   return (
                     <Fragment key={txId}>
-                      <tr className={`fg-legacy-tx-row ${isEditing ? "is-active" : ""}`}>
-                        <td>
+                      <tr className={`fg-legacy-tx-row ${isEditing ? "is-active" : ""} ${isUnconsolidated ? "is-unconsolidated" : ""}`}>
+                        <td className="fg-legacy-col-select">
                           <input
                             type="checkbox"
                             checked={checked}
@@ -250,7 +260,7 @@ export function TransactionsTable(input: {
                             aria-label={`Selecionar transação ${tx.description || txId}`}
                           />
                         </td>
-                        <td>
+                        <td className="fg-legacy-col-desc">
                           <Link href={editUrl} className="fg-legacy-desc-link">
                             <span className="fg-legacy-desc-main">{tx.description || "Sem descrição"}</span>
                             {recurrenceInfo.isRecurring ? (
@@ -258,22 +268,22 @@ export function TransactionsTable(input: {
                             ) : null}
                           </Link>
                         </td>
-                        <td>
+                        <td className="fg-legacy-col-category">
                           <Link href={editUrl} className="fg-legacy-cell-link">
                             {tx.app_category || "Outros"}
                           </Link>
                         </td>
-                        <td>
+                        <td className="fg-legacy-col-account">
                           <Link href={editUrl} className="fg-legacy-cell-link">
                             {bankName} {account?.name ? `- ${account.name}` : ""}
                           </Link>
                         </td>
-                        <td className={Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}>
+                        <td className={`fg-legacy-col-value ${Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}`}>
                           <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-right">
                             {amountOnly(tx.amount)}
                           </Link>
                         </td>
-                        <td>
+                        <td className="fg-legacy-col-status">
                           <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-center">
                             {tx.is_consolidated !== false ? "✓" : "○"}
                           </Link>
@@ -378,7 +388,12 @@ export function TransactionsTable(input: {
 
                                 <div className="fg-legacy-inline-col">
                                   <div className="fg-legacy-inline-label">Nota</div>
-                                  <textarea name="note" className="fg-textarea fg-legacy-inline-note" placeholder="Observações da transação" />
+                                  <textarea
+                                    name="note"
+                                    className="fg-textarea fg-legacy-inline-note"
+                                    defaultValue={currentNote}
+                                    placeholder="Observações da transação"
+                                  />
                                   <div className="fg-legacy-inline-actions">
                                     <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
                                     <button className="fg-btn" name="intent" value="save">Salvar</button>
@@ -414,6 +429,7 @@ function CreateTransactionInline(input: {
   onCancel: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [amountInput, setAmountInput] = useState("");
   const defaultAccountId = String(input.accounts?.[0]?.id || "");
   const safeCategoryOptions = input.categoryOptions?.length
     ? input.categoryOptions
@@ -442,12 +458,12 @@ function CreateTransactionInline(input: {
           Despesa
         </label>
         <label className="fg-legacy-create-action-pill">
-          <input type="radio" name="action" value="Transferencia" />
-          Transferencia
-        </label>
-        <label className="fg-legacy-create-action-pill">
           <input type="radio" name="action" value="Receita" />
           Receita
+        </label>
+        <label className="fg-legacy-create-action-pill">
+          <input type="radio" name="action" value="Transferencia" />
+          Transferencia
         </label>
       </div>
 
@@ -468,7 +484,16 @@ function CreateTransactionInline(input: {
           ))}
         </select>
 
-        <input name="amount" type="number" step="0.01" required placeholder="Valor" className="fg-input fg-legacy-create-amount" />
+        <input
+          name="amount"
+          type="number"
+          step="0.01"
+          required
+          placeholder="Valor"
+          className="fg-input fg-legacy-create-amount"
+          value={amountInput}
+          onChange={(event) => setAmountInput(event.target.value)}
+        />
 
         <label className="fg-checkbox-row fg-legacy-create-check">
           <input name="is_consolidated" type="checkbox" defaultChecked />
@@ -476,7 +501,16 @@ function CreateTransactionInline(input: {
         </label>
       </div>
 
-      <RecurringCreateControls />
+      <RecurringCreateControls amountInput={amountInput} />
+
+      <label className="fg-field-label fg-legacy-create-note-wrap">
+        Observacao
+        <textarea
+          name="note"
+          className="fg-textarea fg-legacy-create-note"
+          placeholder="Registre detalhes importantes desta transacao"
+        />
+      </label>
 
       <div className="fg-legacy-create-actions">
         <button className="fg-btn fg-legacy-create-save" disabled={isSubmitting}>Salvar</button>
@@ -493,16 +527,18 @@ function CreateTransactionInline(input: {
   );
 }
 
-function RecurringCreateControls() {
+function RecurringCreateControls({ amountInput }: { amountInput: string }) {
   const [mode, setMode] = useState<RepeatMode>("none");
   const [repeatEvery, setRepeatEvery] = useState<RepeatEvery>("month");
   const [repeatForever, setRepeatForever] = useState<boolean>(false);
   const [installmentCurrent, setInstallmentCurrent] = useState<number>(1);
   const [installmentTotal, setInstallmentTotal] = useState<number>(1);
-  const [installmentTotalAmount, setInstallmentTotalAmount] = useState<string>("");
 
   const showInstallment = mode === "installment";
   const showAdvanced = mode === "advanced";
+  const installmentAmount = parsePositiveDecimal(amountInput);
+  const remainingInstallments = Math.max(1, installmentTotal - installmentCurrent + 1);
+  const calculatedTotalAmount = (installmentAmount * remainingInstallments).toFixed(2);
 
   function updateCurrent(value: string) {
     const nextCurrent = Math.max(1, Math.trunc(Number(value) || 1));
@@ -574,15 +610,17 @@ function RecurringCreateControls() {
           <label className="fg-field-label">
             R$ Total
             <input
-              type="number"
-              name="installment_total_amount"
-              min="0.01"
-              step="0.01"
+              type="text"
               className="fg-input"
-              value={installmentTotalAmount}
-              onChange={(event) => setInstallmentTotalAmount(event.target.value)}
+              value={brlCompact(calculatedTotalAmount)}
+              readOnly
+              aria-readonly="true"
             />
           </label>
+          <input type="hidden" name="installment_total_amount" value={calculatedTotalAmount} />
+          <div className="fg-field-note">
+            Parcelas restantes: {remainingInstallments}. Total calculado automaticamente.
+          </div>
           <input type="hidden" name="repeat_every" value="month" />
         </div>
       ) : null}
@@ -892,6 +930,13 @@ function parseRepeatEvery(input: string): RepeatEvery {
   return "month";
 }
 
+function parsePositiveDecimal(input: string) {
+  const normalized = String(input || "").trim().replace(",", ".");
+  const value = Number(normalized);
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return Math.abs(value);
+}
+
 function formatRepeatEveryLabel(value: RepeatEvery) {
   if (value === "week") return "Semanal";
   if (value === "year") return "Anual";
@@ -962,6 +1007,15 @@ function extractRawRecurrence(raw: any) {
   if (!recurrence || typeof recurrence !== "object") return null;
 
   return recurrence as Record<string, any>;
+}
+
+function extractRawNote(raw: any) {
+  if (!raw) return "";
+
+  const payload = typeof raw === "string" ? safeJsonParse(raw) : raw;
+  if (!payload || typeof payload !== "object") return "";
+
+  return String((payload as any).note || "").trim();
 }
 
 function safeJsonParse(input: string) {
