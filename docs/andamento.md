@@ -4,23 +4,29 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: replicacao automatica de orcamento ao salvar o mes atual em `budgets`.
+- Entrega principal: correcao do fluxo automatico de captura de notificacoes do Nubank no APK companion.
 - Resultado entregue:
-  - API `POST /api/budgets/save`:
-    - Quando `month_ref` salvo for o mes atual, o mesmo orcamento e replicado automaticamente para todos os meses seguintes do mesmo ano.
-    - A sincronizacao replica o conjunto de categorias e valores (upsert) e remove categorias nao selecionadas tambem nos meses replicados.
-    - Quando `month_ref` nao for o mes atual, o salvamento continua apenas no mes escolhido.
-  - UX da pagina `budgets`:
-    - Mensagem de sucesso diferenciada quando houve replicacao automatica (`saved_replicated`).
+  - APK Android companion:
+    - Listener de notificacoes ficou mais resiliente para bancos:
+      - ampliado filtro de pacotes (match por prefixo/variantes);
+      - leitura de mais campos do payload de notificacao (`textLines`, `subText`, `infoText`, `tickerText`);
+      - reducao de bloqueios por heuristica para nao perder eventos validos.
+    - Adicionado rebind automatico do `NotificationListenerService` ao desconectar.
+    - Sincronizacao de fallback ajustada para `REPLACE` em fila one-shot, evitando atraso por trabalho antigo pendente.
+  - Backend parser:
+    - `parseMoneyBR` ampliado para aceitar formatos monetarios mais variados (virgula e ponto), reduzindo casos de `parsed=false`.
+  - Build Android:
+    - `assembleDebug` validado com sucesso.
+    - Novo APK de teste gerado: `build-artifacts/financego-companion-debug-auto-notify-fix.apk`.
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validar a regra de replicacao automatica no fluxo mensal de orcamento.
+- Objetivo: validar ingestao automatica imediata de notificacoes reais apos o fix.
 - Em andamento:
-  - [ ] Validar salvamento no mes atual com criacao automatica dos meses seguintes do ano.
-  - [ ] Validar que salvamento em mes futuro/passado nao dispara replicacao.
-  - [ ] Validar ajuste manual posterior em um mes futuro apos replicacao.
+  - [ ] Instalar o APK com fix (`auto-notify-fix`) no dispositivo.
+  - [ ] Confirmar captura imediata de notificacao do Nubank com transacao criada no FinanceGO.
+  - [ ] Confirmar se eventos parseados permanecem em `NUBANK` e nao em conta `GENERICO`.
 
 ## Proximas etapas
 - Curto prazo:

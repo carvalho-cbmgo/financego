@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir falha de registro automatico de notificacoes Nubank apos pareamento do APK.
+- Prompt base: "Instalei o apk... recebi notificacao do NuBank e nao registrou automaticamente... corrigir para funcionar automatico."
+- Resultado:
+  - Listener Android ficou mais tolerante a variacoes de pacote/conteudo.
+  - Rebind automatico do servico implementado.
+  - Parser monetario no backend ampliado para mais formatos.
+  - APK debug atualizado para reteste rapido no celular.
+
 - Objetivo: automatizar replicacao de orcamento quando o mes de referencia for o mes atual.
 - Prompt base: "Na pagina budget, se o mes de referencia for o mes atual... replicado para todos os meses seguintes dentro do ano..."
 - Resultado:

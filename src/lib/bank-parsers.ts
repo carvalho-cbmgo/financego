@@ -52,9 +52,47 @@ function normalize(input?: string | null) {
 }
 
 function parseMoneyBR(input: string): number | null {
-  const match = input.match(/(?:R\$|\brs\$?)?\s*(-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+,\d{2})/i);
-  if (!match) return null;
-  const value = Number(match[1].replace(/\./g, "").replace(",", "."));
+  const withCurrency = input.match(
+    /(?:R\$|\brs\$?)\s*(-?\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|-?\d{1,3}(?:,\d{3})*(?:\.\d{2})|-?\d+[.,]\d{2}|-?\d+)/i
+  );
+  if (withCurrency?.[1]) {
+    const parsed = parseFlexibleMoneyToken(withCurrency[1]);
+    if (parsed !== null) return parsed;
+  }
+
+  const decimalOnly = input.match(
+    /(-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d{1,3}(?:,\d{3})*\.\d{2}|-?\d+[.,]\d{2})/
+  );
+  if (decimalOnly?.[1]) {
+    return parseFlexibleMoneyToken(decimalOnly[1]);
+  }
+
+  return null;
+}
+
+function parseFlexibleMoneyToken(raw: string): number | null {
+  const token = String(raw || "").trim().replace(/\s+/g, "");
+  if (!token) return null;
+
+  const hasComma = token.includes(",");
+  const hasDot = token.includes(".");
+
+  let normalized = token;
+  if (hasComma && hasDot) {
+    // 1.234,56 -> remove thousand separators and use decimal dot
+    if (token.lastIndexOf(",") > token.lastIndexOf(".")) {
+      normalized = token.replace(/\./g, "").replace(",", ".");
+    } else {
+      // 1,234.56 -> remove thousand separators and keep decimal dot
+      normalized = token.replace(/,/g, "");
+    }
+  } else if (hasComma) {
+    normalized = token.replace(/\./g, "").replace(",", ".");
+  } else {
+    normalized = token.replace(/,/g, "");
+  }
+
+  const value = Number(normalized);
   return Number.isFinite(value) ? value : null;
 }
 

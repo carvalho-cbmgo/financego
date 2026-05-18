@@ -37,6 +37,7 @@ C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleRelease
 ## Artefatos de APK gerados nesta etapa
 ```txt
 build-artifacts/financego-companion-debug.apk
+build-artifacts/financego-companion-debug-auto-notify-fix.apk
 build-artifacts/financego-companion-release-signed.apk
 build-artifacts/financego-companion-release-unsigned.apk
 build-artifacts/financego-companion-v2-release-signed.apk

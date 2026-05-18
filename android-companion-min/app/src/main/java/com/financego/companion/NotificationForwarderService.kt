@@ -1,5 +1,6 @@
 package com.financego.companion
 
+import android.content.ComponentName
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -26,9 +27,28 @@ class NotificationForwarderService : NotificationListenerService() {
     "br.com.inter",
   )
 
+  private val allowedPackagePrefixes = listOf(
+    "com.nu.production",
+    "com.itau",
+    "br.com.santander",
+    "br.com.inter",
+    "com.c6bank",
+    "com.mercadopago",
+  )
+
+  override fun onListenerConnected() {
+    super.onListenerConnected()
+    AppWorkScheduler.enqueueOneTimeSync(applicationContext)
+  }
+
+  override fun onListenerDisconnected() {
+    super.onListenerDisconnected()
+    requestRebind(ComponentName(applicationContext, NotificationForwarderService::class.java))
+  }
+
   override fun onNotificationPosted(sbn: StatusBarNotification) {
     val packageName = sbn.packageName ?: return
-    if (!allowedPackages.contains(packageName)) return
+    if (!isAllowedPackage(packageName)) return
 
     val config = CompanionPrefs.load(applicationContext)
     val token = SecureTokenStore.get(applicationContext)
@@ -38,7 +58,18 @@ class NotificationForwarderService : NotificationListenerService() {
     val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
     val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
     val bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
-    val fullText = "$title $text $bigText".trim()
+    val subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString() ?: ""
+    val infoText = extras.getCharSequence(Notification.EXTRA_INFO_TEXT)?.toString() ?: ""
+    val textLines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+      ?.joinToString(" ") { it?.toString().orEmpty() }
+      ?: ""
+    val tickerText = sbn.notification.tickerText?.toString() ?: ""
+    val fullText = listOf(title, text, bigText, subText, infoText, textLines, tickerText)
+      .joinToString(" ")
+      .replace("\\s+".toRegex(), " ")
+      .trim()
+
+    if (fullText.isBlank()) return
     if (!looksLikeFinancialEvent(fullText)) return
 
     val payload = JSONObject().apply {
@@ -62,10 +93,37 @@ class NotificationForwarderService : NotificationListenerService() {
     }
   }
 
+  private fun isAllowedPackage(packageName: String): Boolean {
+    if (allowedPackages.contains(packageName)) return true
+
+    val normalized = packageName.lowercase()
+    if (allowedPackagePrefixes.any { normalized.startsWith(it) }) return true
+
+    return normalized.contains("nubank")
+      || normalized.contains("itau")
+      || normalized.contains("bradesco")
+      || normalized.contains("santander")
+      || normalized.contains("inter")
+      || normalized.contains("c6bank")
+      || normalized.contains("mercadopago")
+      || normalized.contains("picpay")
+      || normalized.contains("bb.android")
+      || normalized.contains("caixa")
+  }
+
   private fun looksLikeFinancialEvent(content: String): Boolean {
     val text = content.lowercase()
-    if (!text.contains("r$")) return false
+    if (text.contains("codigo de acesso")
+      || text.contains("codigo de seguranca")
+      || text.contains("token de acesso")
+      || text.contains("senha de uso unico")
+      || text.contains("one time password")
+      || text.contains("otp")
+    ) {
+      return false
+    }
 
+    val hasMoneyPattern = Regex("""(?:r\$|rs\$?)?\s*-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})""").containsMatchIn(text)
     val markers = listOf(
       "compra",
       "pix",
@@ -78,6 +136,9 @@ class NotificationForwarderService : NotificationListenerService() {
       "transferencia",
       "estorno",
     )
-    return markers.any { text.contains(it) }
+    val hasMarker = markers.any { text.contains(it) }
+
+    // Permite enviar notificacoes com valor monetario mesmo sem palavra-chave clara.
+    return hasMoneyPattern || hasMarker
   }
 }

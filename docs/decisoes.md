@@ -4,6 +4,21 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: ampliar a captura no `NotificationForwarderService` com heuristicas menos restritivas e fallback de pacote por prefixo.
+- Motivo: notificacoes reais do Nubank estavam sendo perdidas antes do envio ao backend por filtros locais muito rigidos.
+- Impacto: maior taxa de captura automatica imediata para eventos bancarios reais.
+
+- Data: `2026-05-17`
+- Decisao: aplicar `requestRebind` no listener de notificacoes quando ocorrer desconexao do servico.
+- Motivo: manter funcionamento automatico continuo em cenarios de MIUI/Android que desconectam listeners em background.
+- Impacto: reducao de quedas silenciosas no fluxo de ingestao automatica.
+
+- Data: `2026-05-17`
+- Decisao: atualizar parser monetario de notificacoes para aceitar mais formatos (`1.234,56`, `1,234.56`, `19.90`, `19,90`).
+- Motivo: alguns pushes bancarios variam formato local e podiam resultar em `parsed=false`.
+- Impacto: aumento na taxa de parse e criacao de transacoes automaticas.
+
+- Data: `2026-05-17`
 - Decisao: ao salvar `budgets` no mes atual, replicar automaticamente o mesmo planejamento para os meses seguintes do mesmo ano.
 - Motivo: reduzir atrito operacional e evitar configuracao manual recorrente mes a mes.
 - Impacto: usuario define o planejamento uma vez no mes corrente e recebe pre-preenchimento ate dezembro.

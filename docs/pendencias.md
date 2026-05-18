@@ -8,6 +8,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Criar tela de diagnostico no companion com "ultimo evento capturado", "ultimo envio", "ultimo erro HTTP".
 - [ ] Avaliar parametro opcional para desativar replicacao automatica ao salvar o mes atual (modo avancado).
 - [ ] Adicionar opcao de destacar apenas categorias com maior consumo no grafico pizza (top N).
 - [ ] Avaliar tooltip no grafico pizza para detalhar categoria ao passar o mouse.
@@ -61,4 +62,11 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Severidade: media
 - Como reproduzir: abrir `budgets` antes da remodelagem e tentar montar orcamento customizado por mes.
 - Status: resolvido em `2026-05-17`
+- Responsavel: time de desenvolvimento
+
+- ID: `NTF-006`
+- Descricao: notificacao real do Nubank recebida no celular, mas sem criacao imediata de transacao no FinanceGO.
+- Severidade: alta
+- Como reproduzir: receber push de transacao apos pareamento do companion.
+- Status: resolvido em `2026-05-17` (filtro/resiliencia do listener + parser monetario ampliado + rebind automatico).
 - Responsavel: time de desenvolvimento
