@@ -50,6 +50,9 @@ export function TransactionsTable(input: {
   const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
   const [isWorking, setIsWorking] = useState(false);
   const [message, setMessage] = useState("");
+  const [bulkCategoryValue, setBulkCategoryValue] = useState("");
+  const [pendingReclassifyCategory, setPendingReclassifyCategory] = useState("");
+  const [showReclassifyDialog, setShowReclassifyDialog] = useState(false);
   const [typeFilters, setTypeFilters] = useState<TxTypeFilters>({
     all: true,
     expense: false,
@@ -135,12 +138,17 @@ export function TransactionsTable(input: {
     });
   }
 
-  async function runBatch(intent: "delete" | "consolidate" | "unconsolidate") {
+  async function runBatch(intent: "delete" | "consolidate" | "unconsolidate" | "reclassify", category = "") {
     if (!selectedTxIds.length || isWorking) return;
 
     if (intent === "delete") {
       const confirmed = window.confirm(`Excluir ${selectedTxIds.length} transação(ões) selecionada(s)?`);
       if (!confirmed) return;
+    }
+
+    if (intent === "reclassify" && !String(category || "").trim()) {
+      setMessage("Selecione uma categoria para reclassificar.");
+      return;
     }
 
     setIsWorking(true);
@@ -154,6 +162,7 @@ export function TransactionsTable(input: {
         body: JSON.stringify({
           intent,
           tx_ids: selectedTxIds,
+          category,
         }),
       });
 
@@ -166,6 +175,7 @@ export function TransactionsTable(input: {
       if (intent === "delete") setMessage(`${selectedTxIds.length} transação(ões) excluída(s).`);
       if (intent === "consolidate") setMessage(`${selectedTxIds.length} transação(ões) consolidada(s).`);
       if (intent === "unconsolidate") setMessage(`${selectedTxIds.length} transação(ões) marcadas como não consolidadas.`);
+      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transacao(oes) reclassificada(s).`);
 
       setSelectedTxIds([]);
       router.refresh();
@@ -175,6 +185,45 @@ export function TransactionsTable(input: {
       setIsWorking(false);
       notifyGlobalLoading(false);
     }
+  }
+
+
+  function startReclassifyFlow(nextCategory: string) {
+    const value = String(nextCategory || "").trim();
+    if (!value) return;
+
+    if (!selectedTxIds.length) {
+      setMessage("Selecione ao menos uma transacao para reclassificar.");
+      setBulkCategoryValue("");
+      return;
+    }
+
+    setPendingReclassifyCategory(value);
+    setShowReclassifyDialog(true);
+  }
+
+  async function confirmReclassify() {
+    const categoryValue = String(pendingReclassifyCategory || "").trim();
+    if (!categoryValue) {
+      cancelReclassify();
+      return;
+    }
+
+    setShowReclassifyDialog(false);
+    await runBatch("reclassify", categoryValue);
+    setPendingReclassifyCategory("");
+    setBulkCategoryValue("");
+  }
+
+  function cancelReclassify() {
+    setShowReclassifyDialog(false);
+    setPendingReclassifyCategory("");
+    setBulkCategoryValue("");
+  }
+
+  function getCategoryLabel(value: string) {
+    const match = categoryOptions.find((option) => option.value === value);
+    return match?.label || value;
   }
 
   if (!input.txs.length) {
@@ -233,7 +282,16 @@ export function TransactionsTable(input: {
         >
           ✓
         </button>
-        <select className="fg-select" defaultValue="">
+        <select
+          className="fg-select"
+          value={bulkCategoryValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setBulkCategoryValue(nextValue);
+            startReclassifyFlow(nextValue);
+          }}
+          disabled={isWorking}
+        >
           <option value="">Alterar categoria</option>
           {categoryOptions.map((option) => (
             <option key={option.value} value={option.value}>{option.label}</option>
@@ -243,6 +301,25 @@ export function TransactionsTable(input: {
       </div>
 
       {message ? <div className="fg-field-note">{message}</div> : null}
+      {showReclassifyDialog ? (
+        <div className="fg-legacy-confirm-backdrop" role="dialog" aria-modal="true" onClick={cancelReclassify}>
+          <div className="fg-legacy-confirm-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="fg-card-title">Confirmar reclassificacao</div>
+            <p>
+              Deseja reclassificar {selectedTxIds.length} transacao(oes) para a categoria{" "}
+              <strong>{getCategoryLabel(pendingReclassifyCategory)}</strong>?
+            </p>
+            <div className="fg-legacy-confirm-actions">
+              <button type="button" className="fg-btn" onClick={confirmReclassify}>
+                Confirmar
+              </button>
+              <button type="button" className="fg-btn-secondary" onClick={cancelReclassify}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {showCreateForm ? (
         <CreateTransactionInline
           accounts={input.accounts}

@@ -1547,6 +1547,40 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   width: 170px;
 }
 
+.fg-legacy-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(17, 23, 35, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+
+.fg-legacy-confirm-modal {
+  width: min(440px, 100%);
+  border: 1px solid #c3cfaa;
+  border-radius: 10px;
+  background: #fff;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+}
+
+.fg-legacy-confirm-modal p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #273244;
+}
+
+.fg-legacy-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .fg-legacy-create-form {
   display: grid;
   gap: 6px;

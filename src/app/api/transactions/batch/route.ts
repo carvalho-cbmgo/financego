@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getApiUserFromCookiesOrRequest, unauthorized } from "@/lib/auth-server";
 
-type Intent = "delete" | "consolidate" | "unconsolidate";
+type Intent = "delete" | "consolidate" | "unconsolidate" | "reclassify";
 
 export async function POST(req: Request) {
   const user = await getApiUserFromCookiesOrRequest(req);
@@ -10,6 +10,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const intent = String(body?.intent || "") as Intent;
+  const category = String(body?.category || "").trim();
   const txIds = Array.from(
     new Set(
       (Array.isArray(body?.tx_ids) ? body.tx_ids : [])
@@ -19,17 +20,35 @@ export async function POST(req: Request) {
   );
 
   if (!txIds.length) {
-    return NextResponse.json({ error: "Selecione ao menos uma transação." }, { status: 400 });
+    return NextResponse.json({ error: "Selecione ao menos uma transacao." }, { status: 400 });
   }
 
-  if (!["delete", "consolidate", "unconsolidate"].includes(intent)) {
-    return NextResponse.json({ error: "Ação inválida para lote." }, { status: 400 });
+  if (!["delete", "consolidate", "unconsolidate", "reclassify"].includes(intent)) {
+    return NextResponse.json({ error: "Acao invalida para lote." }, { status: 400 });
   }
 
   if (intent === "delete") {
     const { error } = await supabaseAdmin
       .from("transactions")
       .delete()
+      .eq("profile_id", user.id)
+      .in("id", txIds);
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, affected: txIds.length });
+  }
+
+  if (intent === "reclassify") {
+    if (!category) {
+      return NextResponse.json({ error: "Selecione uma categoria para reclassificar." }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("transactions")
+      .update({
+        app_category: category,
+        app_subcategory: null,
+      })
       .eq("profile_id", user.id)
       .in("id", txIds);
 
@@ -50,4 +69,3 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true, affected: txIds.length });
 }
-
