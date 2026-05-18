@@ -72,3 +72,13 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: receber push de transacao apos pareamento do companion.
 - Status: resolvido em `2026-05-17` (filtro/resiliencia do listener + parser monetario ampliado + rebind automatico).
 - Responsavel: time de desenvolvimento
+
+- [ ] Validar em Xiaomi (HyperOS/MIUI) se a simulacao local PIX dispara captura automatica com app em primeiro plano e em segundo plano.
+- [ ] Confirmar comportamento quando permissao `POST_NOTIFICATIONS` for negada e depois concedida.
+
+- ID: `NTF-007`
+- Descricao: alguns aparelhos exibem mensagem de seguranca/restricao para apps de fontes desconhecidas e podem bloquear fluxo automatico de notificacoes.
+- Severidade: media
+- Como reproduzir: instalar APK manualmente em dispositivo com politicas de seguranca mais restritivas.
+- Status: em monitoramento
+- Responsavel: time de desenvolvimento

@@ -89,6 +89,13 @@
             android:layout_marginTop="10dp"
             android:text="@string/test_button" />
 
+        <Button
+            android:id="@+id/simulatePixNotificationButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/simulate_pix_button" />
+
         <TextView
             android:id="@+id/statusText"
             android:layout_width="match_parent"

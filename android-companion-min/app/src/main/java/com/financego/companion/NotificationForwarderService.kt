@@ -14,6 +14,7 @@ class NotificationForwarderService : NotificationListenerService() {
   private val ioScope = CoroutineScope(Dispatchers.IO)
 
   private val allowedPackages = setOf(
+    "com.financego.companion",
     "com.nu.production",
     "br.com.bb.android",
     "com.itau",
@@ -28,6 +29,7 @@ class NotificationForwarderService : NotificationListenerService() {
   )
 
   private val allowedPackagePrefixes = listOf(
+    "com.financego.companion",
     "com.nu.production",
     "com.itau",
     "br.com.santander",
@@ -109,6 +111,7 @@ class NotificationForwarderService : NotificationListenerService() {
       || normalized.contains("picpay")
       || normalized.contains("bb.android")
       || normalized.contains("caixa")
+      || normalized.contains("financego.companion")
   }
 
   private fun looksLikeFinancialEvent(content: String): Boolean {

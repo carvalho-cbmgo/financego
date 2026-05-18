@@ -113,3 +113,13 @@ git commit -m "descricao da entrega"
 git push origin main
 # (push em main aciona deploy automatico no Vercel)
 ```
+
+## Teste de simulacao PIX no APK
+```txt
+1) Abrir FinanceGO Companion
+2) Salvar configuracao (URL + Device Public ID + Device Token)
+3) Habilitar acesso de notificacoes para o app
+4) Tocar em "Simular notificacao PIX (listener)"
+5) Conferir no status do app: listener ATIVO e fila offline
+6) Verificar no FinanceGO se a transacao foi criada automaticamente
+```

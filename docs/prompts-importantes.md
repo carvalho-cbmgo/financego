@@ -102,3 +102,12 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 - Artefato documentado: atualizacao completa de `/docs` apos ajuste da home mobile e geracao de APK para testes.
 - Prompt base: "Atualize os arquivos da pasta docs com todas atualizacoes..."
 - Resultado: estado atual consolidado para continuidade rapida do projeto.
+
+- Objetivo: testar automaticamente no celular se o companion registra transacao apos notificacao tipo PIX, mesmo sem push real de banco.
+- Prompt base: "Nao consigo ativar as notificacoes do apk... Conseguimos simular de alguma maneira um teste recebendo uma notificacao de pix..."
+- Resultado:
+  - Novo botao `Simular notificacao PIX (listener)` criado no APK.
+  - Companion passou a gerar notificacao local com payload estilo Nubank PIX.
+  - Listener passou a aceitar o proprio pacote para capturar a simulacao.
+  - Status do app mostra listener/permissao/fila para facilitar diagnostico rapido.
+  - Build Android e build web validados com sucesso.

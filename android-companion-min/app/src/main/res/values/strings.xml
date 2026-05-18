@@ -8,5 +8,6 @@
     <string name="device_name_hint">Nome do dispositivo</string>
     <string name="save_button">Salvar configuracao</string>
     <string name="open_permission_button">Abrir permissao de notificacoes</string>
-    <string name="test_button">Enviar evento de teste</string>
+    <string name="test_button">Enviar evento de teste (API direta)</string>
+    <string name="simulate_pix_button">Simular notificacao PIX (listener)</string>
 </resources>

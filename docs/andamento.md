@@ -4,33 +4,32 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: ajustes de login + logout rapido no topo da tela mobile.
+- Entrega principal: simulacao local de notificacao PIX no APK companion para validar fluxo automatico.
 - Resultado entregue:
-  - Pagina `login`:
-    - Removido o feedback de `Carregando...` exibido abaixo do botao.
-    - Botao principal em modo login alterado de `Entrar no Finance GO` para `Acessar`.
-    - Mensagem de status agora aparece apenas quando existe texto real (ex.: erro).
-  - Tela mobile do FinanceGO:
-    - Adicionado icone de logout no topo direito da tela.
-    - Incluida acao `Sair` tambem no rodape do menu lateral.
-    - Logout limpa cookie de sessao no backend e encerra sessao local do Supabase no cliente.
-  - Build web:
-    - `npm run build` executado com sucesso apos os ajustes.
+  - Android companion:
+    - Permissao `POST_NOTIFICATIONS` adicionada no manifest para Android 13+.
+    - Novo botao `Simular notificacao PIX (listener)` adicionado na tela principal.
+    - Simulacao cria notificacao local com texto estilo Nubank PIX para teste ponta a ponta.
+    - Listener agora aceita o proprio pacote `com.financego.companion` para captar a simulacao.
+    - Status da UI mostra listener ativo/desativado, permissao de notificacoes e fila offline.
+  - Build validado:
+    - `gradle assembleDebug` executado com sucesso.
+    - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: validar UX final de acesso/saida no fluxo mobile e login.
+- Objetivo: validar em aparelho real o fluxo automatico completo com a simulacao PIX.
 - Em andamento:
-  - [ ] Validar logout pelo icone superior em diferentes navegadores mobile.
-  - [ ] Validar texto/estado do botao `Acessar` em condicao de erro de login.
-  - [ ] Confirmar retorno consistente para `/login` apos deslogar.
+  - [ ] Instalar APK atualizado no Xiaomi.
+  - [ ] Acionar `Simular notificacao PIX (listener)` e confirmar criacao automatica da transacao.
+  - [ ] Validar se a transacao aparece na conta correta apos parse da notificacao simulada.
 
 ## Proximas etapas
 - Curto prazo:
-  - [ ] Adicionar acao de desparear dispositivo na tela `/mobile/pair`.
-  - [ ] Refinar visual do menu lateral mobile conforme feedback de uso.
+  - [ ] Exibir no companion o ultimo payload capturado e o ultimo status HTTP de envio.
+  - [ ] Adicionar diagnostico visual de "listener conectado agora".
 - Medio prazo:
   - [ ] Publicar rotina simplificada de distribuicao de APK (release interna).
-  - [ ] Criar monitor de saude do companion (fila offline, ultimo envio, erros).
+  - [ ] Automatizar release assinada por tag de versao.
 - Longo prazo:
   - [ ] Evoluir estrategia de distribuicao (assinatura definitiva e canal de release).
 

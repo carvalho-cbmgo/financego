@@ -1,6 +1,12 @@
 package com.financego.companion
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
@@ -8,6 +14,9 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,6 +25,11 @@ import org.json.JSONObject
 import java.time.Instant
 
 class MainActivity : AppCompatActivity() {
+  private companion object {
+    const val NOTIFICATION_PERMISSION_REQUEST = 4101
+    const val TEST_NOTIFICATION_CHANNEL_ID = "financego_companion_test_channel"
+  }
+
   private lateinit var baseUrlInput: EditText
   private lateinit var devicePublicIdInput: EditText
   private lateinit var deviceTokenInput: EditText
@@ -35,6 +49,7 @@ class MainActivity : AppCompatActivity() {
     val saveButton = findViewById<Button>(R.id.saveButton)
     val openPermissionButton = findViewById<Button>(R.id.openPermissionButton)
     val testButton = findViewById<Button>(R.id.testButton)
+    val simulatePixNotificationButton = findViewById<Button>(R.id.simulatePixNotificationButton)
 
     val config = CompanionPrefs.load(this)
     baseUrlInput.setText(config.baseUrl)
@@ -45,9 +60,11 @@ class MainActivity : AppCompatActivity() {
     saveButton.setOnClickListener { saveConfig() }
     openPermissionButton.setOnClickListener { openNotificationAccess() }
     testButton.setOnClickListener { sendTestEvent() }
+    simulatePixNotificationButton.setOnClickListener { simulatePixNotification() }
 
     AppWorkScheduler.ensurePeriodicSync(this)
-    updateStatus("Pronto. Configure os campos e habilite permissao de notificacoes.")
+    ensurePostNotificationsPermissionIfNeeded()
+    updateStatus("Pronto. Configure os campos, habilite o listener e rode a simulacao PIX.")
     handlePairIntent(intent)
   }
 
@@ -126,7 +143,7 @@ class MainActivity : AppCompatActivity() {
       return
     }
 
-    updateStatus("Enviando evento de teste...")
+    updateStatus("Enviando evento de teste direto para a API...")
     lifecycleScope.launch {
       val result = withContext(Dispatchers.IO) {
         NotificationApi.sendIngest(
@@ -148,6 +165,101 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
+  private fun simulatePixNotification() {
+    val config = CompanionPrefs.load(this)
+    val token = SecureTokenStore.get(this).trim()
+    if (config.baseUrl.isBlank() || token.isBlank() || config.devicePublicId.isBlank()) {
+      updateStatus("Salve URL base, Device Public ID e token antes da simulacao.")
+      toast("Preencha e salve a configuracao antes da simulacao.")
+      return
+    }
+
+    if (!isNotificationListenerEnabled()) {
+      updateStatus("Listener de notificacoes desativado. Abra permissoes e habilite o FinanceGO Companion.")
+      toast("Ative o listener de notificacoes primeiro.")
+      openNotificationAccess()
+      return
+    }
+
+    if (!hasPostNotificationsPermission()) {
+      ensurePostNotificationsPermissionIfNeeded()
+      updateStatus("Permissao de notificacoes pendente. Autorize para gerar simulacao local.")
+      toast("Permita notificacoes e toque novamente em simular.")
+      return
+    }
+
+    postLocalPixNotification()
+    updateStatus("Notificacao PIX simulada enviada. Aguarde alguns segundos para o registro automatico.")
+    toast("Notificacao PIX simulada enviada.")
+  }
+
+  private fun postLocalPixNotification() {
+    val manager = getSystemService(NotificationManager::class.java) ?: return
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      val channel = NotificationChannel(
+        TEST_NOTIFICATION_CHANNEL_ID,
+        "FinanceGO Companion Tests",
+        NotificationManager.IMPORTANCE_DEFAULT,
+      ).apply {
+        description = "Canal de testes para simular notificacoes financeiras locais."
+      }
+      manager.createNotificationChannel(channel)
+    }
+
+    val now = Instant.now()
+    val body = "Nubank: Pix enviado de R$ 27,90 para Mercado Central em ${now.toString().take(19).replace('T', ' ')}"
+    val notification = NotificationCompat.Builder(this, TEST_NOTIFICATION_CHANNEL_ID)
+      .setSmallIcon(android.R.drawable.stat_notify_more)
+      .setContentTitle("Nubank | Pix enviado")
+      .setContentText(body)
+      .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+      .setAutoCancel(true)
+      .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+      .build()
+
+    val notificationId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+    manager.notify(notificationId, notification)
+  }
+
+  private fun hasPostNotificationsPermission(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+    return ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+  }
+
+  private fun ensurePostNotificationsPermissionIfNeeded() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPostNotificationsPermission()) {
+      ActivityCompat.requestPermissions(
+        this,
+        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+        NOTIFICATION_PERMISSION_REQUEST,
+      )
+    }
+  }
+
+  private fun isNotificationListenerEnabled(): Boolean {
+    val componentName = ComponentName(this, NotificationForwarderService::class.java)
+    val enabled = Settings.Secure.getString(contentResolver, "enabled_notification_listeners") ?: return false
+    return enabled.split(":").any { flattened ->
+      flattened.equals(componentName.flattenToString(), ignoreCase = true)
+        || flattened.equals(componentName.flattenToShortString(), ignoreCase = true)
+    }
+  }
+
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray,
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (requestCode == NOTIFICATION_PERMISSION_REQUEST) {
+      if (hasPostNotificationsPermission()) {
+        updateStatus("Permissao de notificacoes concedida. Simulacao PIX pronta para uso.")
+      } else {
+        updateStatus("Permissao de notificacoes negada. A simulacao local nao podera ser exibida.")
+      }
+    }
+  }
+
   private fun buildTestPayload(devicePublicId: String): JSONObject {
     return JSONObject().apply {
       put("deviceId", android.os.Build.MODEL)
@@ -164,7 +276,9 @@ class MainActivity : AppCompatActivity() {
 
   private fun updateStatus(text: String) {
     val queueSize = OfflineQueue(applicationContext).size()
-    statusText.text = "$text\nFila offline: $queueSize"
+    val listener = if (isNotificationListenerEnabled()) "ATIVO" else "DESATIVADO"
+    val notifications = if (hasPostNotificationsPermission()) "OK" else "PENDENTE"
+    statusText.text = "$text\nListener: $listener | Notificacoes: $notifications\nFila offline: $queueSize"
   }
 
   private fun sendConnectivityTestAfterSave(config: CompanionConfig, token: String) {

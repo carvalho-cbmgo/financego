@@ -137,3 +137,13 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - [ ] Definir processo oficial de distribuicao de APK para usuarios (canal interno ou store privada).
 - [ ] Definir politica de assinatura de release final (keystore de producao).
 - [ ] Definir estrategia de atualizacao automatica do companion no dispositivo.
+
+- Data: `2026-05-17`
+- Decisao: habilitar simulacao local de notificacao PIX no APK (`Simular notificacao PIX (listener)`) para validar captura automatica fim a fim sem depender de push real de banco.
+- Motivo: em alguns aparelhos Android o sistema so libera confianca no listener apos eventos reais; o botao de simulacao cria um evento controlado para diagnostico rapido.
+- Impacto: equipe e usuario conseguem testar no proprio celular o caminho completo (notificacao -> listener -> ingest -> transacao) de forma repetivel.
+
+- Data: `2026-05-17`
+- Decisao: incluir pacote `com.financego.companion` na whitelist do `NotificationForwarderService`.
+- Motivo: permitir que o listener capture a notificacao de simulacao emitida pelo proprio companion.
+- Impacto: teste local ganhou previsibilidade e reduz falsos negativos de configuracao.
