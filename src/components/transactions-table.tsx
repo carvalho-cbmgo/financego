@@ -336,7 +336,6 @@ export function TransactionsTable(input: {
             <tr className="fg-legacy-balance-head-row">
               <th colSpan={6}>
                 <div className="fg-legacy-balance-head-top">
-                  <PreviousBalanceToggle checked={input.includePreviousBalance} label="Incluir saldo anterior" />
                   <div className="fg-legacy-type-filters" role="group" aria-label="Filtrar transações por ação">
                     <label className="fg-checkbox-row">
                       <input
@@ -370,6 +369,9 @@ export function TransactionsTable(input: {
                       />
                       Transferências
                     </label>
+                  </div>
+                  <div className="fg-legacy-prev-balance-toggle">
+                    <PreviousBalanceToggle checked={input.includePreviousBalance} label="Incluir saldo anterior" />
                   </div>
                 </div>
                 <div className="fg-legacy-balance-head-value">

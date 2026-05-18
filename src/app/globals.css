@@ -1712,6 +1712,11 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   font-weight: 700;
 }
 
+.fg-legacy-prev-balance-toggle {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 .fg-legacy-balance-head-value {
   text-align: right;
 }
