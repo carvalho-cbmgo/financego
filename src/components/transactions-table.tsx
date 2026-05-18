@@ -28,6 +28,13 @@ type RecurrenceInfo = {
   badgeLabel: string;
 };
 
+type TxTypeFilters = {
+  all: boolean;
+  expense: boolean;
+  income: boolean;
+  transfer: boolean;
+};
+
 export function TransactionsTable(input: {
   txs: any[];
   banks: any[];
@@ -43,6 +50,12 @@ export function TransactionsTable(input: {
   const [selectedTxIds, setSelectedTxIds] = useState<string[]>([]);
   const [isWorking, setIsWorking] = useState(false);
   const [message, setMessage] = useState("");
+  const [typeFilters, setTypeFilters] = useState<TxTypeFilters>({
+    all: true,
+    expense: false,
+    income: false,
+    transfer: false,
+  });
 
   const accountById = useMemo(
     () => new Map<string, any>((input.accounts || []).map((acc: any) => [String(acc.id), acc])),
@@ -53,15 +66,26 @@ export function TransactionsTable(input: {
     [input.banks],
   );
 
-  const grouped = useMemo(() => groupTransactionsByDay(input.txs || []), [input.txs]);
+  const filteredTxs = useMemo(() => {
+    const txs = input.txs || [];
+    if (typeFilters.all) return txs;
+
+    return txs.filter((tx: any) => {
+      const txType = mapTransactionTypeToFilter(tx?.type);
+      if (txType === "expense") return typeFilters.expense;
+      if (txType === "income") return typeFilters.income;
+      return typeFilters.transfer;
+    });
+  }, [input.txs, typeFilters]);
+  const grouped = useMemo(() => groupTransactionsByDay(filteredTxs), [filteredTxs]);
   const displayedAmount = useMemo(
-    () => (input.txs || []).reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0),
-    [input.txs],
+    () => filteredTxs.reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0),
+    [filteredTxs],
   );
   const baseBalance = input.includePreviousBalance ? Number(input.previousBalance || 0) : 0;
   const balanceBeforeDisplayed = baseBalance;
   const balanceWithDisplayed = baseBalance + displayedAmount;
-  const displayedTxIds = useMemo(() => (input.txs || []).map((tx: any) => String(tx.id)), [input.txs]);
+  const displayedTxIds = useMemo(() => filteredTxs.map((tx: any) => String(tx.id)), [filteredTxs]);
   const allDisplayedSelected = displayedTxIds.length > 0 && displayedTxIds.every((id) => selectedTxIds.includes(id));
   const categoryOptions = useMemo(() => dedupeCategoryOptions(input.categoryOptions || []), [input.categoryOptions]);
 
@@ -77,6 +101,38 @@ export function TransactionsTable(input: {
     }
 
     setSelectedTxIds((current) => Array.from(new Set([...current, ...displayedTxIds])));
+  }
+
+  function handleAllTypeFilterChange(checked: boolean) {
+    if (!checked) return;
+
+    setTypeFilters({
+      all: true,
+      expense: false,
+      income: false,
+      transfer: false,
+    });
+  }
+
+  function handleSpecificTypeFilterChange(type: "expense" | "income" | "transfer", checked: boolean) {
+    setTypeFilters((current) => {
+      const next = {
+        ...current,
+        all: false,
+        [type]: checked,
+      };
+
+      if (!next.expense && !next.income && !next.transfer) {
+        return {
+          all: true,
+          expense: false,
+          income: false,
+          transfer: false,
+        };
+      }
+
+      return next;
+    });
   }
 
   async function runBatch(intent: "delete" | "consolidate" | "unconsolidate") {
@@ -204,6 +260,40 @@ export function TransactionsTable(input: {
               <th colSpan={6}>
                 <div className="fg-legacy-balance-head-top">
                   <PreviousBalanceToggle checked={input.includePreviousBalance} label="Incluir saldo anterior" />
+                  <div className="fg-legacy-type-filters" role="group" aria-label="Filtrar transações por ação">
+                    <label className="fg-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={typeFilters.all}
+                        onChange={(event) => handleAllTypeFilterChange(event.target.checked)}
+                      />
+                      Todos
+                    </label>
+                    <label className="fg-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={typeFilters.expense}
+                        onChange={(event) => handleSpecificTypeFilterChange("expense", event.target.checked)}
+                      />
+                      Despesas
+                    </label>
+                    <label className="fg-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={typeFilters.income}
+                        onChange={(event) => handleSpecificTypeFilterChange("income", event.target.checked)}
+                      />
+                      Receitas
+                    </label>
+                    <label className="fg-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={typeFilters.transfer}
+                        onChange={(event) => handleSpecificTypeFilterChange("transfer", event.target.checked)}
+                      />
+                      Transferências
+                    </label>
+                  </div>
                 </div>
                 <div className="fg-legacy-balance-head-value">
                   Saldo sem as transacoes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
@@ -220,7 +310,13 @@ export function TransactionsTable(input: {
             </tr>
           </thead>
           <tbody>
-            {grouped.map((group) => (
+            {!grouped.length ? (
+              <tr>
+                <td colSpan={6} className="fg-legacy-empty-cell">
+                  Nenhuma transacao para os filtros selecionados.
+                </td>
+              </tr>
+            ) : grouped.map((group) => (
               <Fragment key={group.dayKey}>
                 <tr className="fg-legacy-group-row">
                   <td colSpan={6}>{group.label}</td>
@@ -883,6 +979,20 @@ function actionFromType(type: string | null | undefined) {
   if (type === "credit") return "Receita";
   if (type === "transfer") return "Transferência";
   return "Despesa";
+}
+
+function mapTransactionTypeToFilter(type: string | null | undefined) {
+  const normalized = String(type || "").trim().toLowerCase();
+
+  if (normalized === "credit" || normalized === "income" || normalized === "receita") {
+    return "income" as const;
+  }
+
+  if (normalized === "transfer" || normalized === "transferencia" || normalized === "transferência") {
+    return "transfer" as const;
+  }
+
+  return "expense" as const;
 }
 
 function toInputDate(input?: string | null) {

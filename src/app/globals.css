@@ -1658,8 +1658,24 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-balance-head-top {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
   margin-bottom: 3px;
+}
+
+.fg-legacy-type-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fg-legacy-type-filters .fg-checkbox-row {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .fg-legacy-balance-head-value {
@@ -1672,6 +1688,12 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-legacy-tx-row.is-unconsolidated td {
   font-weight: 700;
+}
+
+.fg-legacy-empty-cell {
+  padding: 10px 6px !important;
+  text-align: center;
+  color: #5b5b5b;
 }
 
 .fg-legacy-col-select {

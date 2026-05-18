@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 type AccountsParams = {
   edit_bank?: string;
+  delete_bank?: string;
   edit_account?: string;
   delete_account?: string;
   ok?: string;
@@ -67,10 +68,12 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   };
 
   const selectedEditBankId = String(params.edit_bank || "").trim();
+  const selectedDeleteBankId = String(params.delete_bank || "").trim();
   const selectedEditAccountId = String(params.edit_account || "").trim();
   const selectedDeleteAccountId = String(params.delete_account || "").trim();
 
   const editingBank = (banks || []).find((bank: any) => String(bank.id) === selectedEditBankId) || null;
+  const deletingBank = (banks || []).find((bank: any) => String(bank.id) === selectedDeleteBankId) || null;
   const editingAccount = (accounts || []).find((account: any) => String(account.id) === selectedEditAccountId) || null;
   const deletingAccount = (accounts || []).find((account: any) => String(account.id) === selectedDeleteAccountId) || null;
   const editingAccountTypeLabel = accountTypeLabel(editingAccount?.type);
@@ -228,6 +231,23 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           </Card>
         ) : null}
 
+        {deletingBank ? (
+          <Card title={`Excluir banco: ${deletingBank.name || "Sem nome"}`}>
+            <div className="fg-stack">
+              <p>
+                Esta acao exclui apenas o banco selecionado. Caso existam contas vinculadas, exclua ou mova as contas antes de confirmar.
+              </p>
+              <form action="/api/banks/delete" method="post" className="fg-form">
+                <input type="hidden" name="id" value={deletingBank.id} />
+                <div className="fg-account-actions">
+                  <button className="fg-btn-danger">Confirmar exclusao</button>
+                  <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
+                </div>
+              </form>
+            </div>
+          </Card>
+        ) : null}
+
         <div className="fg-accounts-table-grid">
           <Card title="Visao por banco">
             <div className="fg-table-wrap">
@@ -256,6 +276,8 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                         <td>{brl(-row.plannedExpense)}</td>
                         <td>
                           <Link href={editLink("edit_bank", row.id)} className="fg-link fg-accounts-inline-action">Editar</Link>
+                          {" "}
+                          <Link href={editLink("delete_bank", row.id)} className="fg-link fg-accounts-inline-action">Excluir</Link>
                         </td>
                       </tr>
                     );
@@ -316,7 +338,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
   );
 }
 
-function editLink(param: "edit_bank" | "edit_account" | "delete_account", value: string) {
+function editLink(param: "edit_bank" | "delete_bank" | "edit_account" | "delete_account", value: string) {
   return `/accounts?${param}=${encodeURIComponent(value)}`;
 }
 
@@ -325,6 +347,7 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
     "1": "Conta salva com sucesso.",
     bank_saved: "Banco salvo com sucesso.",
     bank_updated: "Banco atualizado com sucesso.",
+    bank_deleted: "Banco excluido com sucesso.",
     account_deleted: "Conta excluida com sucesso.",
   };
 
@@ -333,6 +356,10 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
     missing_bank_name: "Informe o nome do banco.",
     invalid_bank: "Banco invalido para esta conta.",
     bank_not_found: "Banco nao encontrado para edicao.",
+    missing_bank: "Banco invalido para exclusao.",
+    bank_delete_not_found: "Banco nao encontrado para exclusao.",
+    bank_has_accounts: "Nao foi possivel excluir: existem contas vinculadas a este banco.",
+    bank_delete_failed: "Nao foi possivel excluir o banco agora.",
     missing_account: "Conta invalida para exclusao.",
     account_not_found: "Conta nao encontrada para exclusao.",
     delete_failed: "Nao foi possivel excluir a conta agora.",

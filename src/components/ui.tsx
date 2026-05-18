@@ -29,7 +29,7 @@ export function PageShell({ children }: { children: ReactNode }) {
         </nav>
 
         <Link href="/login" className="shell-user-pill">
-          Trocar usuário
+          Sair
         </Link>
       </header>
 
