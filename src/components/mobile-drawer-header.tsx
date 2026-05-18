@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MobileMonthPicker } from "@/components/mobile-month-picker";
+import { supabaseBrowser } from "@/lib/supabase";
 
 type MobileDrawerHeaderProps = {
   monthRef: string;
@@ -14,6 +15,7 @@ type MobileDrawerHeaderProps = {
 export function MobileDrawerHeader({ monthRef, profileLabel, lastSyncText }: MobileDrawerHeaderProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -49,6 +51,21 @@ export function MobileDrawerHeader({ monthRef, profileLabel, lastSyncText }: Mob
     router.push(path);
   }
 
+  async function logout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    closeDrawer();
+
+    try {
+      await fetch("/api/auth/session", { method: "DELETE" });
+      await supabaseBrowser.auth.signOut({ scope: "local" });
+    } finally {
+      router.replace("/login");
+      router.refresh();
+      setIsLoggingOut(false);
+    }
+  }
+
   return (
     <>
       <header className="fg-mobile-topbar">
@@ -81,6 +98,16 @@ export function MobileDrawerHeader({ monthRef, profileLabel, lastSyncText }: Mob
               onClick={() => goToPath(`/mobile/pair?month_ref=${monthRef}`)}
             >
               {"\u22EE"}
+            </button>
+            <button
+              type="button"
+              className="fg-mobile-icon-btn"
+              aria-label="Deslogar"
+              title="Deslogar"
+              onClick={logout}
+              disabled={isLoggingOut}
+            >
+              {"\u23FB"}
             </button>
           </div>
         </div>
@@ -118,6 +145,9 @@ export function MobileDrawerHeader({ monthRef, profileLabel, lastSyncText }: Mob
           <Link href={`/mobile/pair?month_ref=${monthRef}`} className="fg-mobile-drawer-settings" onClick={closeDrawer}>
             Configuracoes
           </Link>
+          <button type="button" className="fg-mobile-drawer-settings" onClick={logout} disabled={isLoggingOut}>
+            {isLoggingOut ? "Saindo..." : "Sair"}
+          </button>
           <div className="fg-mobile-drawer-sync">{lastSyncText}</div>
         </div>
       </aside>

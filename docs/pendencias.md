@@ -8,6 +8,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Avaliar opcao de confirmar logout no mobile (on/off) para evitar saídas acidentais por toque no icone.
 - [ ] Avaliar opcao de "desativar" (sem excluir) dispositivo pareado para troubleshooting.
 - [ ] Criar tela de diagnostico no companion com "ultimo evento capturado", "ultimo envio", "ultimo erro HTTP".
 - [ ] Avaliar parametro opcional para desativar replicacao automatica ao salvar o mes atual (modo avancado).

@@ -4,27 +4,25 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: exclusao de dispositivos pareados em `/mobile/pair` + novo release-signed para teste no Xiaomi.
+- Entrega principal: ajustes de login + logout rapido no topo da tela mobile.
 - Resultado entregue:
-  - Pagina `mobile/pair`:
-    - Lista de dispositivos pareados agora permite exclusao por item (`Excluir dispositivo`).
-    - Fluxo com mensagens de status (sucesso/erro) apos exclusao.
-  - API de dispositivos:
-    - Nova rota `POST /api/devices/delete` com validacao de ownership por `profile_id`.
-    - Exclusao segura apenas de dispositivos do usuario autenticado.
-  - APK Android companion:
-    - Versao incrementada para facilitar instalacao/atualizacao no celular (`versionCode=2`, `versionName=0.1.1`).
-    - Build release gerado e assinado para reteste:
-      - `build-artifacts/financego-companion-release-signed-auto-notify-fix.apk`.
+  - Pagina `login`:
+    - Removido o feedback de `Carregando...` exibido abaixo do botao.
+    - Botao principal em modo login alterado de `Entrar no Finance GO` para `Acessar`.
+    - Mensagem de status agora aparece apenas quando existe texto real (ex.: erro).
+  - Tela mobile do FinanceGO:
+    - Adicionado icone de logout no topo direito da tela.
+    - Incluida acao `Sair` tambem no rodape do menu lateral.
+    - Logout limpa cookie de sessao no backend e encerra sessao local do Supabase no cliente.
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validar em campo o novo release-signed no Xiaomi com exclusao de dispositivo e captura automatica.
+- Objetivo: validar UX final de acesso/saida no fluxo mobile e login.
 - Em andamento:
-  - [ ] Instalar `financego-companion-release-signed-auto-notify-fix.apk` no Xiaomi.
-  - [ ] Validar exclusao de dispositivo diretamente em `/mobile/pair`.
-  - [ ] Confirmar captura imediata da proxima notificacao real do Nubank.
+  - [ ] Validar logout pelo icone superior em diferentes navegadores mobile.
+  - [ ] Validar texto/estado do botao `Acessar` em condicao de erro de login.
+  - [ ] Confirmar retorno consistente para `/login` apos deslogar.
 
 ## Proximas etapas
 - Curto prazo:

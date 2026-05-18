@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: remover o estado textual `Carregando...` do bloco de mensagem inferior da tela de login e manter feedback visual no proprio botao.
+- Motivo: reduzir ruido visual e atender ao fluxo solicitado para tela de acesso.
+- Impacto: login fica mais limpo, preservando mensagens apenas para erros/sucessos relevantes.
+
+- Data: `2026-05-17`
+- Decisao: adicionar logout imediato na barra superior do mobile e no menu lateral, com limpeza de sessao server cookie + cliente Supabase.
+- Motivo: facilitar saida rapida da conta em uso pelo celular.
+- Impacto: usuario encerra sessao com um toque e retorna direto para `/login`.
+
+- Data: `2026-05-17`
 - Decisao: adicionar exclusao de dispositivo pareado direto em `/mobile/pair`, com endpoint dedicado e validacao por usuario autenticado.
 - Motivo: permitir manutencao de pares antigos/invalidos sem precisar limpeza manual no banco.
 - Impacto: fluxo de pareamento ficou autossuficiente no mobile.

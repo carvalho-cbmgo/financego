@@ -3,6 +3,13 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: ajustar UX da login e incluir logout por icone na tela mobile.
+- Prompt base: "Na página login, retirar o componente ... Carregando... mudar botão para Acessar ... disponibilizar ícone para deslogar."
+- Resultado:
+  - `Carregando...` removido do bloco de status abaixo do botao na login.
+  - Texto do botao principal alterado para `Acessar`.
+  - Icone de logout adicionado no topo direito do mobile e opcao `Sair` no drawer.
+
 - Objetivo: permitir exclusao de dispositivos pareados no mobile/pair e gerar release-signed para teste paralelo no Xiaomi.
 - Prompt base: "Na parte mobile/pair, disponibilizar uma opcao para excluir dispositivos pareados... gerar versao release-signed..."
 - Resultado:

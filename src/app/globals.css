@@ -2300,6 +2300,17 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   color: #5e6470;
   font-size: 18px;
   text-decoration: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.fg-mobile-drawer-settings:disabled {
+  opacity: 0.65;
+  cursor: default;
 }
 
 .fg-mobile-drawer-sync {

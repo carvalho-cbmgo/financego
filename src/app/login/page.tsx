@@ -24,7 +24,7 @@ export default function LoginPage() {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
-    setMessage("Carregando...");
+    setMessage("");
 
     try {
       if (mode === "signup") {
@@ -144,11 +144,11 @@ export default function LoginPage() {
             </label>
 
             <button type="submit" className="fg-btn fg-login-submit" disabled={isSubmitting}>
-              {isSubmitting ? "Carregando..." : mode === "login" ? "Entrar no Finance GO" : "Criar conta no Finance GO"}
+              {isSubmitting ? "Acessando..." : mode === "login" ? "Acessar" : "Criar conta no Finance GO"}
             </button>
           </form>
 
-          <div className="fg-login-message" role="status" aria-live="polite">{message}</div>
+          {message ? <div className="fg-login-message" role="status" aria-live="polite">{message}</div> : null}
         </section>
       </section>
 
