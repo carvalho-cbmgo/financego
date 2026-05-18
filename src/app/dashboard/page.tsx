@@ -446,7 +446,7 @@ function ManualTransactionForm(input: { accounts: any[]; bankById: Map<string, a
         <select name="action" defaultValue="Despesa" required className="fg-select">
           <option value="Receita">Receita</option>
           <option value="Despesa">Despesa</option>
-          <option value="Transferência">Transferência</option>
+          <option value="Transferencia">Transferência</option>
         </select>
         <input name="category" placeholder="Categoria" defaultValue="Outros" className="fg-input" />
       </div>

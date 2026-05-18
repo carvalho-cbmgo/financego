@@ -218,12 +218,12 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <Card title={`Excluir conta: ${deletingAccount.name || "Sem nome"}`}>
             <div className="fg-stack">
               <p>
-                Esta acao exclui a conta selecionada e as transacoes vinculadas. Esta operacao nao pode ser desfeita.
+                Esta ação exclui a conta selecionada e as transações vinculadas. Esta operação não pode ser desfeita.
               </p>
               <form action="/api/accounts/delete" method="post" className="fg-form">
                 <input type="hidden" name="id" value={deletingAccount.id} />
                 <div className="fg-account-actions">
-                  <button className="fg-btn-danger">Confirmar exclusao</button>
+                  <button className="fg-btn-danger">Confirmar exclusão</button>
                   <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
                 </div>
               </form>
@@ -235,12 +235,12 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <Card title={`Excluir banco: ${deletingBank.name || "Sem nome"}`}>
             <div className="fg-stack">
               <p>
-                Esta acao exclui apenas o banco selecionado. Caso existam contas vinculadas, exclua ou mova as contas antes de confirmar.
+                Esta ação exclui apenas o banco selecionado. Caso existam contas vinculadas, exclua ou mova as contas antes de confirmar.
               </p>
               <form action="/api/banks/delete" method="post" className="fg-form">
                 <input type="hidden" name="id" value={deletingBank.id} />
                 <div className="fg-account-actions">
-                  <button className="fg-btn-danger">Confirmar exclusao</button>
+                  <button className="fg-btn-danger">Confirmar exclusão</button>
                   <Link href="/accounts" className="fg-btn-secondary">Cancelar</Link>
                 </div>
               </form>
@@ -249,18 +249,18 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
         ) : null}
 
         <div className="fg-accounts-table-grid">
-          <Card title="Visao por banco">
+          <Card title="Visão por banco">
             <div className="fg-table-wrap">
               <table className="fg-table fg-accounts-table">
                 <thead>
                   <tr>
                     <th>Banco</th>
-                    <th>Codigo</th>
+                    <th>Código</th>
                     <th>Contas</th>
                     <th>Saldo</th>
                     <th>Despesa consolidada</th>
                     <th>Despesa prevista</th>
-                    <th>Acoes</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -287,7 +287,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
             </div>
           </Card>
 
-          <Card title="Visao por conta">
+          <Card title="Visão por conta">
             <div className="fg-table-wrap">
               <table className="fg-table fg-accounts-table">
                 <thead>
@@ -296,11 +296,11 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
                     <th>Conta</th>
                     <th>Tipo</th>
                     <th>Saldo</th>
-                    <th>Transacoes</th>
+                    <th>Transações</th>
                     <th>Despesa consolidada</th>
                     <th>Despesa prevista</th>
                     <th>Receita consolidada</th>
-                    <th>Acoes</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>

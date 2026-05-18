@@ -12,8 +12,8 @@ function isMobileClient() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("maykocarvalho@gmail.com");
+  const [password, setPassword] = useState("123456");
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState("");
@@ -61,8 +61,6 @@ export default function LoginPage() {
   return (
     <main className="fg-login-screen">
       <div className="fg-login-backdrop" aria-hidden="true" />
-      <div className="fg-login-orb fg-login-orb-a" aria-hidden="true" />
-      <div className="fg-login-orb fg-login-orb-b" aria-hidden="true" />
 
       <section className="fg-login-shell" aria-label="Acesso ao Finance GO">
         <section className="fg-login-card">

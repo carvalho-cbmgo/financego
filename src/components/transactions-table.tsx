@@ -175,7 +175,7 @@ export function TransactionsTable(input: {
       if (intent === "delete") setMessage(`${selectedTxIds.length} transação(ões) excluída(s).`);
       if (intent === "consolidate") setMessage(`${selectedTxIds.length} transação(ões) consolidada(s).`);
       if (intent === "unconsolidate") setMessage(`${selectedTxIds.length} transação(ões) marcadas como não consolidadas.`);
-      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transacao(oes) reclassificada(s).`);
+      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transação(ões) reclassificada(s).`);
 
       setSelectedTxIds([]);
       router.refresh();
@@ -193,7 +193,7 @@ export function TransactionsTable(input: {
     if (!value) return;
 
     if (!selectedTxIds.length) {
-      setMessage("Selecione ao menos uma transacao para reclassificar.");
+      setMessage("Selecione ao menos uma transação para reclassificar.");
       setBulkCategoryValue("");
       return;
     }
@@ -241,9 +241,9 @@ export function TransactionsTable(input: {
           className="fg-btn fg-legacy-add-btn"
           type="button"
           onClick={() => setShowCreateForm((current) => !current)}
-          title="Adicionar nova transacao"
+          title="Adicionar nova transação"
         >
-          + Adicionar transacao
+          + Adicionar transação
         </button>
         <div className="fg-legacy-transactions-actions-right">
         <button
@@ -304,9 +304,9 @@ export function TransactionsTable(input: {
       {showReclassifyDialog ? (
         <div className="fg-legacy-confirm-backdrop" role="dialog" aria-modal="true" onClick={cancelReclassify}>
           <div className="fg-legacy-confirm-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="fg-card-title">Confirmar reclassificacao</div>
+            <div className="fg-card-title">Confirmar reclassificação</div>
             <p>
-              Deseja reclassificar {selectedTxIds.length} transacao(oes) para a categoria{" "}
+              Deseja reclassificar {selectedTxIds.length} transação(ões) para a categoria{" "}
               <strong>{getCategoryLabel(pendingReclassifyCategory)}</strong>?
             </p>
             <div className="fg-legacy-confirm-actions">
@@ -375,7 +375,7 @@ export function TransactionsTable(input: {
                   </div>
                 </div>
                 <div className="fg-legacy-balance-head-value">
-                  Saldo sem as transacoes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
+                  Saldo sem as transações exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
                 </div>
               </th>
             </tr>
@@ -392,7 +392,7 @@ export function TransactionsTable(input: {
             {!grouped.length ? (
               <tr>
                 <td colSpan={6} className="fg-legacy-empty-cell">
-                  Nenhuma transacao para os filtros selecionados.
+                  Nenhuma transação para os filtros selecionados.
                 </td>
               </tr>
             ) : grouped.map((group) => (
@@ -521,7 +521,7 @@ export function TransactionsTable(input: {
                                 <div className="fg-legacy-action-group">
                                   <label><input type="radio" name="action" value="Despesa" defaultChecked={actionFromType(tx.type) === "Despesa"} /> Despesa</label>
                                   <label><input type="radio" name="action" value="Receita" defaultChecked={actionFromType(tx.type) === "Receita"} /> Receita</label>
-                                  <label><input type="radio" name="action" value="Transferência" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferência</label>
+                                  <label><input type="radio" name="action" value="Transferencia" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferência</label>
                                 </div>
                                 <div className="fg-legacy-inline-right">
                                   <label className="fg-checkbox-row">
@@ -586,7 +586,7 @@ export function TransactionsTable(input: {
             ))}
             <tr className="fg-legacy-balance-foot-row">
               <td colSpan={6}>
-                Saldo com as transacoes exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
+                Saldo com as transações exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
               </td>
             </tr>
           </tbody>
@@ -611,7 +611,7 @@ function CreateTransactionInline(input: {
     : [{ value: "Outros", label: "Outros", depth: 0 }];
 
   if (!input.accounts?.length) {
-    return <div className="fg-empty">Cadastre uma conta antes de adicionar transacoes.</div>;
+    return <div className="fg-empty">Cadastre uma conta antes de adicionar transações.</div>;
   }
 
   return (
@@ -638,7 +638,7 @@ function CreateTransactionInline(input: {
         </label>
         <label className="fg-legacy-create-action-pill">
           <input type="radio" name="action" value="Transferencia" />
-          Transferencia
+          Transferência
         </label>
       </div>
 
@@ -651,7 +651,7 @@ function CreateTransactionInline(input: {
           className="fg-input fg-legacy-create-date"
         />
 
-        <input name="description" required placeholder="Descricao da transacao" className="fg-input fg-legacy-create-desc" />
+        <input name="description" required placeholder="Descrição da transação" className="fg-input fg-legacy-create-desc" />
 
         <select name="category" defaultValue="Outros" className="fg-select fg-legacy-create-category">
           {safeCategoryOptions.map((option) => (
@@ -683,7 +683,7 @@ function CreateTransactionInline(input: {
         <textarea
           name="note"
           className="fg-textarea fg-legacy-create-note"
-          placeholder="Registre detalhes importantes desta transacao"
+          placeholder="Registre detalhes importantes desta transação"
         />
       </label>
 
@@ -728,7 +728,7 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
 
   return (
     <div className="fg-legacy-create-repeat-wrap">
-      <div className="fg-legacy-inline-label">Repetir transacao</div>
+      <div className="fg-legacy-inline-label">Repetir transação</div>
       <div className="fg-legacy-repeat-options">
         <label>
           <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />

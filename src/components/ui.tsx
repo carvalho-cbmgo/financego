@@ -1,5 +1,5 @@
-﻿import Link from "next/link";
 import { ReactNode } from "react";
+import { LogoutButton } from "@/components/logout-button";
 import { TopNavLinks } from "@/components/top-nav-links";
 
 const navItems = [
@@ -20,17 +20,15 @@ export function PageShell({ children }: { children: ReactNode }) {
     <div className="shell-wrap">
       <header className="shell-topbar">
         <div className="shell-brand-mark">
-          <span className="shell-brand-main">finance</span>
-          <span className="shell-brand-go">go</span>
+          <span className="shell-brand-main">Finance</span>
+          <span className="shell-brand-go">GO</span>
         </div>
 
         <nav className="shell-topnav" aria-label="Navegação principal">
           <TopNavLinks items={navItems} />
         </nav>
 
-        <Link href="/login" className="shell-user-pill">
-          Sair
-        </Link>
+        <LogoutButton />
       </header>
 
       <main className="shell-main">
