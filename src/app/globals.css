@@ -2318,6 +2318,14 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   line-height: 1.35;
 }
 
+.fg-mobile-pair-help.is-ok {
+  color: #1f6a2e;
+}
+
+.fg-mobile-pair-help.is-error {
+  color: #a13030;
+}
+
 .fg-mobile-pair-panel {
   display: grid;
   gap: 10px;
@@ -2429,6 +2437,16 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   padding: 10px;
   display: grid;
   gap: 6px;
+}
+
+.fg-mobile-pair-device-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.fg-mobile-pair-device-actions .fg-btn-danger {
+  min-height: 30px;
+  padding: 4px 10px;
 }
 
 .fg-mobile-pair-device-name {

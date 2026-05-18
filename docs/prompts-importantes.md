@@ -3,6 +3,13 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: permitir exclusao de dispositivos pareados no mobile/pair e gerar release-signed para teste paralelo no Xiaomi.
+- Prompt base: "Na parte mobile/pair, disponibilizar uma opcao para excluir dispositivos pareados... gerar versao release-signed..."
+- Resultado:
+  - Botao `Excluir dispositivo` implementado na lista de pareados em `/mobile/pair`.
+  - Nova rota `POST /api/devices/delete` adicionada com validacao de ownership.
+  - Companion com versao incrementada e release-signed novo gerado para reteste.
+
 - Objetivo: corrigir falha de registro automatico de notificacoes Nubank apos pareamento do APK.
 - Prompt base: "Instalei o apk... recebi notificacao do NuBank e nao registrou automaticamente... corrigir para funcionar automatico."
 - Resultado:

@@ -4,29 +4,27 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-17`
-- Entrega principal: correcao do fluxo automatico de captura de notificacoes do Nubank no APK companion.
+- Entrega principal: exclusao de dispositivos pareados em `/mobile/pair` + novo release-signed para teste no Xiaomi.
 - Resultado entregue:
+  - Pagina `mobile/pair`:
+    - Lista de dispositivos pareados agora permite exclusao por item (`Excluir dispositivo`).
+    - Fluxo com mensagens de status (sucesso/erro) apos exclusao.
+  - API de dispositivos:
+    - Nova rota `POST /api/devices/delete` com validacao de ownership por `profile_id`.
+    - Exclusao segura apenas de dispositivos do usuario autenticado.
   - APK Android companion:
-    - Listener de notificacoes ficou mais resiliente para bancos:
-      - ampliado filtro de pacotes (match por prefixo/variantes);
-      - leitura de mais campos do payload de notificacao (`textLines`, `subText`, `infoText`, `tickerText`);
-      - reducao de bloqueios por heuristica para nao perder eventos validos.
-    - Adicionado rebind automatico do `NotificationListenerService` ao desconectar.
-    - Sincronizacao de fallback ajustada para `REPLACE` em fila one-shot, evitando atraso por trabalho antigo pendente.
-  - Backend parser:
-    - `parseMoneyBR` ampliado para aceitar formatos monetarios mais variados (virgula e ponto), reduzindo casos de `parsed=false`.
-  - Build Android:
-    - `assembleDebug` validado com sucesso.
-    - Novo APK de teste gerado: `build-artifacts/financego-companion-debug-auto-notify-fix.apk`.
+    - Versao incrementada para facilitar instalacao/atualizacao no celular (`versionCode=2`, `versionName=0.1.1`).
+    - Build release gerado e assinado para reteste:
+      - `build-artifacts/financego-companion-release-signed-auto-notify-fix.apk`.
   - Build web:
     - `npm run build` executado com sucesso apos os ajustes.
 
 ## Etapa atual
-- Objetivo: validar ingestao automatica imediata de notificacoes reais apos o fix.
+- Objetivo: validar em campo o novo release-signed no Xiaomi com exclusao de dispositivo e captura automatica.
 - Em andamento:
-  - [ ] Instalar o APK com fix (`auto-notify-fix`) no dispositivo.
-  - [ ] Confirmar captura imediata de notificacao do Nubank com transacao criada no FinanceGO.
-  - [ ] Confirmar se eventos parseados permanecem em `NUBANK` e nao em conta `GENERICO`.
+  - [ ] Instalar `financego-companion-release-signed-auto-notify-fix.apk` no Xiaomi.
+  - [ ] Validar exclusao de dispositivo diretamente em `/mobile/pair`.
+  - [ ] Confirmar captura imediata da proxima notificacao real do Nubank.
 
 ## Proximas etapas
 - Curto prazo:

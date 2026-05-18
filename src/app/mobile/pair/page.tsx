@@ -8,11 +8,14 @@ export const dynamic = "force-dynamic";
 
 type PairPageParams = {
   month_ref?: string;
+  ok?: string;
+  error?: string;
 };
 
 export default async function MobilePairPage({ searchParams }: { searchParams: Promise<PairPageParams> }) {
   const params = await searchParams;
   const selectedMonthRef = normalizeMonthRef(String(params.month_ref || ""), monthRef());
+  const status = buildStatusMessage(params.ok, params.error);
   const { user, accessToken } = await requireServerSession();
   const supabaseAdmin = createUserDb(accessToken);
 
@@ -38,6 +41,7 @@ export default async function MobilePairPage({ searchParams }: { searchParams: P
         <section className="fg-mobile-section">
           <h3 className="fg-mobile-section-title">Passo 1 - gerar credenciais</h3>
           <article className="fg-mobile-card">
+            {status ? <p className={`fg-mobile-pair-help ${status.tone === "error" ? "is-error" : "is-ok"}`}>{status.text}</p> : null}
             <p className="fg-mobile-pair-help">
               Toque em <strong>Conectar app automaticamente</strong> para abrir o companion sem digitar dados.
               Se o Android bloquear a abertura automatica, use o modo manual logo abaixo.
@@ -78,6 +82,11 @@ export default async function MobilePairPage({ searchParams }: { searchParams: P
                     <div className="fg-mobile-pair-device-meta">
                       Ultimo contato: {device.last_seen_at ? formatDate(device.last_seen_at) : "-"}
                     </div>
+                    <form action="/api/devices/delete" method="post" className="fg-mobile-pair-device-actions">
+                      <input type="hidden" name="device_id" value={String(device.id || "")} />
+                      <input type="hidden" name="return_url" value={`/mobile/pair?month_ref=${encodeURIComponent(selectedMonthRef)}`} />
+                      <button className="fg-btn-danger">Excluir dispositivo</button>
+                    </form>
                   </li>
                 ))}
               </ul>
@@ -107,4 +116,20 @@ function formatDate(input: string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function buildStatusMessage(okValue?: string, errorValue?: string) {
+  const okMap: Record<string, string> = {
+    device_deleted: "Dispositivo pareado excluido com sucesso.",
+  };
+
+  const errorMap: Record<string, string> = {
+    missing_device: "Dispositivo invalido para exclusao.",
+    device_not_found: "Dispositivo nao encontrado para este usuario.",
+    delete_failed: "Nao foi possivel excluir o dispositivo agora.",
+  };
+
+  if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };
+  if (okValue && okMap[okValue]) return { tone: "ok" as const, text: okMap[okValue] };
+  return null;
 }

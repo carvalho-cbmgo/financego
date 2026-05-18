@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-17`
+- Decisao: adicionar exclusao de dispositivo pareado direto em `/mobile/pair`, com endpoint dedicado e validacao por usuario autenticado.
+- Motivo: permitir manutencao de pares antigos/invalidos sem precisar limpeza manual no banco.
+- Impacto: fluxo de pareamento ficou autossuficiente no mobile.
+
+- Data: `2026-05-17`
+- Decisao: incrementar versao do companion para `versionCode=2` e `versionName=0.1.1` antes de novo release-signed.
+- Motivo: reduzir chance de erro de instalacao/upgrade no Android ao testar builds consecutivos.
+- Impacto: retestes no Xiaomi com instalacao mais previsivel.
+
+- Data: `2026-05-17`
 - Decisao: ampliar a captura no `NotificationForwarderService` com heuristicas menos restritivas e fallback de pacote por prefixo.
 - Motivo: notificacoes reais do Nubank estavam sendo perdidas antes do envio ao backend por filtros locais muito rigidos.
 - Impacto: maior taxa de captura automatica imediata para eventos bancarios reais.
