@@ -3,6 +3,16 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: remover painel superior do dashboard/transacoes, remodelar experiencia mobile e preparar uso por APK sem navegador.
+- Prompt base: "Retirar o Painel de 'Central de controle financeiro'... Realizar uma remodelagem aprofundada do designer do sistema quando utilizado num celular... aplicativo apk FinanceGO possa ser instalado no celular..."
+- Resultado:
+  - Painel superior `Central de controle financeiro` removido de `dashboard` e `transactions`.
+  - `/mobile` remodelado com saldo projetado, KPIs, insights, atalhos e melhor leitura das transacoes.
+  - Companion Android ganhou `MobileWebActivity` com WebView interno para abrir `/mobile` no APK.
+  - Botao `Abrir FinanceGO no app` adicionado ao companion.
+  - `BootReceiver` criado para reagendar sincronizacao apos reinicio do celular.
+  - Build web validado; build Android pendente por ausencia de Gradle no ambiente local.
+
 - Objetivo: ajustar UX da login e incluir logout por icone na tela mobile.
 - Prompt base: "Na página login, retirar o componente ... Carregando... mudar botão para Acessar ... disponibilizar ícone para deslogar."
 - Resultado:

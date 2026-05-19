@@ -3,11 +3,15 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Compilar novo APK apos inclusao de `MobileWebActivity` e `BootReceiver`.
+- [ ] Validar login e navegacao do FinanceGO dentro do APK sem navegador externo.
 - [ ] Testar instalacao e execucao do APK release assinado em pelo menos 2 aparelhos Android.
 - [ ] Validar fluxo real: notificacao bancaria recebida -> transacao criada automaticamente no FinanceGO.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Adicionar tela de status dentro do APK informando URL ativa, ultimo envio, ultimo erro e tamanho da fila offline.
+- [ ] Avaliar botao no WebView para voltar rapidamente a tela de configuracao do companion.
 - [ ] Avaliar opcao de confirmar logout no mobile (on/off) para evitar saídas acidentais por toque no icone.
 - [ ] Avaliar opcao de "desativar" (sem excluir) dispositivo pareado para troubleshooting.
 - [ ] Criar tela de diagnostico no companion com "ultimo evento capturado", "ultimo envio", "ultimo erro HTTP".

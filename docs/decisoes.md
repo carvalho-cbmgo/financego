@@ -3,6 +3,26 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-19`
+- Decisao: remover o painel "Central de controle financeiro" do topo de `dashboard` e `transactions`.
+- Motivo: o usuario solicitou retirar o bloco e seus indicadores para simplificar o topo das paginas desktop.
+- Impacto: as funcionalidades de dashboard/transacoes continuam preservadas, sem o painel adicional criado anteriormente.
+
+- Data: `2026-05-19`
+- Decisao: transformar o APK companion em um ponto de entrada tambem para uso do FinanceGO via WebView interno.
+- Motivo: permitir que o usuario use o sistema pelo app instalado, sem depender de abrir navegador, mantendo captura de notificacoes em segundo plano.
+- Impacto: novo botao `Abrir FinanceGO no app` abre `/mobile` dentro do APK e preserva o listener nativo para notificacoes bancarias.
+
+- Data: `2026-05-19`
+- Decisao: adicionar `BootReceiver` no companion Android.
+- Motivo: reforcar a confiabilidade da fila offline e do agendamento de sincronizacao apos reinicio do aparelho.
+- Impacto: ao reiniciar o Android, o app agenda nova sincronizacao e tenta reenviar eventos pendentes quando houver rede.
+
+- Data: `2026-05-19`
+- Decisao: remodelar `/mobile` como uma experiencia de aplicativo financeiro, com saldo projetado, indicadores e insights.
+- Motivo: melhorar leitura no celular e aproximar o uso de uma experiencia nativa mais clara e confiavel.
+- Impacto: tela mobile ganha resumo mais forte sem remover extrato, categorias, fluxo, pendencias e pareamento.
+
 - Data: `2026-05-17`
 - Decisao: remover o estado textual `Carregando...` do bloco de mensagem inferior da tela de login e manter feedback visual no proprio botao.
 - Motivo: reduzir ruido visual e atender ao fluxo solicitado para tela de acesso.

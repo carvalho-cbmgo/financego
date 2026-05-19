@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     statusText = findViewById(R.id.statusText)
 
     val saveButton = findViewById<Button>(R.id.saveButton)
+    val openFinanceGoButton = findViewById<Button>(R.id.openFinanceGoButton)
     val openPermissionButton = findViewById<Button>(R.id.openPermissionButton)
     val testButton = findViewById<Button>(R.id.testButton)
     val simulatePixNotificationButton = findViewById<Button>(R.id.simulatePixNotificationButton)
@@ -58,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     deviceTokenInput.setText(SecureTokenStore.get(this))
 
     saveButton.setOnClickListener { saveConfig() }
+    openFinanceGoButton.setOnClickListener { openFinanceGoApp() }
     openPermissionButton.setOnClickListener { openNotificationAccess() }
     testButton.setOnClickListener { sendTestEvent() }
     simulatePixNotificationButton.setOnClickListener { simulatePixNotification() }
@@ -124,6 +126,19 @@ class MainActivity : AppCompatActivity() {
     toast("Configuracao salva com sucesso.")
     updateStatus("Configuracao salva. Testando conectividade...")
     sendConnectivityTestAfterSave(config, deviceToken)
+  }
+
+  private fun openFinanceGoApp() {
+    val config = CompanionPrefs.load(this)
+    val baseUrl = normalizeBaseUrl(config.baseUrl)
+    if (baseUrl.isBlank()) {
+      updateStatus("Salve a URL base antes de abrir o FinanceGO dentro do app.")
+      toast("Salve a configuracao primeiro.")
+      return
+    }
+
+    val url = "$baseUrl/mobile"
+    startActivity(Intent(this, MobileWebActivity::class.java).putExtra(MobileWebActivity.EXTRA_URL, url))
   }
 
   private fun openNotificationAccess() {

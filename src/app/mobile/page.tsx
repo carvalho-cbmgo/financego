@@ -96,6 +96,18 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
   const categoryRows = buildCategoryRows(consolidatedMonthTxs);
   const totalCategorySpent = categoryRows.reduce((sum, row) => sum + row.value, 0);
   const donutSegments = buildDonutSegments(categoryRows, totalCategorySpent);
+  const pendingInflow = pendingMonthTxs
+    .filter((tx) => isRevenueTx(tx) || toAmount(tx.amount) > 0)
+    .reduce((sum, tx) => sum + Math.abs(toAmount(tx.amount)), 0);
+  const pendingOutflow = pendingMonthTxs
+    .filter((tx) => isExpenseTx(tx) || toAmount(tx.amount) < 0)
+    .reduce((sum, tx) => sum + Math.abs(toAmount(tx.amount)), 0);
+  const pendingNet = pendingInflow - pendingOutflow;
+  const consolidationRate = monthTxs.length ? Math.round((consolidatedMonthTxs.length / monthTxs.length) * 100) : 100;
+  const topExpenseCategory = categoryRows[0] || null;
+  const spendPressure = entradas > 0 ? Math.round((saidasAbs / entradas) * 100) : saidasAbs > 0 ? 100 : 0;
+  const projectedBalance = saldoContas + pendingNet;
+  const health = buildFinancialHealth({ resultadoMes, projectedBalance, spendPressure, pendingOutflow });
 
   const dailyBalances = buildDailyBalances({
     monthRef: selectedMonthRef,
@@ -105,15 +117,60 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
   const sparkline = buildSparkline(dailyBalances);
   const profileLabel = formatProfileLabel(user.email, user.id);
   const lastSyncText = `Sincronizado em ${formatSyncDate(new Date())}`;
+  const selectedMonthLabel = labelMonthLong(selectedMonthRef);
 
   return (
     <main className="fg-mobile-screen">
       <MobileDrawerHeader monthRef={selectedMonthRef} profileLabel={profileLabel} lastSyncText={lastSyncText} />
 
       <section className="fg-mobile-content">
+        <section className="fg-mobile-hero-card" aria-label="Resumo financeiro mobile">
+          <div className="fg-mobile-hero-top">
+            <div>
+              <div className="fg-mobile-hero-brand">Finance GO</div>
+              <h1>Gestão no bolso</h1>
+            </div>
+            <span className={`fg-mobile-health-pill is-${health.tone}`}>{health.label}</span>
+          </div>
+          <p>{health.description}</p>
+          <div className="fg-mobile-hero-balance">
+            <span>Saldo projetado</span>
+            <strong className={projectedBalance < 0 ? "is-negative" : "is-positive"}>{brl(projectedBalance)}</strong>
+            <small>{selectedMonthLabel} com pendências previstas</small>
+          </div>
+          <div className="fg-mobile-kpi-grid">
+            <MobileKpi label="Saldo atual" value={brl(saldoContas)} tone={saldoContas < 0 ? "negative" : "positive"} />
+            <MobileKpi label="Resultado" value={brl(resultadoMes)} tone={resultadoMes < 0 ? "negative" : "positive"} />
+            <MobileKpi label="Pendências" value={brl(pendingNet)} tone={pendingNet < 0 ? "warning" : "positive"} />
+            <MobileKpi label="Consolidação" value={`${consolidationRate}%`} tone={consolidationRate < 70 ? "warning" : "positive"} />
+          </div>
+        </section>
+
+        <section className="fg-mobile-insight-grid" aria-label="Inteligência financeira">
+          <MobileInsight
+            label="Maior categoria"
+            title={topExpenseCategory ? topExpenseCategory.category : "Sem gastos"}
+            detail={topExpenseCategory ? brl(topExpenseCategory.value) : "Nenhuma despesa consolidada no mês"}
+          />
+          <MobileInsight
+            label="Pressão de gastos"
+            title={`${spendPressure}%`}
+            detail={spendPressure <= 70 ? "Ritmo confortável" : spendPressure <= 100 ? "Acompanhe de perto" : "Saídas acima das entradas"}
+            tone={spendPressure <= 70 ? "positive" : spendPressure <= 100 ? "warning" : "negative"}
+          />
+          <MobileInsight
+            label="Modo APK"
+            title="Captura automática"
+            detail="Pareie o app Android para registrar PIX e cartão por notificações."
+            href={`/mobile/pair?month_ref=${encodeURIComponent(selectedMonthRef)}`}
+          />
+        </section>
+
         <div className="fg-mobile-chip-row">
-          <a href="#ultimas-alteracoes" className="fg-mobile-chip">Ultimas alteracoes</a>
-          <a href="#nao-consolidadas" className="fg-mobile-chip">Nao consolidadas ({pendingMonthTxs.length})</a>
+          <a href="#saldo-das-contas" className="fg-mobile-chip">Saldo</a>
+          <a href="#grafico-mensal" className="fg-mobile-chip">Fluxo</a>
+          <a href="#extrato-mensal" className="fg-mobile-chip">Extrato</a>
+          <a href="#nao-consolidadas" className="fg-mobile-chip">Pendências ({pendingMonthTxs.length})</a>
         </div>
 
         <section id="saldo-das-contas" className="fg-mobile-section">
@@ -125,15 +182,19 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
         </section>
 
         <section className="fg-mobile-section">
-          <h3 className="fg-mobile-section-title">Resultado do periodo</h3>
+          <h3 className="fg-mobile-section-title">Resultado do período</h3>
           <article className="fg-mobile-card">
             <div className="fg-mobile-result-row">
               <span>Entradas</span>
               <strong>{brl(entradas)}</strong>
             </div>
             <div className="fg-mobile-result-row">
-              <span>Saidas</span>
+              <span>Saídas</span>
               <strong>{brl(-saidasAbs)}</strong>
+            </div>
+            <div className="fg-mobile-result-row">
+              <span>Pendências previstas</span>
+              <strong className={pendingNet < 0 ? "is-negative" : "is-positive"}>{brl(pendingNet)}</strong>
             </div>
             <div className="fg-mobile-result-total">
               <strong className={resultadoMes < 0 ? "is-negative" : "is-positive"}>{brl(resultadoMes)}</strong>
@@ -142,7 +203,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
         </section>
 
         <section className="fg-mobile-section">
-          <h3 className="fg-mobile-section-title">Comparativo de saidas</h3>
+          <h3 className="fg-mobile-section-title">Comparativo de saídas</h3>
           <article className="fg-mobile-card fg-mobile-compare-card">
             <div className="fg-mobile-compare-left">
               <div className="fg-mobile-compare-value">{brl(-previousMonthExpenses)}</div>
@@ -152,13 +213,13 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
               {expenseComparisonPercent === null ? (
                 <>
                   <div className="fg-mobile-compare-pct">0%</div>
-                  <div className="fg-mobile-compare-note">sem base de comparacao</div>
+                  <div className="fg-mobile-compare-note">sem base de comparação</div>
                 </>
               ) : (
                 <>
                   <div className="fg-mobile-compare-pct">{Math.abs(expenseComparisonPercent).toFixed(0)}%</div>
                   <div className="fg-mobile-compare-note">
-                    {expensesReduced ? "reducao de saidas" : "aumento de saidas"}
+                    {expensesReduced ? "redução de saídas" : "aumento de saídas"}
                   </div>
                 </>
               )}
@@ -174,7 +235,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
           <h3 className="fg-mobile-section-title">Fluxo de caixa</h3>
           <article className="fg-mobile-card">
             <div className="fg-mobile-chart-wrap">
-              <svg viewBox="0 0 320 170" className="fg-mobile-chart" role="img" aria-label="Grafico de fluxo de caixa">
+              <svg viewBox="0 0 320 170" className="fg-mobile-chart" role="img" aria-label="Gráfico de fluxo de caixa">
                 {[0, 1, 2, 3].map((line) => (
                   <line
                     key={line}
@@ -207,7 +268,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
                   .map((tx) => (
                     <li key={tx.id} className={`fg-mobile-tx-item ${tx.is_consolidated === false ? "is-pending" : ""}`}>
                       <div>
-                        <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transacao")}</div>
+                        <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transação")}</div>
                         <div className="fg-mobile-tx-meta">
                           {shortDate(tx.posted_at)} - {safeText(tx.app_category, "Outros")}
                         </div>
@@ -217,7 +278,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
                   ))}
               </ul>
             ) : (
-              <div className="fg-mobile-empty">Sem transacoes no mes selecionado.</div>
+              <div className="fg-mobile-empty">Sem transações no mês selecionado.</div>
             )}
           </article>
         </section>
@@ -230,7 +291,7 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
                 <div
                   className="fg-mobile-donut"
                   style={{ background: `conic-gradient(${donutSegments.join(", ")})` }}
-                  aria-label="Grafico de categorias"
+                  aria-label="Gráfico de categorias"
                 />
                 <div className="fg-mobile-category-list">
                   {categoryRows.map((row) => {
@@ -245,20 +306,20 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
                 </div>
               </div>
             ) : (
-              <div className="fg-mobile-empty">Sem despesas consolidadas no mes.</div>
+              <div className="fg-mobile-empty">Sem despesas consolidadas no mês.</div>
             )}
           </article>
         </section>
 
         <section id="ultimas-alteracoes" className="fg-mobile-section">
-          <h3 className="fg-mobile-section-title">Ultimas alteracoes</h3>
+          <h3 className="fg-mobile-section-title">Últimas alterações</h3>
           <article className="fg-mobile-card">
             {latestMonthTxs.length ? (
               <ul className="fg-mobile-tx-list">
                 {latestMonthTxs.map((tx) => (
                   <li key={tx.id} className="fg-mobile-tx-item">
                     <div>
-                      <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transacao")}</div>
+                      <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transação")}</div>
                       <div className="fg-mobile-tx-meta">{shortDate(tx.posted_at)}</div>
                     </div>
                     <strong className={toAmount(tx.amount) < 0 ? "is-negative" : "is-positive"}>{brl(tx.amount || 0)}</strong>
@@ -266,20 +327,20 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
                 ))}
               </ul>
             ) : (
-              <div className="fg-mobile-empty">Nenhuma transacao no periodo.</div>
+              <div className="fg-mobile-empty">Nenhuma transação no período.</div>
             )}
           </article>
         </section>
 
         <section id="nao-consolidadas" className="fg-mobile-section">
-          <h3 className="fg-mobile-section-title">Nao consolidadas</h3>
+          <h3 className="fg-mobile-section-title">Não consolidadas</h3>
           <article className="fg-mobile-card">
             {pendingMonthTxs.length ? (
               <ul className="fg-mobile-tx-list">
                 {pendingMonthTxs.map((tx) => (
                   <li key={tx.id} className="fg-mobile-tx-item is-pending">
                     <div>
-                      <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transacao pendente")}</div>
+                      <div className="fg-mobile-tx-desc">{safeText(tx.description, "Transação pendente")}</div>
                       <div className="fg-mobile-tx-meta">{shortDate(tx.posted_at)}</div>
                     </div>
                     <strong className={toAmount(tx.amount) < 0 ? "is-negative" : "is-positive"}>{brl(tx.amount || 0)}</strong>
@@ -287,13 +348,62 @@ export default async function MobilePage({ searchParams }: { searchParams: Promi
                 ))}
               </ul>
             ) : (
-              <div className="fg-mobile-empty">Todas as transacoes do mes estao consolidadas.</div>
+              <div className="fg-mobile-empty">Todas as transações do mês estão consolidadas.</div>
             )}
           </article>
         </section>
       </section>
     </main>
   );
+}
+
+function MobileKpi({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "positive" | "negative" | "warning";
+}) {
+  return (
+    <div className={`fg-mobile-kpi is-${tone}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function MobileInsight({
+  label,
+  title,
+  detail,
+  tone = "neutral",
+  href,
+}: {
+  label: string;
+  title: string;
+  detail: string;
+  tone?: "neutral" | "positive" | "negative" | "warning";
+  href?: string;
+}) {
+  const content = (
+    <>
+      <span>{label}</span>
+      <strong>{title}</strong>
+      <small>{detail}</small>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a href={href} className={`fg-mobile-insight is-link is-${tone}`}>
+        {content}
+      </a>
+    );
+  }
+
+  return <div className={`fg-mobile-insight is-${tone}`}>{content}</div>;
 }
 
 function normalizeMonthRef(input: string, fallback: string) {
@@ -446,6 +556,55 @@ function labelMonth(ref: string) {
   if (!Number.isFinite(year) || !Number.isFinite(month)) return ref;
   const names = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
   return `${names[Math.max(0, month - 1)]} ${String(year).slice(-2)}`;
+}
+
+function labelMonthLong(ref: string) {
+  const [yearRaw, monthRaw] = ref.split("-");
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return ref;
+  const date = new Date(Date.UTC(year, month - 1, 1));
+  const label = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function buildFinancialHealth(input: {
+  resultadoMes: number;
+  projectedBalance: number;
+  spendPressure: number;
+  pendingOutflow: number;
+}) {
+  if (input.projectedBalance < 0) {
+    return {
+      label: "Atenção",
+      tone: "negative" as const,
+      description: "A projeção do mês fica negativa ao considerar transações futuras. Priorize revisar despesas e pendências.",
+    };
+  }
+
+  if (input.spendPressure > 100) {
+    return {
+      label: "Pressionado",
+      tone: "warning" as const,
+      description: "As saídas consolidadas já superam as entradas do mês. Evite novos compromissos até reequilibrar.",
+    };
+  }
+
+  if (input.pendingOutflow > 0) {
+    return {
+      label: "Planejado",
+      tone: "positive" as const,
+      description: "Há gastos futuros mapeados e o saldo projetado continua positivo. Boa visibilidade para decidir.",
+    };
+  }
+
+  return {
+    label: "Estável",
+    tone: "positive" as const,
+    description: input.resultadoMes >= 0
+      ? "O mês está positivo com base nas transações consolidadas."
+      : "O mês exige acompanhamento, mas ainda há margem pelo saldo projetado.",
+  };
 }
 
 function safeText(input: string | null | undefined, fallback: string) {

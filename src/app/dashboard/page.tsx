@@ -242,30 +242,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     .slice(0, 10);
 
   const alertFuture = nonConsolidatedFuture.filter((tx: any) => Math.abs(Number(tx.amount || 0)) >= 500).slice(0, 8);
-  const plannedOutflow = plannedMonthTxs
-    .filter((tx: any) => isExpenseTx(tx) || Number(tx.amount || 0) < 0)
-    .reduce((sum: number, tx: any) => sum + Math.abs(Number(tx.amount || 0)), 0);
-  const plannedInflow = plannedMonthTxs
-    .filter((tx: any) => isRevenueTx(tx) || Number(tx.amount || 0) > 0)
-    .reduce((sum: number, tx: any) => sum + Math.abs(Number(tx.amount || 0)), 0);
-  const alertTotal = alertFuture.reduce((sum: number, tx: any) => sum + Math.abs(Number(tx.amount || 0)), 0);
-  const txCount = (monthTxs || []).length;
-  const consolidatedCount = consolidatedMonthTxs.length;
-  const expensePressure = entradas > 0
-    ? Math.round((Math.abs(saidas) / entradas) * 100)
-    : Math.abs(saidas) > 0
-      ? 100
-      : 0;
-  const selectedBank = selectedBankId ? bankById.get(selectedBankId) : null;
-  const selectedAccount = selectedAccountIds.length === 1 ? accountById.get(selectedAccountIds[0]) : null;
-  const scopeLabel = selectedAccount
-    ? `${selectedAccount.name}`
-    : selectedAccountIds.length
-      ? `${selectedAccountIds.length} contas selecionadas`
-      : selectedBank
-        ? `Banco ${selectedBank.name}`
-        : "Todas as contas";
-  const monthLabel = formatMonthLabel(selectedMonthRef);
 
   const returnParams = new URLSearchParams();
   returnParams.set("tab", "transactions");
@@ -281,29 +257,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <PageShell>
-      <div className="fg-dashboard-shell">
-        <FinanceCommandCenter
-          currentTab={currentTab}
-          monthLabel={monthLabel}
-          scopeLabel={scopeLabel}
-          balance={saldo}
-          previousBalance={saldoAnterior}
-          includePreviousBalance={includePreviousBalance}
-          inflow={entradas}
-          outflow={saidas}
-          plannedOutflow={plannedOutflow}
-          plannedInflow={plannedInflow}
-          openTxCount={plannedMonthTxs.length}
-          alertCount={alertFuture.length}
-          alertTotal={alertTotal}
-          topCategory={categoryRows[0] || null}
-          accountCount={selectedAccounts.length}
-          txCount={txCount}
-          consolidatedCount={consolidatedCount}
-          expensePressure={expensePressure}
-        />
-
-        <div className="fg-legacy-grid">
+      <div className="fg-legacy-grid">
         <aside className="fg-legacy-side fg-legacy-side-stack">
           <div className="fg-legacy-side-block">
             <AccountsSidePanel
@@ -401,149 +355,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </div>
           )}
         </section>
-        </div>
       </div>
     </PageShell>
-  );
-}
-
-function FinanceCommandCenter(input: {
-  currentTab: "overview" | "transactions";
-  monthLabel: string;
-  scopeLabel: string;
-  balance: number;
-  previousBalance: number;
-  includePreviousBalance: boolean;
-  inflow: number;
-  outflow: number;
-  plannedOutflow: number;
-  plannedInflow: number;
-  openTxCount: number;
-  alertCount: number;
-  alertTotal: number;
-  topCategory: { category: string; value: number } | null;
-  accountCount: number;
-  txCount: number;
-  consolidatedCount: number;
-  expensePressure: number;
-}) {
-  const balanceTone = input.balance >= 0 ? "positive" : "negative";
-  const pressureTone = input.expensePressure <= 70 ? "positive" : input.expensePressure <= 100 ? "warning" : "negative";
-  const pendingNet = input.plannedInflow - input.plannedOutflow;
-  const statusText = input.balance >= 0 ? "Fluxo controlado" : "Atenção ao saldo";
-  const contextLabel = input.currentTab === "transactions" ? "Transações do período" : "Painel inicial";
-
-  return (
-    <section className="fg-finance-hero" aria-label="Resumo financeiro estratégico">
-      <div className="fg-finance-hero-main">
-        <div className="fg-finance-kicker">Finance GO</div>
-        <div className="fg-finance-title-row">
-          <h1 className="fg-finance-title">Central de controle financeiro</h1>
-          <span className={`fg-finance-status is-${balanceTone}`}>{statusText}</span>
-        </div>
-        <p className="fg-finance-subtitle">
-          Uma visão rápida para decidir com segurança: mês, escopo, saldo, compromissos futuros e pontos de atenção em um só lugar.
-        </p>
-        <div className="fg-finance-context">
-          <span>{contextLabel}</span>
-          <span>{input.monthLabel}</span>
-          <span>{input.scopeLabel}</span>
-          <span>{input.accountCount} contas no escopo</span>
-        </div>
-      </div>
-
-      <div className="fg-finance-metrics" aria-label="Indicadores do mês">
-        <FinanceMetric
-          label="Saldo do mês"
-          value={brl(input.balance)}
-          tone={balanceTone}
-          detail={input.includePreviousBalance ? "Inclui saldo anterior" : "Sem saldo anterior"}
-        />
-        <FinanceMetric
-          label="Entradas"
-          value={brl(input.inflow)}
-          tone="positive"
-          detail={`${input.consolidatedCount} transações consolidadas`}
-        />
-        <FinanceMetric
-          label="Saídas"
-          value={brl(input.outflow)}
-          tone="negative"
-          detail={`${input.expensePressure}% das entradas`}
-        />
-        <FinanceMetric
-          label="Futuro previsto"
-          value={brl(pendingNet)}
-          tone={pendingNet >= 0 ? "positive" : "warning"}
-          detail={`${input.openTxCount} transações abertas`}
-        />
-      </div>
-
-      <div className="fg-finance-insights" aria-label="Insights financeiros">
-        <FinanceInsight
-          label="Maior gasto"
-          title={input.topCategory ? input.topCategory.category : "Sem gasto consolidado"}
-          detail={input.topCategory ? brl(input.topCategory.value) : "Cadastre ou consolide despesas"}
-        />
-        <FinanceInsight
-          label="Pressão de gastos"
-          title={`${input.expensePressure}%`}
-          detail={pressureTone === "positive" ? "Dentro de uma faixa confortável" : pressureTone === "warning" ? "Monitore antes de assumir novos gastos" : "Saídas acima das entradas"}
-          tone={pressureTone}
-        />
-        <FinanceInsight
-          label="Alertas"
-          title={`${input.alertCount} atenção`}
-          detail={input.alertTotal > 0 ? `${brl(input.alertTotal)} em valores relevantes` : "Sem grandes compromissos futuros"}
-          tone={input.alertCount ? "warning" : "positive"}
-        />
-        <FinanceInsight
-          label="Base analisada"
-          title={`${input.txCount} registros`}
-          detail={`Saldo anterior: ${brl(input.previousBalance)}`}
-        />
-      </div>
-    </section>
-  );
-}
-
-function FinanceMetric({
-  label,
-  value,
-  detail,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  detail: string;
-  tone?: "neutral" | "positive" | "negative" | "warning";
-}) {
-  return (
-    <div className={`fg-finance-metric is-${tone}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{detail}</small>
-    </div>
-  );
-}
-
-function FinanceInsight({
-  label,
-  title,
-  detail,
-  tone = "neutral",
-}: {
-  label: string;
-  title: string;
-  detail: string;
-  tone?: "neutral" | "positive" | "negative" | "warning";
-}) {
-  return (
-    <div className={`fg-finance-insight is-${tone}`}>
-      <span>{label}</span>
-      <strong>{title}</strong>
-      <small>{detail}</small>
-    </div>
   );
 }
 
@@ -731,17 +544,6 @@ function nextMonthRef(ref: string) {
   const nextYear = current.getUTCFullYear();
   const nextMonth = String(current.getUTCMonth() + 1).padStart(2, "0");
   return `${nextYear}-${nextMonth}`;
-}
-
-function formatMonthLabel(ref: string) {
-  const [yearRaw, monthRaw] = ref.split("-");
-  const year = Number(yearRaw);
-  const month = Number(monthRaw);
-  if (!Number.isFinite(year) || !Number.isFinite(month)) return ref;
-
-  const date = new Date(Date.UTC(year, month - 1, 1));
-  const label = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(date);
-  return capitalize(label);
 }
 
 function formatCurrentDateInfo() {

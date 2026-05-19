@@ -34,6 +34,24 @@ C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleDebug
 C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleRelease
 ```
 
+## Build Android quando houver Gradle no PATH
+```powershell
+cd android-companion-min
+gradle assembleDebug
+gradle assembleRelease
+```
+
+## Validacao do APK com WebView interno
+```txt
+1) Instalar APK gerado.
+2) Abrir FinanceGO Companion.
+3) Salvar URL base, Device Public ID e Device Token.
+4) Tocar em "Abrir FinanceGO no app".
+5) Fazer login dentro do WebView do APK.
+6) Voltar ao companion, tocar em "Abrir permissao de notificacoes" e habilitar o listener.
+7) Testar com "Simular notificacao PIX (listener)".
+```
+
 ## Artefatos de APK gerados nesta etapa
 ```txt
 build-artifacts/financego-companion-debug.apk
