@@ -11,6 +11,7 @@ import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 
 class MobileWebActivity : AppCompatActivity() {
@@ -40,7 +41,6 @@ class MobileWebActivity : AppCompatActivity() {
     webView.settings.apply {
       javaScriptEnabled = true
       domStorageEnabled = true
-      databaseEnabled = true
       cacheMode = WebSettings.LOAD_DEFAULT
       loadsImagesAutomatically = true
       useWideViewPort = true
@@ -68,16 +68,17 @@ class MobileWebActivity : AppCompatActivity() {
       return
     }
 
-    webView.loadUrl(url)
-  }
+    onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+      override fun handleOnBackPressed() {
+        if (webView.canGoBack()) {
+          webView.goBack()
+          return
+        }
+        finish()
+      }
+    })
 
-  @Deprecated("Deprecated in Java")
-  override fun onBackPressed() {
-    if (::webView.isInitialized && webView.canGoBack()) {
-      webView.goBack()
-      return
-    }
-    super.onBackPressed()
+    webView.loadUrl(url)
   }
 
   private fun resolveUrl(): String {

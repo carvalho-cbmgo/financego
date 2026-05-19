@@ -19,26 +19,67 @@ npm run start
 ```
 
 ## Build do companion Android (APK)
+> Recomendado: usar o script do repositório. Ele configura Java do Android Studio, Android SDK, Gradle local e truststore automaticamente.
+
 ```powershell
-# Definir Java do Android Studio na sessao atual
+# Validacao completa: teste, lint, debug e release
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode validate
+
+# Gerar apenas APK debug instalavel para teste
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode debug
+
+# Gerar apenas APK release unsigned
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode release
+
+# Rodar apenas lint Android
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode lint
+
+# Rodar apenas testes unitarios Android
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode test
+```
+
+## Instalar Gradle local novamente
+```powershell
+# Use quando a pasta .tools/gradle-8.7 nao existir no computador atual
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode debug -InstallGradleIfMissing
+```
+
+## Build Android manual com Gradle local
+```powershell
 $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 $env:PATH="$env:JAVA_HOME\bin;$env:PATH"
 $env:ANDROID_HOME="$env:LOCALAPPDATA\Android\Sdk"
 $env:ANDROID_SDK_ROOT="$env:LOCALAPPDATA\Android\Sdk"
+$env:GRADLE_USER_HOME=(Join-Path (Get-Location) '.tools\gradle-user-home')
 
-# Entrar na pasta do companion
+# Necessario nesta maquina por causa da inspecao HTTPS do AVG
+$env:GRADLE_OPTS="-Djavax.net.ssl.trustStore=$(Join-Path (Get-Location) '.tools\financego-android-cacerts') -Djavax.net.ssl.trustStorePassword=changeit -Dcom.sun.net.ssl.checkRevocation=false"
+
 cd android-companion-min
-
-# Exemplo usando Gradle local (quando gradle nao esta no PATH)
-C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleDebug
-C:\Users\Myk\Desktop\financego\.tools\gradle-8.7\bin\gradle.bat assembleRelease
+..\.tools\gradle-8.7\bin\gradle.bat --no-daemon --console=plain :app:assembleDebug
+..\.tools\gradle-8.7\bin\gradle.bat --no-daemon --console=plain :app:assembleRelease
 ```
 
-## Build Android quando houver Gradle no PATH
+## Artefatos Android atuais
+```txt
+android-companion-min/app/build/outputs/apk/debug/app-debug.apk
+android-companion-min/app/build/outputs/apk/release/app-release-unsigned.apk
+```
+
+## Validar assinatura do APK
 ```powershell
-cd android-companion-min
-gradle assembleDebug
-gradle assembleRelease
+$apksigner = "$env:LOCALAPPDATA\Android\Sdk\build-tools\35.0.1\apksigner.bat"
+& $apksigner verify --verbose .\android-companion-min\app\build\outputs\apk\debug\app-debug.apk
+& $apksigner verify --verbose .\android-companion-min\app\build\outputs\apk\release\app-release-unsigned.apk
+```
+
+Observação: o `app-debug.apk` é assinado automaticamente e serve para teste local. O `app-release-unsigned.apk` precisa de keystore de produção antes de distribuição.
+
+## Instalar APK debug via ADB
+```powershell
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb devices -l
+& $adb install -r .\android-companion-min\app\build\outputs\apk\debug\app-debug.apk
 ```
 
 ## Validacao do APK com WebView interno
@@ -52,15 +93,10 @@ gradle assembleRelease
 7) Testar com "Simular notificacao PIX (listener)".
 ```
 
-## Artefatos de APK gerados nesta etapa
+## Artefatos de APK da validação atual
 ```txt
-build-artifacts/financego-companion-debug.apk
-build-artifacts/financego-companion-debug-auto-notify-fix.apk
-build-artifacts/financego-companion-release-signed.apk
-build-artifacts/financego-companion-release-signed-auto-notify-fix.apk
-build-artifacts/financego-companion-release-unsigned.apk
-build-artifacts/financego-companion-v2-release-signed.apk
-build-artifacts/financego-companion-compat-v2-signed.apk
+android-companion-min/app/build/outputs/apk/debug/app-debug.apk
+android-companion-min/app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
 ## Fluxo mobile + pareamento

@@ -3,6 +3,18 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: instalar Gradle, compilar o companion Android e executar validações para funcionamento do FinanceGO em celulares Android.
+- Prompt base: "Instale o Gradle para realizar as compilações do campanion Android e realizar todas as validações e testes necessários para o perfeito funcionamento do FinanceGO em celulares android."
+- Resultado:
+  - Gradle `8.7` instalado localmente em `.tools/gradle-8.7`.
+  - Truststore local criada para resolver dependências Gradle em ambiente com inspeção HTTPS do AVG.
+  - Android Gradle Plugin atualizado para `8.6.1`.
+  - Companion atualizado para `versionCode=4` e `versionName=0.1.3`.
+  - `MobileWebActivity` ajustada para remover APIs depreciadas.
+  - Script `scripts/build-android-companion.ps1` criado para builds Android repetíveis.
+  - Validações concluídas: `assembleDebug`, `assembleRelease`, `testDebugUnitTest`, `lintDebug` e `npm run build`.
+  - APK `debug` verificado como assinado para teste; APK `release` gerado como unsigned e pendente de keystore de produção.
+
 - Objetivo: remover painel superior do dashboard/transacoes, remodelar experiencia mobile e preparar uso por APK sem navegador.
 - Prompt base: "Retirar o Painel de 'Central de controle financeiro'... Realizar uma remodelagem aprofundada do designer do sistema quando utilizado num celular... aplicativo apk FinanceGO possa ser instalado no celular..."
 - Resultado:

@@ -9,3 +9,7 @@ out
 coverage
 dist
 .tmp*
+.tools/
+android-companion-min/.gradle/
+android-companion-min/build/
+android-companion-min/app/build/

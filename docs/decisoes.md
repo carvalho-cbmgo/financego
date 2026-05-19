@@ -4,6 +4,41 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-19`
+- Decisão: instalar o Gradle localmente no repositório, dentro de `.tools/gradle-8.7`, em vez de exigir instalação global no Windows.
+- Motivo: garantir compilação Android imediata nesta máquina e reduzir dependência de configuração manual do `PATH`.
+- Impacto: builds Android passam a ser executados de forma previsível usando o Gradle local; `.tools/` fica fora do Git por ser dependência local gerada.
+
+- Data: `2026-05-19`
+- Decisão: criar o script `scripts/build-android-companion.ps1` para centralizar a configuração de Java, Android SDK, Gradle e truststore.
+- Motivo: simplificar futuras compilações e validações do APK com comandos objetivos (`debug`, `release`, `test`, `lint`, `validate`).
+- Impacto: qualquer nova etapa Android pode ser validada com `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode validate`.
+
+- Data: `2026-05-19`
+- Decisão: usar o Java/JBR do Android Studio (`C:\Program Files\Android\Android Studio\jbr`) para builds Android.
+- Motivo: o Android Gradle Plugin é validado com versões LTS do Java; o Java global da máquina estava em versão mais nova e menos previsível para Android.
+- Impacto: maior compatibilidade com AGP, Kotlin e ferramentas do Android SDK.
+
+- Data: `2026-05-19`
+- Decisão: criar uma truststore local `.tools/financego-android-cacerts` com o certificado raiz do AVG Web/Mail Shield.
+- Motivo: a resolução de dependências Gradle falhava porque o antivírus fazia inspeção HTTPS e substituía a cadeia de certificados.
+- Impacto: Gradle conseguiu baixar e resolver dependências do Android Gradle Plugin sem desativar proteção do sistema.
+
+- Data: `2026-05-19`
+- Decisão: atualizar o Android Gradle Plugin para `8.6.1` e manter `compileSdk=35`.
+- Motivo: remover alerta de compatibilidade do AGP anterior com `compileSdk 35`.
+- Impacto: builds `debug`, `release`, `lintDebug` e testes passaram com configuração mais alinhada ao SDK instalado.
+
+- Data: `2026-05-19`
+- Decisão: atualizar o companion Android para `versionCode=4` e `versionName=0.1.3`.
+- Motivo: facilitar upgrade/testes no Android e distinguir o APK gerado nesta validação.
+- Impacto: o APK atual pode ser identificado como build `0.1.3`.
+
+- Data: `2026-05-19`
+- Decisão: remover usos depreciados em `MobileWebActivity`.
+- Motivo: eliminar avisos de build e preparar a Activity para versões atuais do AndroidX/Android.
+- Impacto: `databaseEnabled` foi removido e o tratamento de voltar passou a usar `OnBackPressedCallback`.
+
+- Data: `2026-05-19`
 - Decisao: remover o painel "Central de controle financeiro" do topo de `dashboard` e `transactions`.
 - Motivo: o usuario solicitou retirar o bloco e seus indicadores para simplificar o topo das paginas desktop.
 - Impacto: as funcionalidades de dashboard/transacoes continuam preservadas, sem o painel adicional criado anteriormente.

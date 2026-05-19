@@ -3,13 +3,18 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Compilar novo APK apos inclusao de `MobileWebActivity` e `BootReceiver`.
+- [x] Compilar novo APK apos inclusao de `MobileWebActivity` e `BootReceiver`.
+- [ ] Configurar keystore de produção para gerar APK/AAB release assinado.
+- [ ] Instalar o APK `debug` gerado em aparelho Android real.
 - [ ] Validar login e navegacao do FinanceGO dentro do APK sem navegador externo.
 - [ ] Testar instalacao e execucao do APK release assinado em pelo menos 2 aparelhos Android.
 - [ ] Validar fluxo real: notificacao bancaria recebida -> transacao criada automaticamente no FinanceGO.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Criar testes unitários Android para parser/configuração do companion; `testDebugUnitTest` passa hoje como `NO-SOURCE`.
+- [ ] Adicionar validação automatizada de instalação via ADB quando houver aparelho/emulador conectado.
+- [ ] Avaliar geração de APK assinado interno com keystore segura fora do repositório.
 - [ ] Adicionar tela de status dentro do APK informando URL ativa, ultimo envio, ultimo erro e tamanho da fila offline.
 - [ ] Avaliar botao no WebView para voltar rapidamente a tela de configuracao do companion.
 - [ ] Avaliar opcao de confirmar logout no mobile (on/off) para evitar saídas acidentais por toque no icone.
@@ -35,6 +40,20 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Criar pipeline de build Android automatizado (CI) para gerar APK por commit/tag.
 
 ## Bugs conhecidos
+- ID: `AND-008`
+- Descricao: ambiente local não possuía Gradle disponível para compilar o companion Android.
+- Severidade: alta
+- Como reproduzir: executar build Android sem `gradle`/`gradlew.bat` disponível.
+- Status: resolvido em `2026-05-19` com Gradle local `.tools/gradle-8.7` e script `scripts/build-android-companion.ps1`.
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-009`
+- Descricao: resolução de dependências Gradle falhava por inspeção HTTPS do AVG (`AVG Web/Mail Shield Root`).
+- Severidade: alta
+- Como reproduzir: executar Gradle sem truststore local contendo o certificado raiz do AVG.
+- Status: resolvido em `2026-05-19` com truststore `.tools/financego-android-cacerts`.
+- Responsavel: time de desenvolvimento
+
 - ID: `TRX-001`
 - Descricao: ambiente local com problema de `npm` (`Exit handler never called`) bloqueando install/build nesta sessao.
 - Severidade: media
