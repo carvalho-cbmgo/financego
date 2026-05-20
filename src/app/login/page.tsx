@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("maykocarvalho@gmail.com");
   const [password, setPassword] = useState("123456");
+  const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [message, setMessage] = useState("");
@@ -28,8 +29,40 @@ export default function LoginPage() {
 
     try {
       if (mode === "signup") {
-        const { error } = await supabaseBrowser.auth.signUp({ email, password });
-        setMessage(error ? error.message : "Conta criada. Verifique o e-mail para confirmar o cadastro.");
+        const normalizedFullName = fullName.replace(/\s+/g, " ").trim();
+        if (!normalizedFullName) {
+          setMessage("Informe seu nome completo para criar o cadastro.");
+          return;
+        }
+
+        const { data, error } = await supabaseBrowser.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: normalizedFullName },
+          },
+        });
+
+        if (error) {
+          setMessage(error.message);
+          return;
+        }
+
+        if (data.session?.access_token) {
+          await fetch("/api/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ access_token: data.session.access_token }),
+          });
+
+          await fetch("/api/profile/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ full_name: normalizedFullName }),
+          });
+        }
+
+        setMessage("Conta criada. Verifique o e-mail para confirmar o cadastro, se solicitado.");
         return;
       }
 
@@ -101,6 +134,24 @@ export default function LoginPage() {
           <h1 className="fg-login-title">{mode === "login" ? "Acesse sua conta" : "Abra sua conta"}</h1>
 
           <form onSubmit={handleSubmit} className="fg-form fg-login-form">
+            {mode === "signup" ? (
+              <label className="fg-login-label">
+                Nome completo
+                <span className="fg-login-input-wrap">
+                  <span className="fg-login-input-icon" aria-hidden="true">ID</span>
+                  <input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    type="text"
+                    required
+                    autoComplete="name"
+                    className="fg-input fg-login-input"
+                    placeholder="Seu nome completo"
+                  />
+                </span>
+              </label>
+            ) : null}
+
             <label className="fg-login-label">
               E-mail
               <span className="fg-login-input-wrap">

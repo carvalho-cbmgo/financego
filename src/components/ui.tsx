@@ -11,6 +11,7 @@ const navItems = [
   { href: "/statements", label: "Importar" },
   { href: "/notifications", label: "Notificações" },
   { href: "/exports", label: "Exportar" },
+  { href: "/profile", label: "Perfil" },
 ];
 
 export function PageShell({ children }: { children: ReactNode }) {

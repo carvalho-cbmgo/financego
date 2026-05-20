@@ -51,6 +51,59 @@ function normalize(input?: string | null) {
     .trim();
 }
 
+function looksSamePerson(candidate: string | null | undefined, fullName: string | null | undefined) {
+  const normalizedCandidate = normalize(candidate);
+  const normalizedFullName = normalize(fullName);
+  if (!normalizedCandidate || !normalizedFullName) return false;
+
+  if (normalizedCandidate === normalizedFullName) return true;
+  if (normalizedCandidate.includes(normalizedFullName) || normalizedFullName.includes(normalizedCandidate)) return true;
+
+  const candidateParts = normalizedCandidate.split(" ").filter((part) => part.length > 2);
+  const nameParts = normalizedFullName.split(" ").filter((part) => part.length > 2);
+  if (candidateParts.length < 2 || nameParts.length < 2) return false;
+
+  const matches = candidateParts.filter((part) => nameParts.includes(part)).length;
+  return matches >= Math.min(2, nameParts.length);
+}
+
+function extractPixCounterparty(text: string) {
+  const patterns = [
+    /pix\s+recebido\s+de\s+([^|.,;]+)/i,
+    /recebido\s+de\s+([^|.,;]+)/i,
+    /pix\s+(?:enviado|realizado|feito)\s+para\s+([^|.,;]+)/i,
+    /(?:enviado|realizado|feito)\s+para\s+([^|.,;]+)/i,
+    /transfer[eê]ncia\s+para\s+([^|.,;]+)/i,
+    /transfer[eê]ncia\s+de\s+([^|.,;]+)/i,
+    /\bde\s+([A-ZÀ-Ú][A-ZÀ-Úa-zà-ú\s]{4,60})/i,
+    /\bpara\s+([A-ZÀ-Ú][A-ZÀ-Úa-zà-ú\s]{4,60})/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    const value = match?.[1]?.replace(/\s+/g, " ").trim();
+    if (value) return value.slice(0, 70);
+  }
+
+  return "";
+}
+
+function buildShortNotificationDescription(input: {
+  type: "debit" | "credit" | "transfer";
+  normalizedText: string;
+  rawText: string;
+  counterparty: string;
+}) {
+  const suffix = input.counterparty ? ` - ${input.counterparty}` : "";
+
+  if (input.type === "transfer") return `Transferência${suffix}`;
+  if (input.type === "credit") return `PIX Recebido${suffix}`;
+  if (/pix|transferencia|transfer[eê]ncia/.test(input.normalizedText)) return `PIX realizado${suffix}`;
+
+  const merchant = extractMerchant(input.rawText);
+  return merchant ? `Compra - ${merchant}` : "Despesa registrada";
+}
+
 function parseMoneyBR(input: string): number | null {
   const withCurrency = input.match(
     /(?:R\$|\brs\$?)\s*(-?\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|-?\d{1,3}(?:,\d{3})*(?:\.\d{2})|-?\d+[.,]\d{2}|-?\d+)/i
@@ -207,6 +260,7 @@ export function parseNotificationByBank(input: {
   text?: string | null;
   bigText?: string | null;
   postedAt?: string | null;
+  profileFullName?: string | null;
 }): ParsedBankTransaction | null {
   const bankKey = detectBankFromPackageOrText({
     packageName: input.packageName,
@@ -220,22 +274,45 @@ export function parseNotificationByBank(input: {
 
   const s = normalize(full);
   let signedAmount = money;
+  const counterparty = extractPixCounterparty(full);
+  const isOwnCounterparty = looksSamePerson(counterparty, input.profileFullName);
+  let forcedType: ParsedBankTransaction["type"] | undefined;
 
-  if (/recebido|credito|deposito|entrada|pix recebido/.test(s)) {
+  if (isOwnCounterparty && /pix|transferencia|transfer[eê]ncia|ted|doc/.test(s)) {
+    forcedType = "transfer";
+    signedAmount = /recebido|credito|deposito|entrada/.test(s) ? Math.abs(money) : -Math.abs(money);
+  } else if (/recebido|credito|deposito|entrada|pix recebido/.test(s)) {
+    forcedType = "credit";
     signedAmount = Math.abs(money);
   } else {
+    forcedType = /pix|transferencia|transfer[eê]ncia|ted|doc/.test(s) ? "transfer" : "debit";
     signedAmount = -Math.abs(money);
   }
 
-  return baseBuild({
+  const parsed = baseBuild({
     bankKey,
     raw: full,
     amount: signedAmount,
+    type: forcedType,
     postedAt: input.postedAt || new Date().toISOString(),
     source: "notification",
     profileId: input.profileId,
     packageName: input.packageName || undefined,
   });
+
+  parsed.description = buildShortNotificationDescription({
+    type: parsed.type === "credit" || parsed.type === "transfer" ? parsed.type : "debit",
+    normalizedText: s,
+    rawText: full,
+    counterparty,
+  });
+  parsed.merchant = counterparty || parsed.merchant;
+  if (parsed.type === "transfer") {
+    parsed.category = "Transferências";
+    parsed.subcategory = "Movimentação interna";
+  }
+
+  return parsed;
 }
 
 

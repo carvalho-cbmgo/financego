@@ -21,6 +21,11 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const profileId = device.profile_id;
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", profileId)
+      .maybeSingle();
 
     const parsed = parseNotificationByBank({
       profileId,
@@ -30,6 +35,7 @@ export async function POST(req: NextRequest) {
       text: body.text,
       bigText: body.bigText || body.big_text,
       postedAt: body.postedAt || body.posted_at,
+      profileFullName: profile?.full_name || null,
     });
 
     const { data: event, error: eventError } = await supabaseAdmin

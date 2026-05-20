@@ -6,7 +6,7 @@ import { parseNotificationByBank } from "@/lib/bank-parsers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { ensureAccountForBank } from "@/lib/accounts";
 
-async function saveParsedNotification(body: any, profileId: string, devicePublicId?: string | null) {
+async function saveParsedNotification(body: any, profileId: string, profileFullName?: string | null, devicePublicId?: string | null) {
   const parsed = parseNotificationByBank({
     profileId,
     packageName: body.packageName || body.package_name,
@@ -15,6 +15,7 @@ async function saveParsedNotification(body: any, profileId: string, devicePublic
     text: body.text,
     bigText: body.bigText || body.big_text,
     postedAt: body.postedAt || body.posted_at,
+    profileFullName,
   });
 
   const { data: event, error: eventError } = await supabaseAdmin
@@ -97,6 +98,11 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const items = Array.isArray(body.items) ? body.items : [];
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", device.profile_id)
+      .maybeSingle();
 
     let processed = 0;
     let duplicates = 0;
@@ -105,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     for (const item of items) {
       try {
-        const result = await saveParsedNotification(item, device.profile_id, device.device_public_id);
+        const result = await saveParsedNotification(item, device.profile_id, profile?.full_name || null, device.device_public_id);
         results.push(result);
         if (result.parsed) processed++;
       } catch (error: any) {

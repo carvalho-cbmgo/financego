@@ -3,6 +3,10 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
+- [ ] Validar login nativo no APK com usuário real.
+- [ ] Habilitar acesso às notificações para o app Finance GO Android e testar captura em segundo plano.
+- [ ] Validar classificação real de notificações: PIX recebido, PIX realizado e transferência entre contas próprias.
 - [x] Compilar novo APK apos inclusao de `MobileWebActivity` e `BootReceiver`.
 - [ ] Configurar keystore de produção para gerar APK/AAB release assinado.
 - [ ] Instalar o APK `debug` gerado em aparelho Android real.
@@ -12,6 +16,10 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Confirmar estabilidade do listener com aparelho bloqueado e apos reinicio.
 
 ## Pendencias importantes
+- [ ] Melhorar a tela nativa Android com componentes visuais mais ricos após validação funcional em aparelho real.
+- [ ] Exibir no app Android diagnóstico do último evento capturado, último envio e último erro HTTP.
+- [ ] Criar fila offline para notificações quando o celular estiver sem internet.
+- [ ] Criar testes unitários para a classificação de notificações baseada no nome completo do usuário.
 - [ ] Criar testes unitários Android para parser/configuração do companion; `testDebugUnitTest` passa hoje como `NO-SOURCE`.
 - [ ] Adicionar validação automatizada de instalação via ADB quando houver aparelho/emulador conectado.
 - [ ] Avaliar geração de APK assinado interno com keystore segura fora do repositório.
@@ -40,11 +48,18 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Criar pipeline de build Android automatizado (CI) para gerar APK por commit/tag.
 
 ## Bugs conhecidos
+- ID: `AND-010`
+- Descricao: a nova versão Android nativa ainda não foi instalada em aparelho real nesta etapa porque não havia dispositivo conectado via ADB.
+- Severidade: alta
+- Como reproduzir: conectar aparelho Android, executar `adb devices -l` e instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+- Status: pendente de teste físico
+- Responsavel: time de desenvolvimento
+
 - ID: `AND-008`
 - Descricao: ambiente local não possuía Gradle disponível para compilar o companion Android.
 - Severidade: alta
 - Como reproduzir: executar build Android sem `gradle`/`gradlew.bat` disponível.
-- Status: resolvido em `2026-05-19` com Gradle local `.tools/gradle-8.7` e script `scripts/build-android-companion.ps1`.
+- Status: resolvido em `2026-05-19` com Gradle local `.tools/gradle-8.7` e script `scripts/build-android-financego.ps1`.
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-009`

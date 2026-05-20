@@ -10,6 +10,6 @@ coverage
 dist
 .tmp*
 .tools/
-android-companion-min/.gradle/
-android-companion-min/build/
-android-companion-min/app/build/
+android-financego/.gradle/
+android-financego/build/
+android-financego/app/build/

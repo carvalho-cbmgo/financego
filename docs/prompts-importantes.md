@@ -3,6 +3,18 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: adicionar perfil com nome completo, ajustar transações com foco modal/transferência interna e substituir Android antigo por novo APK nativo.
+- Prompt base: "Altere o sistema FinanceGO para que haja um registro do nome completo do usuário... Crie uma versão do sistema FinanceGO para celular android (apk) complementamente nova..."
+- Resultado:
+  - Cadastro passou a registrar nome completo.
+  - Página `/profile` criada para visualizar e editar dados do usuário.
+  - Menu superior passou a ter `Perfil` antes de `Sair`.
+  - Transações passaram a abrir criação/edição em modal focado com fundo escurecido.
+  - Transferência manual passou a solicitar origem/destino e gerar duas linhas vinculadas de `type=transfer`.
+  - Parser de notificações passou a usar nome completo para diferenciar PIX recebido, PIX realizado e transferência própria.
+  - Android antigo removido e nova base `android-financego` criada com login nativo, sincronização e listener de notificações.
+  - Builds validados: `npm run build`, Android `debug`, `test`, `lint` e `release`.
+
 - Objetivo: instalar Gradle, compilar o companion Android e executar validações para funcionamento do FinanceGO em celulares Android.
 - Prompt base: "Instale o Gradle para realizar as compilações do campanion Android e realizar todas as validações e testes necessários para o perfeito funcionamento do FinanceGO em celulares android."
 - Resultado:
@@ -11,7 +23,7 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Android Gradle Plugin atualizado para `8.6.1`.
   - Companion atualizado para `versionCode=4` e `versionName=0.1.3`.
   - `MobileWebActivity` ajustada para remover APIs depreciadas.
-  - Script `scripts/build-android-companion.ps1` criado para builds Android repetíveis.
+  - Script `scripts/build-android-financego.ps1` criado para builds Android repetíveis.
   - Validações concluídas: `assembleDebug`, `assembleRelease`, `testDebugUnitTest`, `lintDebug` e `npm run build`.
   - APK `debug` verificado como assinado para teste; APK `release` gerado como unsigned e pendente de keystore de produção.
 

@@ -227,6 +227,7 @@ export async function POST(req: Request) {
   const form = await req.formData();
   const returnUrl = safeReturnUrl(String(form.get("return_url") || "/dashboard?tab=transactions"));
   const accountId = String(form.get("account_id") || "").trim();
+  const transferDestinationAccountId = String(form.get("transfer_destination_account_id") || "").trim();
   const description = String(form.get("description") || "").trim();
   const postedAtDate = String(form.get("posted_at") || "").trim();
   const category = String(form.get("category") || "").trim() || "Outros";
@@ -273,6 +274,85 @@ export async function POST(req: Request) {
   const baseAmount = computeAmountByAction(type, inputAmount);
   const bankKey = bankKeyFromBankName(bankName);
 
+  if (type === "transfer") {
+    if (!transferDestinationAccountId || transferDestinationAccountId === accountId) {
+      return NextResponse.redirect(new URL(withError(returnUrl, "invalid_transfer_accounts"), req.url));
+    }
+
+    const { data: destinationAccount } = await supabaseAdmin
+      .from("accounts")
+      .select("id, institution_name, bank_id")
+      .eq("id", transferDestinationAccountId)
+      .eq("profile_id", user.id)
+      .maybeSingle();
+
+    if (!destinationAccount?.id) {
+      return NextResponse.redirect(new URL(withError(returnUrl, "invalid_transfer_destination"), req.url));
+    }
+
+    const { data: destinationBank } = destinationAccount.bank_id
+      ? await supabaseAdmin
+        .from("banks")
+        .select("name")
+        .eq("id", destinationAccount.bank_id)
+        .eq("profile_id", user.id)
+        .maybeSingle()
+      : { data: null as any };
+
+    const transferGroupKey = `manual-transfer-${crypto.randomUUID()}`;
+    const transferAmount = Math.abs(inputAmount);
+    const sharedRaw = {
+      source: "manual_form",
+      recurrence: { mode: "none" },
+      note: note || null,
+      transfer: {
+        originAccountId: accountId,
+        destinationAccountId: transferDestinationAccountId,
+      },
+    };
+
+    await supabaseAdmin.from("transactions").insert([
+      {
+        profile_id: user.id,
+        account_id: accountId,
+        bank_key: bankKey,
+        description,
+        amount: -transferAmount,
+        currency_code: "BRL",
+        posted_at: `${postedAtDate}T12:00:00.000Z`,
+        status: isConsolidated ? "posted" : "planned",
+        type,
+        source_category: "manual",
+        app_category: "Transferências",
+        app_subcategory: null,
+        is_transfer: true,
+        is_consolidated: isConsolidated,
+        installment_group_key: transferGroupKey,
+        raw: { ...sharedRaw, transfer: { ...sharedRaw.transfer, role: "origin" } },
+      },
+      {
+        profile_id: user.id,
+        account_id: transferDestinationAccountId,
+        bank_key: bankKeyFromBankName(String(destinationBank?.name || destinationAccount.institution_name || "GENERICO")),
+        description,
+        amount: transferAmount,
+        currency_code: "BRL",
+        posted_at: `${postedAtDate}T12:00:00.000Z`,
+        status: isConsolidated ? "posted" : "planned",
+        type,
+        source_category: "manual",
+        app_category: "Transferências",
+        app_subcategory: null,
+        is_transfer: true,
+        is_consolidated: isConsolidated,
+        installment_group_key: transferGroupKey,
+        raw: { ...sharedRaw, transfer: { ...sharedRaw.transfer, role: "destination" } },
+      },
+    ]);
+
+    return NextResponse.redirect(new URL(returnUrl, req.url));
+  }
+
   const recurrence = buildRecurringOccurrences({
     mode: repeatMode,
     description,
@@ -299,7 +379,7 @@ export async function POST(req: Request) {
     source_category: "manual",
     app_category: category,
     app_subcategory: null,
-    is_transfer: type === "transfer",
+    is_transfer: false,
     is_consolidated: recurrence.forceUnconsolidated ? false : isConsolidated,
     installment_current: item.installmentCurrent,
     installment_total: item.installmentTotal,

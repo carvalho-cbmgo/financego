@@ -1,8 +1,0 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.FinanceGOCompanion" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/fg_green</item>
-        <item name="colorPrimaryVariant">@color/fg_green</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="android:statusBarColor" tools:targetApi="l">@color/fg_green</item>
-    </style>
-</resources>

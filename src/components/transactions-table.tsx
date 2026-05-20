@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import { PreviousBalanceToggle } from "@/components/previous-balance-toggle";
@@ -91,6 +91,10 @@ export function TransactionsTable(input: {
   const displayedTxIds = useMemo(() => filteredTxs.map((tx: any) => String(tx.id)), [filteredTxs]);
   const allDisplayedSelected = displayedTxIds.length > 0 && displayedTxIds.every((id) => selectedTxIds.includes(id));
   const categoryOptions = useMemo(() => dedupeCategoryOptions(input.categoryOptions || []), [input.categoryOptions]);
+  const selectedTxForEdit = useMemo(
+    () => (input.txs || []).find((tx: any) => String(tx.id) === String(input.selectedEditTxId || "")) || null,
+    [input.txs, input.selectedEditTxId],
+  );
 
   function toggleOne(txId: string) {
     setSelectedTxIds((current) => (current.includes(txId) ? current.filter((id) => id !== txId) : [...current, txId]));
@@ -142,7 +146,7 @@ export function TransactionsTable(input: {
     if (!selectedTxIds.length || isWorking) return;
 
     if (intent === "delete") {
-      const confirmed = window.confirm(`Excluir ${selectedTxIds.length} transação(ões) selecionada(s)?`);
+      const confirmed = window.confirm(`Excluir ${selectedTxIds.length} transaÃ§Ã£o(Ãµes) selecionada(s)?`);
       if (!confirmed) return;
     }
 
@@ -168,19 +172,19 @@ export function TransactionsTable(input: {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setMessage(String(data?.error || "Não foi possível processar o lote de transações."));
+        setMessage(String(data?.error || "NÃ£o foi possÃ­vel processar o lote de transaÃ§Ãµes."));
         return;
       }
 
-      if (intent === "delete") setMessage(`${selectedTxIds.length} transação(ões) excluída(s).`);
-      if (intent === "consolidate") setMessage(`${selectedTxIds.length} transação(ões) consolidada(s).`);
-      if (intent === "unconsolidate") setMessage(`${selectedTxIds.length} transação(ões) marcadas como não consolidadas.`);
-      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transação(ões) reclassificada(s).`);
+      if (intent === "delete") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) excluÃ­da(s).`);
+      if (intent === "consolidate") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) consolidada(s).`);
+      if (intent === "unconsolidate") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) marcadas como nÃ£o consolidadas.`);
+      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) reclassificada(s).`);
 
       setSelectedTxIds([]);
       router.refresh();
     } catch {
-      setMessage("Erro inesperado ao processar transações em lote.");
+      setMessage("Erro inesperado ao processar transaÃ§Ãµes em lote.");
     } finally {
       setIsWorking(false);
       notifyGlobalLoading(false);
@@ -193,7 +197,7 @@ export function TransactionsTable(input: {
     if (!value) return;
 
     if (!selectedTxIds.length) {
-      setMessage("Selecione ao menos uma transação para reclassificar.");
+      setMessage("Selecione ao menos uma transaÃ§Ã£o para reclassificar.");
       setBulkCategoryValue("");
       return;
     }
@@ -226,24 +230,31 @@ export function TransactionsTable(input: {
     return match?.label || value;
   }
 
+  function closeEditModal() {
+    router.push(input.returnUrl);
+  }
+
   if (!input.txs.length) {
     return (
-      <Card title="Transações">
-        <div className="fg-empty">Nenhuma transação neste filtro.</div>
+      <Card title="TransaÃ§Ãµes">
+        <div className="fg-empty">Nenhuma transaÃ§Ã£o neste filtro.</div>
       </Card>
     );
   }
 
   return (
-    <Card title="Transações">
+    <Card title="TransaÃ§Ãµes">
       <div className="fg-legacy-transactions-actions">
         <button
           className="fg-btn fg-legacy-add-btn"
           type="button"
-          onClick={() => setShowCreateForm((current) => !current)}
-          title="Adicionar nova transação"
+          onClick={() => {
+            setShowCreateForm(true);
+            if (input.selectedEditTxId) router.push(input.returnUrl);
+          }}
+          title="Adicionar nova transaÃ§Ã£o"
         >
-          + Adicionar transação
+          + Adicionar transaÃ§Ã£o
         </button>
         <div className="fg-legacy-transactions-actions-right">
         <button
@@ -251,16 +262,16 @@ export function TransactionsTable(input: {
           type="button"
           onClick={toggleAllDisplayed}
           disabled={!displayedTxIds.length || isWorking}
-          title="Selecionar todas as transações exibidas"
+          title="Selecionar todas as transaÃ§Ãµes exibidas"
         >
-          ☑
+          â˜‘
         </button>
         <button
           className="fg-category-tool-btn is-delete fg-legacy-del-btn"
           type="button"
           onClick={() => runBatch("delete")}
           disabled={!selectedTxIds.length || isWorking}
-          title="Excluir transações selecionadas"
+          title="Excluir transaÃ§Ãµes selecionadas"
         >
           DEL
         </button>
@@ -269,18 +280,18 @@ export function TransactionsTable(input: {
           type="button"
           onClick={() => runBatch("consolidate")}
           disabled={!selectedTxIds.length || isWorking}
-          title="Consolidar transações selecionadas"
+          title="Consolidar transaÃ§Ãµes selecionadas"
         >
-          ✓
+          âœ“
         </button>
         <button
           className="fg-btn-secondary fg-legacy-bulk-icon is-red"
           type="button"
           onClick={() => runBatch("unconsolidate")}
           disabled={!selectedTxIds.length || isWorking}
-          title="Marcar como não consolidada"
+          title="Marcar como nÃ£o consolidada"
         >
-          ✓
+          âœ“
         </button>
         <select
           className="fg-select"
@@ -304,9 +315,9 @@ export function TransactionsTable(input: {
       {showReclassifyDialog ? (
         <div className="fg-legacy-confirm-backdrop" role="dialog" aria-modal="true" onClick={cancelReclassify}>
           <div className="fg-legacy-confirm-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="fg-card-title">Confirmar reclassificação</div>
+            <div className="fg-card-title">Confirmar reclassificaÃ§Ã£o</div>
             <p>
-              Deseja reclassificar {selectedTxIds.length} transação(ões) para a categoria{" "}
+              Deseja reclassificar {selectedTxIds.length} transaÃ§Ã£o(Ãµes) para a categoria{" "}
               <strong>{getCategoryLabel(pendingReclassifyCategory)}</strong>?
             </p>
             <div className="fg-legacy-confirm-actions">
@@ -321,13 +332,26 @@ export function TransactionsTable(input: {
         </div>
       ) : null}
       {showCreateForm ? (
-        <CreateTransactionInline
-          accounts={input.accounts}
-          bankById={bankById}
-          categoryOptions={categoryOptions}
-          returnUrl={input.returnUrl}
-          onCancel={() => setShowCreateForm(false)}
-        />
+        <TransactionFocusModal title="Adicionar transaÃ§Ã£o" onClose={() => setShowCreateForm(false)}>
+          <CreateTransactionInline
+            accounts={input.accounts}
+            bankById={bankById}
+            categoryOptions={categoryOptions}
+            returnUrl={input.returnUrl}
+            onCancel={() => setShowCreateForm(false)}
+          />
+        </TransactionFocusModal>
+      ) : null}
+      {selectedTxForEdit ? (
+        <TransactionFocusModal title="Editar transaÃ§Ã£o" onClose={closeEditModal}>
+          <EditTransactionFocus
+            tx={selectedTxForEdit}
+            accounts={input.accounts}
+            bankById={bankById}
+            categoryOptions={categoryOptions}
+            returnUrl={input.returnUrl}
+          />
+        </TransactionFocusModal>
       ) : null}
 
       <div className="fg-table-wrap">
@@ -336,7 +360,7 @@ export function TransactionsTable(input: {
             <tr className="fg-legacy-balance-head-row">
               <th colSpan={6}>
                 <div className="fg-legacy-balance-head-top">
-                  <div className="fg-legacy-type-filters" role="group" aria-label="Filtrar transações por ação">
+                  <div className="fg-legacy-type-filters" role="group" aria-label="Filtrar transaÃ§Ãµes por aÃ§Ã£o">
                     <label className="fg-checkbox-row">
                       <input
                         type="checkbox"
@@ -367,7 +391,7 @@ export function TransactionsTable(input: {
                         checked={typeFilters.transfer}
                         onChange={(event) => handleSpecificTypeFilterChange("transfer", event.target.checked)}
                       />
-                      Transferências
+                      TransferÃªncias
                     </label>
                   </div>
                   <div className="fg-legacy-prev-balance-toggle">
@@ -375,13 +399,13 @@ export function TransactionsTable(input: {
                   </div>
                 </div>
                 <div className="fg-legacy-balance-head-value">
-                  Saldo sem as transações exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
+                  Saldo sem as transaÃ§Ãµes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
                 </div>
               </th>
             </tr>
             <tr>
               <th className="fg-legacy-col-select"></th>
-              <th className="fg-legacy-col-desc">Descrição</th>
+              <th className="fg-legacy-col-desc">DescriÃ§Ã£o</th>
               <th className="fg-legacy-col-category">Categoria</th>
               <th className="fg-legacy-col-account">Conta</th>
               <th className="fg-legacy-col-value">Valor (R$)</th>
@@ -392,7 +416,7 @@ export function TransactionsTable(input: {
             {!grouped.length ? (
               <tr>
                 <td colSpan={6} className="fg-legacy-empty-cell">
-                  Nenhuma transação para os filtros selecionados.
+                  Nenhuma transaÃ§Ã£o para os filtros selecionados.
                 </td>
               </tr>
             ) : grouped.map((group) => (
@@ -432,12 +456,12 @@ export function TransactionsTable(input: {
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleOne(txId)}
-                            aria-label={`Selecionar transação ${tx.description || txId}`}
+                            aria-label={`Selecionar transaÃ§Ã£o ${tx.description || txId}`}
                           />
                         </td>
                         <td className="fg-legacy-col-desc">
                           <Link href={editUrl} className="fg-legacy-desc-link">
-                            <span className="fg-legacy-desc-main">{tx.description || "Sem descrição"}</span>
+                            <span className="fg-legacy-desc-main">{tx.description || "Sem descriÃ§Ã£o"}</span>
                             {recurrenceInfo.isRecurring ? (
                               <span className="fg-chip fg-chip-recurring">{recurrenceInfo.badgeLabel}</span>
                             ) : null}
@@ -460,12 +484,12 @@ export function TransactionsTable(input: {
                         </td>
                         <td className="fg-legacy-col-status">
                           <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-center">
-                            {tx.is_consolidated !== false ? "✓" : "○"}
+                            {tx.is_consolidated !== false ? "âœ“" : "â—‹"}
                           </Link>
                         </td>
                       </tr>
 
-                      {isEditing ? (
+                      {false ? (
                         <tr>
                           <td colSpan={6}>
                             <form action="/api/categories/update" method="post" className="fg-legacy-inline-editor">
@@ -485,7 +509,7 @@ export function TransactionsTable(input: {
                                   name="description"
                                   required
                                   defaultValue={tx.description || ""}
-                                  placeholder="Descrição"
+                                  placeholder="DescriÃ§Ã£o"
                                   className="fg-input"
                                 />
                                 <select name="category" required defaultValue={currentCategory} className="fg-select">
@@ -521,7 +545,7 @@ export function TransactionsTable(input: {
                                 <div className="fg-legacy-action-group">
                                   <label><input type="radio" name="action" value="Despesa" defaultChecked={actionFromType(tx.type) === "Despesa"} /> Despesa</label>
                                   <label><input type="radio" name="action" value="Receita" defaultChecked={actionFromType(tx.type) === "Receita"} /> Receita</label>
-                                  <label><input type="radio" name="action" value="Transferencia" defaultChecked={actionFromType(tx.type) === "Transferência"} /> Transferência</label>
+                                  <label><input type="radio" name="action" value="Transferencia" defaultChecked={actionFromType(tx.type) === "Transferencia"} /> Transferência</label>
                                 </div>
                                 <div className="fg-legacy-inline-right">
                                   <label className="fg-checkbox-row">
@@ -533,7 +557,7 @@ export function TransactionsTable(input: {
                                     Criar regra
                                   </label>
                                   <span className="fg-legacy-mini-icon">?</span>
-                                  <Link href={input.returnUrl} className="fg-legacy-mini-icon">✖</Link>
+                                  <Link href={input.returnUrl} className="fg-legacy-mini-icon">âœ–</Link>
                                 </div>
                               </div>
 
@@ -554,7 +578,7 @@ export function TransactionsTable(input: {
                                     className="fg-select"
                                     disabled={!recurrenceInfo.isRecurring}
                                   >
-                                    <option value="single">Somente esta transação</option>
+                                    <option value="single">Somente esta transaÃ§Ã£o</option>
                                     <option value="up_to_current">Esta e anteriores vinculadas</option>
                                     <option value="from_current">Esta e posteriores vinculadas</option>
                                   </select>
@@ -567,7 +591,7 @@ export function TransactionsTable(input: {
                                     name="note"
                                     className="fg-textarea fg-legacy-inline-note"
                                     defaultValue={currentNote}
-                                    placeholder="Observações da transação"
+                                    placeholder="ObservaÃ§Ãµes da transaÃ§Ã£o"
                                   />
                                   <div className="fg-legacy-inline-actions">
                                     <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
@@ -586,13 +610,32 @@ export function TransactionsTable(input: {
             ))}
             <tr className="fg-legacy-balance-foot-row">
               <td colSpan={6}>
-                Saldo com as transações exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
+                Saldo com as transaÃ§Ãµes exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </Card>
+  );
+}
+
+function TransactionFocusModal(input: { title: string; children: ReactNode; onClose: () => void }) {
+  return (
+    <div className="fg-transaction-focus-backdrop" role="dialog" aria-modal="true" aria-label={input.title}>
+      <div className="fg-transaction-focus-panel">
+        <div className="fg-transaction-focus-head">
+          <div>
+            <div className="fg-transaction-focus-kicker">Finance GO</div>
+            <h2>{input.title}</h2>
+          </div>
+          <button type="button" className="fg-transaction-focus-close" onClick={input.onClose} aria-label="Cancelar operaÃ§Ã£o">
+            Ã—
+          </button>
+        </div>
+        {input.children}
+      </div>
+    </div>
   );
 }
 
@@ -605,7 +648,9 @@ function CreateTransactionInline(input: {
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [amountInput, setAmountInput] = useState("");
+  const [action, setAction] = useState<"Despesa" | "Receita" | "Transferencia">("Despesa");
   const defaultAccountId = String(input.accounts?.[0]?.id || "");
+  const defaultDestinationAccountId = String(input.accounts?.find((account: any) => String(account.id) !== defaultAccountId)?.id || "");
   const safeCategoryOptions = input.categoryOptions?.length
     ? input.categoryOptions
     : [{ value: "Outros", label: "Outros", depth: 0 }];
@@ -625,61 +670,140 @@ function CreateTransactionInline(input: {
       }}
     >
       <input type="hidden" name="return_url" value={input.returnUrl} />
-      <input type="hidden" name="account_id" value={defaultAccountId} />
+      {action === "Transferencia" ? <input type="hidden" name="category" value="Transferências" /> : null}
 
       <div className="fg-legacy-create-action-row">
         <label className="fg-legacy-create-action-pill">
-          <input type="radio" name="action" value="Despesa" defaultChecked />
+          <input
+            type="radio"
+            name="action"
+            value="Despesa"
+            checked={action === "Despesa"}
+            onChange={() => setAction("Despesa")}
+          />
           Despesa
         </label>
         <label className="fg-legacy-create-action-pill">
-          <input type="radio" name="action" value="Receita" />
+          <input
+            type="radio"
+            name="action"
+            value="Receita"
+            checked={action === "Receita"}
+            onChange={() => setAction("Receita")}
+          />
           Receita
         </label>
         <label className="fg-legacy-create-action-pill">
-          <input type="radio" name="action" value="Transferencia" />
+          <input
+            type="radio"
+            name="action"
+            value="Transferencia"
+            checked={action === "Transferencia"}
+            onChange={() => setAction("Transferencia")}
+          />
           Transferência
         </label>
       </div>
 
-      <div className="fg-legacy-create-fields-row">
-        <input
-          name="posted_at"
-          type="date"
-          defaultValue={new Date().toISOString().slice(0, 10)}
-          required
-          className="fg-input fg-legacy-create-date"
-        />
+      {action === "Transferencia" ? (
+        <div className="fg-transfer-form-grid">
+          <label className="fg-field-label">
+            Data
+            <input
+              name="posted_at"
+              type="date"
+              defaultValue={new Date().toISOString().slice(0, 10)}
+              required
+              className="fg-input"
+            />
+          </label>
+          <label className="fg-field-label">
+            Descrição
+            <input name="description" required placeholder="Transferência entre contas" className="fg-input" />
+          </label>
+          <label className="fg-field-label">
+            Valor
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              placeholder="Valor"
+              className="fg-input"
+              value={amountInput}
+              onChange={(event) => setAmountInput(event.target.value)}
+            />
+          </label>
+          <label className="fg-field-label">
+            Conta de Origem
+            <select name="account_id" required defaultValue={defaultAccountId} className="fg-select">
+              {input.accounts.map((account: any) => (
+                <AccountOption key={account.id} account={account} bankById={input.bankById} />
+              ))}
+            </select>
+          </label>
+          <label className="fg-field-label">
+            Conta de Destino
+            <select name="transfer_destination_account_id" required defaultValue={defaultDestinationAccountId} className="fg-select">
+              {input.accounts.map((account: any) => (
+                <AccountOption key={account.id} account={account} bankById={input.bankById} />
+              ))}
+            </select>
+          </label>
+          <label className="fg-checkbox-row fg-legacy-create-check">
+            <input name="is_consolidated" type="checkbox" defaultChecked />
+            Consolidada
+          </label>
+        </div>
+      ) : (
+        <>
+          <div className="fg-legacy-create-fields-row">
+            <input
+              name="posted_at"
+              type="date"
+              defaultValue={new Date().toISOString().slice(0, 10)}
+              required
+              className="fg-input fg-legacy-create-date"
+            />
 
-        <input name="description" required placeholder="Descrição da transação" className="fg-input fg-legacy-create-desc" />
+            <input name="description" required placeholder="Descrição da transação" className="fg-input fg-legacy-create-desc" />
 
-        <select name="category" defaultValue="Outros" className="fg-select fg-legacy-create-category">
-          {safeCategoryOptions.map((option) => (
-            <option key={option.value} value={option.value}>{option.label}</option>
-          ))}
-        </select>
+            <select name="account_id" required defaultValue={defaultAccountId} className="fg-select fg-legacy-create-account">
+              {input.accounts.map((account: any) => (
+                <AccountOption key={account.id} account={account} bankById={input.bankById} />
+              ))}
+            </select>
 
-        <input
-          name="amount"
-          type="number"
-          step="0.01"
-          required
-          placeholder="Valor"
-          className="fg-input fg-legacy-create-amount"
-          value={amountInput}
-          onChange={(event) => setAmountInput(event.target.value)}
-        />
+            <select name="category" defaultValue="Outros" className="fg-select fg-legacy-create-category">
+              {safeCategoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
 
-        <label className="fg-checkbox-row fg-legacy-create-check">
-          <input name="is_consolidated" type="checkbox" defaultChecked />
-          Consolidada
-        </label>
-      </div>
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              required
+              placeholder="Valor"
+              className="fg-input fg-legacy-create-amount"
+              value={amountInput}
+              onChange={(event) => setAmountInput(event.target.value)}
+            />
 
-      <RecurringCreateControls amountInput={amountInput} />
+            <label className="fg-checkbox-row fg-legacy-create-check">
+              <input name="is_consolidated" type="checkbox" defaultChecked />
+              Consolidada
+            </label>
+          </div>
+
+          <RecurringCreateControls amountInput={amountInput} />
+        </>
+      )}
 
       <label className="fg-field-label fg-legacy-create-note-wrap">
-        Observacao
+        Observações
         <textarea
           name="note"
           className="fg-textarea fg-legacy-create-note"
@@ -702,6 +826,200 @@ function CreateTransactionInline(input: {
   );
 }
 
+function AccountOption(input: { account: any; bankById: Map<string, any> }) {
+  const accountBank = input.bankById.get(String(input.account.bank_id || ""));
+  const optionBankName = accountBank?.name || input.account.institution_name || "Sem banco";
+
+  return (
+    <option value={input.account.id}>
+      {optionBankName} - {input.account.name} ({accountTypeLabel(input.account.type)})
+    </option>
+  );
+}
+function EditTransactionFocus(input: {
+  tx: any;
+  accounts: any[];
+  bankById: Map<string, any>;
+  categoryOptions: CategorySelectOption[];
+  returnUrl: string;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const initialAction = actionFromType(input.tx?.type);
+  const [action, setAction] = useState<"Despesa" | "Receita" | "Transferencia">(
+    initialAction === "Receita" ? "Receita" : initialAction === "Transferencia" ? "Transferencia" : "Despesa",
+  );
+  const txAmount = Number(input.tx?.amount || 0);
+  const transferMeta = extractRawTransfer(input.tx?.raw);
+  const currentAccountId = String(input.tx?.account_id || input.accounts?.[0]?.id || "");
+  const inferredOriginId = String(
+    transferMeta?.originAccountId ||
+    (txAmount < 0 ? currentAccountId : input.accounts.find((account: any) => String(account.id) !== currentAccountId)?.id || currentAccountId)
+  );
+  const inferredDestinationId = String(
+    transferMeta?.destinationAccountId ||
+    (txAmount > 0 ? currentAccountId : input.accounts.find((account: any) => String(account.id) !== inferredOriginId)?.id || "")
+  );
+  const [amountInput, setAmountInput] = useState(
+    action === "Transferencia"
+      ? Math.abs(txAmount).toFixed(2)
+      : Math.abs(Number.isFinite(txAmount) ? txAmount : 0).toFixed(2),
+  );
+  const currentCategory = String(input.tx?.app_category || "Outros");
+  const currentNote = extractRawNote(input.tx?.raw);
+  const selectedAccount = input.accounts.find((account: any) => String(account.id) === currentAccountId);
+  const selectedBankId = String(selectedAccount?.bank_id || "");
+  let safeCategoryOptions = input.categoryOptions?.length
+    ? input.categoryOptions
+    : [{ value: "Outros", label: "Outros", depth: 0 }];
+
+  if (!safeCategoryOptions.some((option) => option.value === currentCategory)) {
+    safeCategoryOptions = [{ value: currentCategory, label: currentCategory, depth: 0 }, ...safeCategoryOptions];
+  }
+
+  return (
+    <form
+      action="/api/categories/update"
+      method="post"
+      className="fg-legacy-create-form"
+      onSubmit={() => {
+        setIsSubmitting(true);
+        notifyGlobalLoading(true);
+      }}
+    >
+      <input type="hidden" name="id" value={String(input.tx?.id || "")} />
+      <input type="hidden" name="return_url" value={input.returnUrl} />
+      <input type="hidden" name="bank_id" value={selectedBankId} />
+      {action === "Transferencia" ? <input type="hidden" name="category" value="Transferências" /> : null}
+
+      <div className="fg-legacy-create-action-row">
+        <label className="fg-legacy-create-action-pill">
+          <input
+            type="radio"
+            name="action"
+            value="Despesa"
+            checked={action === "Despesa"}
+            onChange={() => setAction("Despesa")}
+          />
+          Despesa
+        </label>
+        <label className="fg-legacy-create-action-pill">
+          <input
+            type="radio"
+            name="action"
+            value="Receita"
+            checked={action === "Receita"}
+            onChange={() => setAction("Receita")}
+          />
+          Receita
+        </label>
+        <label className="fg-legacy-create-action-pill">
+          <input
+            type="radio"
+            name="action"
+            value="Transferencia"
+            checked={action === "Transferencia"}
+            onChange={() => setAction("Transferencia")}
+          />
+          Transferência
+        </label>
+      </div>
+
+      {action === "Transferencia" ? (
+        <div className="fg-transfer-form-grid">
+          <label className="fg-field-label">
+            Data
+            <input name="posted_at" type="date" required defaultValue={toInputDate(input.tx?.posted_at)} className="fg-input" />
+          </label>
+          <label className="fg-field-label">
+            Descrição
+            <input name="description" required defaultValue={input.tx?.description || ""} className="fg-input" />
+          </label>
+          <label className="fg-field-label">
+            Valor
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              className="fg-input"
+              value={amountInput}
+              onChange={(event) => setAmountInput(event.target.value)}
+            />
+          </label>
+          <label className="fg-field-label">
+            Conta de Origem
+            <select name="account_id" required defaultValue={inferredOriginId} className="fg-select">
+              {input.accounts.map((account: any) => (
+                <AccountOption key={account.id} account={account} bankById={input.bankById} />
+              ))}
+            </select>
+          </label>
+          <label className="fg-field-label">
+            Conta de Destino
+            <select name="transfer_destination_account_id" required defaultValue={inferredDestinationId} className="fg-select">
+              {input.accounts.map((account: any) => (
+                <AccountOption key={account.id} account={account} bankById={input.bankById} />
+              ))}
+            </select>
+          </label>
+          <label className="fg-checkbox-row fg-legacy-create-check">
+            <input name="is_consolidated" type="checkbox" defaultChecked={input.tx?.is_consolidated !== false} />
+            Consolidada
+          </label>
+        </div>
+      ) : (
+        <>
+          <div className="fg-legacy-create-fields-row">
+            <input name="posted_at" type="date" required defaultValue={toInputDate(input.tx?.posted_at)} className="fg-input fg-legacy-create-date" />
+            <input name="description" required defaultValue={input.tx?.description || ""} placeholder="Descrição" className="fg-input fg-legacy-create-desc" />
+            <select name="account_id" required defaultValue={currentAccountId} className="fg-select fg-legacy-create-account">
+              {input.accounts.map((account: any) => (
+                <AccountOption key={account.id} account={account} bankById={input.bankById} />
+              ))}
+            </select>
+            <select name="category" required defaultValue={currentCategory} className="fg-select fg-legacy-create-category">
+              {safeCategoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              required
+              placeholder="Valor"
+              className="fg-input fg-legacy-create-amount"
+              value={amountInput}
+              onChange={(event) => setAmountInput(event.target.value)}
+            />
+            <label className="fg-checkbox-row fg-legacy-create-check">
+              <input name="is_consolidated" type="checkbox" defaultChecked={input.tx?.is_consolidated !== false} />
+              Consolidada
+            </label>
+          </div>
+          <RecurringControls tx={input.tx} />
+        </>
+      )}
+
+      <label className="fg-field-label fg-legacy-create-note-wrap">
+        Observações
+        <textarea
+          name="note"
+          className="fg-textarea fg-legacy-create-note"
+          defaultValue={currentNote}
+          placeholder="Observações da transação"
+        />
+      </label>
+
+      <div className="fg-legacy-create-actions">
+        <button className="fg-btn-danger" name="intent" value="delete" disabled={isSubmitting}>Excluir</button>
+        <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
+        <button className="fg-btn" name="intent" value="save" disabled={isSubmitting}>Salvar</button>
+      </div>
+    </form>
+  );
+}
 function RecurringCreateControls({ amountInput }: { amountInput: string }) {
   const [mode, setMode] = useState<RepeatMode>("none");
   const [repeatEvery, setRepeatEvery] = useState<RepeatEvery>("month");
@@ -728,7 +1046,7 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
 
   return (
     <div className="fg-legacy-create-repeat-wrap">
-      <div className="fg-legacy-inline-label">Repetir transação</div>
+      <div className="fg-legacy-inline-label">Repetir transaÃ§Ã£o</div>
       <div className="fg-legacy-repeat-options">
         <label>
           <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />
@@ -882,11 +1200,11 @@ function RecurringControls({ tx }: { tx: any }) {
 
   return (
     <>
-      <div className="fg-legacy-inline-label">Repetir transação</div>
+      <div className="fg-legacy-inline-label">Repetir transaÃ§Ã£o</div>
       <div className="fg-legacy-repeat-options">
         <label>
           <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />
-          Sem repetição
+          Sem repetiÃ§Ã£o
         </label>
         <label>
           <input
@@ -906,14 +1224,14 @@ function RecurringControls({ tx }: { tx: any }) {
             checked={mode === "advanced"}
             onChange={() => setMode("advanced")}
           />
-          Avançado
+          AvanÃ§ado
         </label>
       </div>
 
       {showInstallment ? (
         <div className="fg-legacy-repeat-grid">
           <label className="fg-field-label">
-            Nº da parcela atual
+            NÂº da parcela atual
             <input
               type="number"
               name="installment_current"
@@ -963,7 +1281,7 @@ function RecurringControls({ tx }: { tx: any }) {
               onChange={(event) => setRepeatEvery(parseRepeatEvery(event.target.value))}
             >
               <option value="week">Semana</option>
-              <option value="month">Mês</option>
+              <option value="month">MÃªs</option>
               <option value="year">Ano</option>
             </select>
           </label>
@@ -979,7 +1297,7 @@ function RecurringControls({ tx }: { tx: any }) {
           </label>
 
           <label className="fg-field-label">
-            Nº da parcela atual
+            NÂº da parcela atual
             <input
               type="number"
               name="installment_current"
@@ -1005,7 +1323,7 @@ function RecurringControls({ tx }: { tx: any }) {
           </label>
 
           <div className="fg-field-note">
-            As recorrentes serão vinculadas e exibidas com indicador visual na lista.
+            As recorrentes serÃ£o vinculadas e exibidas com indicador visual na lista.
           </div>
         </div>
       ) : null}
@@ -1056,7 +1374,7 @@ function brlCompact(value: number | string | null | undefined) {
 
 function actionFromType(type: string | null | undefined) {
   if (type === "credit") return "Receita";
-  if (type === "transfer") return "Transferência";
+  if (type === "transfer") return "Transferencia";
   return "Despesa";
 }
 
@@ -1067,7 +1385,7 @@ function mapTransactionTypeToFilter(type: string | null | undefined) {
     return "income" as const;
   }
 
-  if (normalized === "transfer" || normalized === "transferencia" || normalized === "transferência") {
+  if (normalized === "transfer" || normalized === "transferencia" || normalized === "transferÃªncia") {
     return "transfer" as const;
   }
 
@@ -1167,8 +1485,8 @@ function getRecurrenceInfo(tx: any): RecurrenceInfo {
   if (defaultMode === "installment") {
     badgeLabel = `Parcela ${installmentCurrent} de ${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)}`;
   } else if (defaultMode === "advanced") {
-    if (repeatForever) badgeLabel = `Recorrente • ${formatRepeatEveryLabel(repeatEvery)}`;
-    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} • ${formatRepeatEveryLabel(repeatEvery)}`;
+    if (repeatForever) badgeLabel = `Recorrente â€¢ ${formatRepeatEveryLabel(repeatEvery)}`;
+    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} â€¢ ${formatRepeatEveryLabel(repeatEvery)}`;
   }
 
   const amountAbs = Math.abs(Number(tx?.amount || 0));
@@ -1205,6 +1523,22 @@ function extractRawNote(raw: any) {
   if (!payload || typeof payload !== "object") return "";
 
   return String((payload as any).note || "").trim();
+}
+
+function extractRawTransfer(raw: any) {
+  if (!raw) return null;
+
+  const payload = typeof raw === "string" ? safeJsonParse(raw) : raw;
+  if (!payload || typeof payload !== "object") return null;
+
+  const transfer = (payload as any).transfer;
+  if (!transfer || typeof transfer !== "object") return null;
+
+  return {
+    originAccountId: String((transfer as any).originAccountId || ""),
+    destinationAccountId: String((transfer as any).destinationAccountId || ""),
+    role: String((transfer as any).role || ""),
+  };
 }
 
 function safeJsonParse(input: string) {

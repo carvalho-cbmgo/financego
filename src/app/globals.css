@@ -3395,6 +3395,128 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   background: #c13c3c;
 }
 
+.fg-transaction-focus-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(164, 190, 57, 0.2), transparent 34%),
+    rgba(13, 18, 28, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.fg-transaction-focus-panel {
+  width: min(980px, 96vw);
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 22px;
+  background: linear-gradient(145deg, #ffffff 0%, #f7faf1 100%);
+  box-shadow: 0 28px 90px rgba(2, 6, 23, 0.34);
+  padding: 18px;
+}
+
+.fg-transaction-focus-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #dde5d2;
+}
+
+.fg-transaction-focus-head h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.04em;
+  color: #172033;
+}
+
+.fg-transaction-focus-kicker {
+  margin-bottom: 3px;
+  color: #668016;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.fg-transaction-focus-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d1d8c8;
+  border-radius: 999px;
+  background: #fff;
+  color: #263238;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fg-transfer-form-grid {
+  display: grid;
+  grid-template-columns: 132px minmax(220px, 1.35fr) minmax(120px, 0.65fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.fg-transfer-form-grid .fg-field-label:nth-of-type(4),
+.fg-transfer-form-grid .fg-field-label:nth-of-type(5) {
+  grid-column: span 1;
+}
+
+.fg-transfer-form-grid .fg-checkbox-row {
+  align-self: center;
+  min-height: 38px;
+}
+
+.fg-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.8fr);
+  gap: 16px;
+}
+
+.fg-profile-form,
+.fg-profile-help {
+  display: grid;
+  gap: 14px;
+}
+
+.fg-profile-help {
+  color: #4a5565;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.fg-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fg-success-note,
+.fg-error-note {
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fg-success-note {
+  border: 1px solid #bdd79b;
+  background: #f1f8e7;
+  color: #335d13;
+}
+
+.fg-error-note {
+  border: 1px solid #efb1b1;
+  background: #fff4f4;
+  color: #9b1c1c;
+}
+
 @media (min-width: 821px) {
   .fg-mobile-content {
     max-width: 760px;
@@ -3412,5 +3534,10 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
   .fg-budgets-categories-grid {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .fg-profile-grid,
+  .fg-transfer-form-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -3,15 +3,40 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-20`
+- Decisão: remover as bases Android antigas (`android-companion-min` e `android-notification-forwarder`) e criar uma nova base nativa em `android-financego`.
+- Motivo: o produto passou a exigir um APK novo, independente da versão companion/WebView antiga, com login próprio e uso direto dos dados do Supabase via APIs do FinanceGO.
+- Impacto: o Android agora usa APIs `/api/android/*`, login nativo, sincronização nativa e listener de notificações em segundo plano.
+
+- Data: `2026-05-20`
+- Decisão: usar `profiles.full_name` como dado central do cadastro do usuário.
+- Motivo: o nome completo é necessário para interpretar notificações de PIX e diferenciar recebimentos de terceiros, pagamentos e transferências entre contas próprias.
+- Impacto: cadastro coleta nome completo, página `/profile` permite edição e parser de notificações usa esse dado.
+
+- Data: `2026-05-20`
+- Decisão: representar transferência interna manual com duas transações vinculadas.
+- Motivo: a tabela `transactions` possui apenas um `account_id`; duas linhas permitem debitar a origem e creditar o destino sem classificar como receita/despesa.
+- Impacto: saldos por conta ficam corretos e relatórios que excluem `type=transfer` não contam a movimentação como entrada/saída operacional.
+
+- Data: `2026-05-20`
+- Decisão: criação/edição de transações na web deve ocorrer em modal focado com fundo escurecido.
+- Motivo: evitar interação acidental com o restante da página enquanto o usuário está criando ou editando uma transação.
+- Impacto: o fluxo fica mais seguro e visualmente claro na página `transactions`.
+
+- Data: `2026-05-20`
+- Decisão: criar APIs Android autenticadas por Bearer token da sessão Supabase.
+- Motivo: o novo APK precisa operar sem pareamento antigo por device token e com login direto do usuário.
+- Impacto: adicionadas `/api/android/login`, `/api/android/bootstrap`, `/api/android/transactions/save` e `/api/android/notifications/ingest`.
+
 - Data: `2026-05-19`
 - Decisão: instalar o Gradle localmente no repositório, dentro de `.tools/gradle-8.7`, em vez de exigir instalação global no Windows.
 - Motivo: garantir compilação Android imediata nesta máquina e reduzir dependência de configuração manual do `PATH`.
 - Impacto: builds Android passam a ser executados de forma previsível usando o Gradle local; `.tools/` fica fora do Git por ser dependência local gerada.
 
 - Data: `2026-05-19`
-- Decisão: criar o script `scripts/build-android-companion.ps1` para centralizar a configuração de Java, Android SDK, Gradle e truststore.
+- Decisão: criar o script `scripts/build-android-financego.ps1` para centralizar a configuração de Java, Android SDK, Gradle e truststore.
 - Motivo: simplificar futuras compilações e validações do APK com comandos objetivos (`debug`, `release`, `test`, `lint`, `validate`).
-- Impacto: qualquer nova etapa Android pode ser validada com `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-companion.ps1 -Mode validate`.
+- Impacto: qualquer nova etapa Android pode ser validada com `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate`.
 
 - Data: `2026-05-19`
 - Decisão: usar o Java/JBR do Android Studio (`C:\Program Files\Android\Android Studio\jbr`) para builds Android.

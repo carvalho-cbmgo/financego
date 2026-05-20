@@ -218,6 +218,7 @@ export async function POST(req: Request) {
   const bankId = String(form.get("bank_id") || "").trim();
   const action = String(form.get("action") || "");
   const accountId = String(form.get("account_id") || "").trim();
+  const transferDestinationAccountId = String(form.get("transfer_destination_account_id") || "").trim();
   const inputAmount = Number(form.get("amount") || 0);
   const returnUrl = safeReturnUrl(String(form.get("return_url") || ""));
   const intent = String(form.get("intent") || "save").trim().toLowerCase();
@@ -253,6 +254,16 @@ export async function POST(req: Request) {
   }
 
   if (intent === "delete") {
+    if (String(existingTx.installment_group_key || "").startsWith("manual-transfer-")) {
+      await supabaseAdmin
+        .from("transactions")
+        .delete()
+        .eq("profile_id", user.id)
+        .eq("installment_group_key", existingTx.installment_group_key);
+
+      return NextResponse.redirect(new URL(returnUrl, req.url));
+    }
+
     if (!existingTx.installment_group_key || deleteScope === "single") {
       await supabaseAdmin
         .from("transactions")
@@ -320,6 +331,96 @@ export async function POST(req: Request) {
   const bankName = String(bank?.name || account.institution_name || "GENERICO");
   const bankKey = bankKeyFromBankName(bankName);
 
+  if (txType === "transfer") {
+    if (!transferDestinationAccountId || transferDestinationAccountId === accountId) {
+      return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=invalid_transfer_accounts", req.url));
+    }
+
+    const { data: destinationAccount } = await supabaseAdmin
+      .from("accounts")
+      .select("id, bank_id, institution_name")
+      .eq("id", transferDestinationAccountId)
+      .eq("profile_id", user.id)
+      .maybeSingle();
+
+    if (!destinationAccount?.id) {
+      return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=invalid_transfer_destination", req.url));
+    }
+
+    const { data: destinationBank } = destinationAccount.bank_id
+      ? await supabaseAdmin
+        .from("banks")
+        .select("name")
+        .eq("id", destinationAccount.bank_id)
+        .eq("profile_id", user.id)
+        .maybeSingle()
+      : { data: null as any };
+
+    const groupKey = String(existingTx.installment_group_key || `manual-transfer-${crypto.randomUUID()}`);
+    const transferAmount = Math.abs(inputAmount);
+    const sharedRaw = {
+      source: "manual_edit",
+      recurrence: { mode: "none" },
+      note: note || null,
+      transfer: {
+        originAccountId: accountId,
+        destinationAccountId: transferDestinationAccountId,
+      },
+    };
+
+    await supabaseAdmin
+      .from("transactions")
+      .delete()
+      .eq("profile_id", user.id)
+      .eq("installment_group_key", groupKey)
+      .neq("id", id);
+
+    await supabaseAdmin
+      .from("transactions")
+      .update({
+        description,
+        posted_at: `${postedAtDate}T12:00:00.000Z`,
+        bank_key: bankKey,
+        amount: -transferAmount,
+        app_category: "Transferências",
+        app_subcategory: null,
+        type: txType,
+        is_transfer: true,
+        account_id: accountId,
+        is_consolidated: isConsolidated,
+        status: isConsolidated ? "posted" : "planned",
+        installment_current: null,
+        installment_total: null,
+        installment_group_key: groupKey,
+        raw: { ...sharedRaw, transfer: { ...sharedRaw.transfer, role: "origin" } },
+      })
+      .eq("id", id)
+      .eq("profile_id", user.id);
+
+    await supabaseAdmin
+      .from("transactions")
+      .insert({
+        profile_id: user.id,
+        account_id: transferDestinationAccountId,
+        bank_key: bankKeyFromBankName(String(destinationBank?.name || destinationAccount.institution_name || "GENERICO")),
+        description,
+        amount: transferAmount,
+        currency_code: "BRL",
+        posted_at: `${postedAtDate}T12:00:00.000Z`,
+        status: isConsolidated ? "posted" : "planned",
+        type: txType,
+        source_category: "manual",
+        app_category: "Transferências",
+        app_subcategory: null,
+        is_transfer: true,
+        is_consolidated: isConsolidated,
+        installment_group_key: groupKey,
+        raw: { ...sharedRaw, transfer: { ...sharedRaw.transfer, role: "destination" } },
+      });
+
+    return NextResponse.redirect(new URL(returnUrl, req.url));
+  }
+
   const recurrence = buildRecurringOccurrences({
     mode: repeatMode,
     description,
@@ -344,7 +445,7 @@ export async function POST(req: Request) {
         app_category: category,
         app_subcategory: null,
         type: txType,
-        is_transfer: txType === "transfer",
+        is_transfer: false,
         account_id: accountId,
         is_consolidated: isConsolidated,
         status: isConsolidated ? "posted" : "planned",
@@ -383,7 +484,7 @@ export async function POST(req: Request) {
       app_category: category,
       app_subcategory: null,
       type: txType,
-      is_transfer: txType === "transfer",
+      is_transfer: false,
       account_id: accountId,
       is_consolidated: false,
       status: "planned",
@@ -412,7 +513,7 @@ export async function POST(req: Request) {
     source_category: "manual",
     app_category: category,
     app_subcategory: null,
-    is_transfer: txType === "transfer",
+    is_transfer: false,
     is_consolidated: false,
     installment_current: item.installmentCurrent,
     installment_total: item.installmentTotal,
