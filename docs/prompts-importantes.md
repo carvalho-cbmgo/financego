@@ -3,6 +3,16 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir crash imediato do APK Android nativo ao abrir no celular.
+- Prompt base: "Instalei o app-debug.apk no meu celular andoid, mas ao tentar iniciar o aplicativo não foi possível, pois deu erro e o aplicativo fechou imediatamente."
+- Resultado:
+  - Causa provável identificada: uso de `AppCompatActivity` com tema nativo Android, incompatibilidade que pode derrubar o app antes da tela inicial.
+  - `MainActivity` passou a herdar de `android.app.Activity`.
+  - Dependencia `androidx.appcompat:appcompat` removida.
+  - Versao Android atualizada para `1.0.1`.
+  - Build `debug`, `lint`, `test` e `release` validados com sucesso.
+  - APK `debug` verificado como assinado.
+
 - Objetivo: adicionar perfil com nome completo, ajustar transações com foco modal/transferência interna e substituir Android antigo por novo APK nativo.
 - Prompt base: "Altere o sistema FinanceGO para que haja um registro do nome completo do usuário... Crie uma versão do sistema FinanceGO para celular android (apk) complementamente nova..."
 - Resultado:

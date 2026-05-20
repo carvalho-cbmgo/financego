@@ -4,6 +4,27 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-20`
+- Entrega principal: hotfix do crash imediato ao abrir o APK Android nativo.
+- Resultado entregue:
+  - Android:
+    - `MainActivity` deixou de herdar de `AppCompatActivity` e passou a herdar de `android.app.Activity`.
+    - Dependencia `androidx.appcompat:appcompat` removida porque o app usa tema nativo `Theme.Material.Light.NoActionBar`.
+    - Versao Android atualizada para `versionCode=2` e `versionName=1.0.1`.
+    - Artefatos gerados do Gradle foram limpos apos bloqueio local `AccessDeniedException` em `app/build/generated`.
+  - Validações executadas com sucesso:
+    - `npm run build`
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug`
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode lint`
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode test`
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode release`
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+  - Observação:
+    - O APK `debug` foi verificado como assinado pelo `apksigner`.
+    - Nenhum aparelho apareceu conectado via ADB nesta maquina, portanto o reteste fisico deve ser feito instalando a nova versao `1.0.1`.
+
+- Data: `2026-05-20`
 - Entrega principal: perfil do usuário, transferência interna estruturada e nova versão Android nativa do FinanceGO.
 - Resultado entregue:
   - Web:
@@ -94,10 +115,11 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: instalar o novo APK nativo `android-financego` em aparelho Android real e validar login, sincronização e captura de notificações bancárias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.1` em aparelho Android real e validar abertura, login, sincronizacao e captura de notificacoes bancarias.
 - Em andamento:
+  - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Compilar novo APK nativo.
-  - [ ] Instalar APK `debug` atualizado no celular.
+  - [ ] Reinstalar APK `debug` atualizado no celular.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -105,6 +127,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
+  - [ ] Confirmar em aparelho real que o APK `1.0.1` abre sem fechar imediatamente.
   - [ ] Configurar assinatura de produção para gerar APK release assinado.
   - [ ] Instalar `app-debug.apk` em celular real e validar login nativo, sincronização e listener.
   - [ ] Exibir no app Android o último payload capturado e o último status HTTP de envio.

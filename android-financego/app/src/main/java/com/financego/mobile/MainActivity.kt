@@ -1,5 +1,6 @@
-﻿package com.financego.mobile
+package com.financego.mobile
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
@@ -21,14 +22,13 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.concurrent.Executors
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
   private lateinit var store: SessionStore
   private lateinit var api: FinanceGoApi
   private val executor = Executors.newSingleThreadExecutor()

@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-20`
+- Decisao: usar `android.app.Activity` no APK nativo em vez de `AppCompatActivity`.
+- Motivo: o app Android usa tema nativo (`android:style/Theme.Material.Light.NoActionBar`); `AppCompatActivity` exige tema `Theme.AppCompat` e pode causar crash imediato na abertura.
+- Impacto: o APK `1.0.1` fica alinhado ao tema nativo, remove dependencia AppCompat desnecessaria e reduz risco de falha antes da tela de login.
+
+- Data: `2026-05-20`
 - Decisão: remover as bases Android antigas (`android-companion-min` e `android-notification-forwarder`) e criar uma nova base nativa em `android-financego`.
 - Motivo: o produto passou a exigir um APK novo, independente da versão companion/WebView antiga, com login próprio e uso direto dos dados do Supabase via APIs do FinanceGO.
 - Impacto: o Android agora usa APIs `/api/android/*`, login nativo, sincronização nativa e listener de notificações em segundo plano.

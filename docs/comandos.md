@@ -82,6 +82,19 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 & $adb install -r .\android-financego\app\build\outputs\apk\debug\app-debug.apk
 ```
 
+## Reinstalar APK debug apos hotfix Android
+```powershell
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb devices -l
+
+# Use quando o app ja estiver instalado no celular.
+& $adb install -r .\android-financego\app\build\outputs\apk\debug\app-debug.apk
+
+# Se o Android continuar abrindo a versao antiga, desinstale e instale novamente.
+& $adb uninstall com.financego.mobile
+& $adb install .\android-financego\app\build\outputs\apk\debug\app-debug.apk
+```
+
 ## Validação do APK nativo
 ```txt
 1) Instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
