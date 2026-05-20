@@ -40,7 +40,7 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setMessage(String(data?.error || "Nao foi possivel gerar o pareamento."));
+        setMessage(String(data?.error || "Não foi possível gerar o pareamento."));
         return;
       }
 
@@ -49,9 +49,9 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
 
       if (options?.autoOpen) {
         openCompanionPairing(pairData);
-        setMessage("Pareamento gerado. Abrindo o app companion para configuracao automatica...");
+        setMessage("Pareamento gerado. Abrindo o app companion para configuração automática...");
       } else {
-        setMessage("Pareamento gerado com sucesso. Se preferir, use o botao de conexao automatica.");
+        setMessage("Pareamento gerado com sucesso. Se preferir, use o botão de conexão automática.");
       }
     } catch (error: any) {
       setMessage(String(error?.message || "Erro inesperado ao gerar pareamento."));
@@ -77,9 +77,9 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
     if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
-      setMessage(`${label} copiado para a area de transferencia.`);
+      setMessage(`${label} copiado para a área de transferência.`);
     } catch {
-      setMessage(`Nao foi possivel copiar ${label.toLowerCase()}. Copie manualmente.`);
+      setMessage(`Não foi possível copiar ${label.toLowerCase()}. Copie manualmente.`);
     }
   }
 
@@ -143,7 +143,7 @@ export function MobilePairingPanel({ defaultDeviceName }: MobilePairingPanelProp
           </div>
 
           <p className="fg-mobile-pair-note">
-            {payload.warning || "Mostre o token apenas no momento da configuracao e salve no Android com seguranca."}
+            {payload.warning || "Mostre o token apenas no momento da configuração e salve no Android com segurança."}
           </p>
         </div>
       ) : null}

@@ -165,3 +165,16 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Listener passou a aceitar o proprio pacote para capturar a simulacao.
   - Status do app mostra listener/permissao/fila para facilitar diagnostico rapido.
   - Build Android e build web validados com sucesso.
+
+- Objetivo: remodelar o APK nativo com login sofisticado, carregamento visual, painel mensal, perfil, detalhe de conta e transacoes recorrentes.
+- Prompt base: "No aplicativo apk, ajustar para que seja ocultado da tela de login o informacao https... Trabalhe na parte do design das telas do sistema apk para que sistema fique extremamente sofisticado e profissional."
+- Resultado:
+  - Login nativo redesenhado, sem URL visivel e sem subtitulo tecnico.
+  - Overlay `Carregando...` aplicado nas operacoes principais.
+  - Tela principal Android passou a usar mes de referencia, setas, saldo anterior, entradas, saidas e saldo atual.
+  - Contas exibidas com saldo e marcador `CREDITO`/`CORRENTE`.
+  - Detalhe de conta criado com saldos e transacoes por mes.
+  - Perfil criado no APK para visualizar e editar nome completo.
+  - Nova transacao nativa passou a suportar transferencia, consolidacao, parcelamento e recorrencia avancada.
+  - APIs Android ajustadas para categorias dinamicas e salvamento recorrente.
+  - Acentuacao de textos web alterados foi revisada, incluindo orcamento, pareamento mobile, contas, seletores de mes e exportacoes.

@@ -98,7 +98,7 @@ export function BudgetsPlannerPanel(input: {
 
       <div className="fg-budgets-selector">
         <div className="fg-budgets-selector-head">
-          <strong>Categorias do orcamento</strong>
+          <strong>Categorias do orçamento</strong>
           <span>{selectedCategories.length} selecionada(s)</span>
         </div>
 
@@ -156,8 +156,8 @@ export function BudgetsPlannerPanel(input: {
           <thead>
             <tr>
               <th>Categoria</th>
-              <th>Orcamento mensal (R$)</th>
-              <th>Acao</th>
+              <th>Orçamento mensal (R$)</th>
+              <th>Ação</th>
             </tr>
           </thead>
           <tbody>
@@ -189,7 +189,7 @@ export function BudgetsPlannerPanel(input: {
             ) : (
               <tr>
                 <td colSpan={3}>
-                  Selecione categorias para criar orcamentos neste mes. Se salvar vazio, o mes fica sem categorias orcadas.
+                  Selecione categorias para criar orçamentos neste mês. Se salvar vazio, o mês fica sem categorias orçadas.
                 </td>
               </tr>
             )}
@@ -198,7 +198,7 @@ export function BudgetsPlannerPanel(input: {
       </div>
 
       <div className="fg-budgets-actions">
-        <button className="fg-btn">Salvar orcamento do mes</button>
+        <button className="fg-btn">Salvar orçamento do mês</button>
       </div>
     </form>
   );

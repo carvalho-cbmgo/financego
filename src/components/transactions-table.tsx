@@ -146,7 +146,7 @@ export function TransactionsTable(input: {
     if (!selectedTxIds.length || isWorking) return;
 
     if (intent === "delete") {
-      const confirmed = window.confirm(`Excluir ${selectedTxIds.length} transaÃ§Ã£o(Ãµes) selecionada(s)?`);
+      const confirmed = window.confirm(`Excluir ${selectedTxIds.length} transação(ões) selecionada(s)?`);
       if (!confirmed) return;
     }
 
@@ -172,19 +172,19 @@ export function TransactionsTable(input: {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setMessage(String(data?.error || "NÃ£o foi possÃ­vel processar o lote de transaÃ§Ãµes."));
+        setMessage(String(data?.error || "Não foi possível processar o lote de transações."));
         return;
       }
 
-      if (intent === "delete") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) excluÃ­da(s).`);
-      if (intent === "consolidate") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) consolidada(s).`);
-      if (intent === "unconsolidate") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) marcadas como nÃ£o consolidadas.`);
-      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transaÃ§Ã£o(Ãµes) reclassificada(s).`);
+      if (intent === "delete") setMessage(`${selectedTxIds.length} transação(ões) excluída(s).`);
+      if (intent === "consolidate") setMessage(`${selectedTxIds.length} transação(ões) consolidada(s).`);
+      if (intent === "unconsolidate") setMessage(`${selectedTxIds.length} transação(ões) marcadas como não consolidadas.`);
+      if (intent === "reclassify") setMessage(`${selectedTxIds.length} transação(ões) reclassificada(s).`);
 
       setSelectedTxIds([]);
       router.refresh();
     } catch {
-      setMessage("Erro inesperado ao processar transaÃ§Ãµes em lote.");
+      setMessage("Erro inesperado ao processar transações em lote.");
     } finally {
       setIsWorking(false);
       notifyGlobalLoading(false);
@@ -197,7 +197,7 @@ export function TransactionsTable(input: {
     if (!value) return;
 
     if (!selectedTxIds.length) {
-      setMessage("Selecione ao menos uma transaÃ§Ã£o para reclassificar.");
+      setMessage("Selecione ao menos uma transação para reclassificar.");
       setBulkCategoryValue("");
       return;
     }
@@ -236,14 +236,14 @@ export function TransactionsTable(input: {
 
   if (!input.txs.length) {
     return (
-      <Card title="TransaÃ§Ãµes">
-        <div className="fg-empty">Nenhuma transaÃ§Ã£o neste filtro.</div>
+      <Card title="Transações">
+        <div className="fg-empty">Nenhuma transação neste filtro.</div>
       </Card>
     );
   }
 
   return (
-    <Card title="TransaÃ§Ãµes">
+    <Card title="Transações">
       <div className="fg-legacy-transactions-actions">
         <button
           className="fg-btn fg-legacy-add-btn"
@@ -252,9 +252,9 @@ export function TransactionsTable(input: {
             setShowCreateForm(true);
             if (input.selectedEditTxId) router.push(input.returnUrl);
           }}
-          title="Adicionar nova transaÃ§Ã£o"
+          title="Adicionar nova transação"
         >
-          + Adicionar transaÃ§Ã£o
+          + Adicionar transação
         </button>
         <div className="fg-legacy-transactions-actions-right">
         <button
@@ -262,16 +262,16 @@ export function TransactionsTable(input: {
           type="button"
           onClick={toggleAllDisplayed}
           disabled={!displayedTxIds.length || isWorking}
-          title="Selecionar todas as transaÃ§Ãµes exibidas"
+          title="Selecionar todas as transações exibidas"
         >
-          â˜‘
+          ☑
         </button>
         <button
           className="fg-category-tool-btn is-delete fg-legacy-del-btn"
           type="button"
           onClick={() => runBatch("delete")}
           disabled={!selectedTxIds.length || isWorking}
-          title="Excluir transaÃ§Ãµes selecionadas"
+          title="Excluir transações selecionadas"
         >
           DEL
         </button>
@@ -280,18 +280,18 @@ export function TransactionsTable(input: {
           type="button"
           onClick={() => runBatch("consolidate")}
           disabled={!selectedTxIds.length || isWorking}
-          title="Consolidar transaÃ§Ãµes selecionadas"
+          title="Consolidar transações selecionadas"
         >
-          âœ“
+          ✓
         </button>
         <button
           className="fg-btn-secondary fg-legacy-bulk-icon is-red"
           type="button"
           onClick={() => runBatch("unconsolidate")}
           disabled={!selectedTxIds.length || isWorking}
-          title="Marcar como nÃ£o consolidada"
+          title="Marcar como não consolidada"
         >
-          âœ“
+          ✓
         </button>
         <select
           className="fg-select"
@@ -315,9 +315,9 @@ export function TransactionsTable(input: {
       {showReclassifyDialog ? (
         <div className="fg-legacy-confirm-backdrop" role="dialog" aria-modal="true" onClick={cancelReclassify}>
           <div className="fg-legacy-confirm-modal" onClick={(event) => event.stopPropagation()}>
-            <div className="fg-card-title">Confirmar reclassificaÃ§Ã£o</div>
+            <div className="fg-card-title">Confirmar reclassificação</div>
             <p>
-              Deseja reclassificar {selectedTxIds.length} transaÃ§Ã£o(Ãµes) para a categoria{" "}
+              Deseja reclassificar {selectedTxIds.length} transação(ões) para a categoria{" "}
               <strong>{getCategoryLabel(pendingReclassifyCategory)}</strong>?
             </p>
             <div className="fg-legacy-confirm-actions">
@@ -332,7 +332,7 @@ export function TransactionsTable(input: {
         </div>
       ) : null}
       {showCreateForm ? (
-        <TransactionFocusModal title="Adicionar transaÃ§Ã£o" onClose={() => setShowCreateForm(false)}>
+        <TransactionFocusModal title="Adicionar transação" onClose={() => setShowCreateForm(false)}>
           <CreateTransactionInline
             accounts={input.accounts}
             bankById={bankById}
@@ -343,7 +343,7 @@ export function TransactionsTable(input: {
         </TransactionFocusModal>
       ) : null}
       {selectedTxForEdit ? (
-        <TransactionFocusModal title="Editar transaÃ§Ã£o" onClose={closeEditModal}>
+        <TransactionFocusModal title="Editar transação" onClose={closeEditModal}>
           <EditTransactionFocus
             tx={selectedTxForEdit}
             accounts={input.accounts}
@@ -360,7 +360,7 @@ export function TransactionsTable(input: {
             <tr className="fg-legacy-balance-head-row">
               <th colSpan={6}>
                 <div className="fg-legacy-balance-head-top">
-                  <div className="fg-legacy-type-filters" role="group" aria-label="Filtrar transaÃ§Ãµes por aÃ§Ã£o">
+                  <div className="fg-legacy-type-filters" role="group" aria-label="Filtrar transações por ação">
                     <label className="fg-checkbox-row">
                       <input
                         type="checkbox"
@@ -391,7 +391,7 @@ export function TransactionsTable(input: {
                         checked={typeFilters.transfer}
                         onChange={(event) => handleSpecificTypeFilterChange("transfer", event.target.checked)}
                       />
-                      TransferÃªncias
+                      Transferências
                     </label>
                   </div>
                   <div className="fg-legacy-prev-balance-toggle">
@@ -399,13 +399,13 @@ export function TransactionsTable(input: {
                   </div>
                 </div>
                 <div className="fg-legacy-balance-head-value">
-                  Saldo sem as transaÃ§Ãµes exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
+                  Saldo sem as transações exibidas: <strong>{brlCompact(balanceBeforeDisplayed)}</strong>
                 </div>
               </th>
             </tr>
             <tr>
               <th className="fg-legacy-col-select"></th>
-              <th className="fg-legacy-col-desc">DescriÃ§Ã£o</th>
+              <th className="fg-legacy-col-desc">Descrição</th>
               <th className="fg-legacy-col-category">Categoria</th>
               <th className="fg-legacy-col-account">Conta</th>
               <th className="fg-legacy-col-value">Valor (R$)</th>
@@ -416,7 +416,7 @@ export function TransactionsTable(input: {
             {!grouped.length ? (
               <tr>
                 <td colSpan={6} className="fg-legacy-empty-cell">
-                  Nenhuma transaÃ§Ã£o para os filtros selecionados.
+                  Nenhuma transação para os filtros selecionados.
                 </td>
               </tr>
             ) : grouped.map((group) => (
@@ -456,12 +456,12 @@ export function TransactionsTable(input: {
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleOne(txId)}
-                            aria-label={`Selecionar transaÃ§Ã£o ${tx.description || txId}`}
+                            aria-label={`Selecionar transação ${tx.description || txId}`}
                           />
                         </td>
                         <td className="fg-legacy-col-desc">
                           <Link href={editUrl} className="fg-legacy-desc-link">
-                            <span className="fg-legacy-desc-main">{tx.description || "Sem descriÃ§Ã£o"}</span>
+                            <span className="fg-legacy-desc-main">{tx.description || "Sem descrição"}</span>
                             {recurrenceInfo.isRecurring ? (
                               <span className="fg-chip fg-chip-recurring">{recurrenceInfo.badgeLabel}</span>
                             ) : null}
@@ -484,7 +484,7 @@ export function TransactionsTable(input: {
                         </td>
                         <td className="fg-legacy-col-status">
                           <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-center">
-                            {tx.is_consolidated !== false ? "âœ“" : "â—‹"}
+                            {tx.is_consolidated !== false ? "✓" : "○"}
                           </Link>
                         </td>
                       </tr>
@@ -509,7 +509,7 @@ export function TransactionsTable(input: {
                                   name="description"
                                   required
                                   defaultValue={tx.description || ""}
-                                  placeholder="DescriÃ§Ã£o"
+                                  placeholder="Descrição"
                                   className="fg-input"
                                 />
                                 <select name="category" required defaultValue={currentCategory} className="fg-select">
@@ -557,7 +557,7 @@ export function TransactionsTable(input: {
                                     Criar regra
                                   </label>
                                   <span className="fg-legacy-mini-icon">?</span>
-                                  <Link href={input.returnUrl} className="fg-legacy-mini-icon">âœ–</Link>
+                                  <Link href={input.returnUrl} className="fg-legacy-mini-icon">×</Link>
                                 </div>
                               </div>
 
@@ -578,7 +578,7 @@ export function TransactionsTable(input: {
                                     className="fg-select"
                                     disabled={!recurrenceInfo.isRecurring}
                                   >
-                                    <option value="single">Somente esta transaÃ§Ã£o</option>
+                                    <option value="single">Somente esta transação</option>
                                     <option value="up_to_current">Esta e anteriores vinculadas</option>
                                     <option value="from_current">Esta e posteriores vinculadas</option>
                                   </select>
@@ -591,7 +591,7 @@ export function TransactionsTable(input: {
                                     name="note"
                                     className="fg-textarea fg-legacy-inline-note"
                                     defaultValue={currentNote}
-                                    placeholder="ObservaÃ§Ãµes da transaÃ§Ã£o"
+                                    placeholder="Observações da transação"
                                   />
                                   <div className="fg-legacy-inline-actions">
                                     <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
@@ -610,7 +610,7 @@ export function TransactionsTable(input: {
             ))}
             <tr className="fg-legacy-balance-foot-row">
               <td colSpan={6}>
-                Saldo com as transaÃ§Ãµes exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
+                Saldo com as transações exibidas: <strong>{brlCompact(balanceWithDisplayed)}</strong>
               </td>
             </tr>
           </tbody>
@@ -629,8 +629,8 @@ function TransactionFocusModal(input: { title: string; children: ReactNode; onCl
             <div className="fg-transaction-focus-kicker">Finance GO</div>
             <h2>{input.title}</h2>
           </div>
-          <button type="button" className="fg-transaction-focus-close" onClick={input.onClose} aria-label="Cancelar operaÃ§Ã£o">
-            Ã—
+          <button type="button" className="fg-transaction-focus-close" onClick={input.onClose} aria-label="Cancelar operação">
+            ×
           </button>
         </div>
         {input.children}
@@ -1046,7 +1046,7 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
 
   return (
     <div className="fg-legacy-create-repeat-wrap">
-      <div className="fg-legacy-inline-label">Repetir transaÃ§Ã£o</div>
+      <div className="fg-legacy-inline-label">Repetir transação</div>
       <div className="fg-legacy-repeat-options">
         <label>
           <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />
@@ -1129,7 +1129,7 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
               onChange={(event) => setRepeatEvery(parseRepeatEvery(event.target.value))}
             >
               <option value="week">Semana</option>
-              <option value="month">Mes</option>
+              <option value="month">Mês</option>
               <option value="year">Ano</option>
             </select>
           </label>
@@ -1200,11 +1200,11 @@ function RecurringControls({ tx }: { tx: any }) {
 
   return (
     <>
-      <div className="fg-legacy-inline-label">Repetir transaÃ§Ã£o</div>
+      <div className="fg-legacy-inline-label">Repetir transação</div>
       <div className="fg-legacy-repeat-options">
         <label>
           <input type="radio" name="repeat_mode" value="none" checked={mode === "none"} onChange={() => setMode("none")} />
-          Sem repetiÃ§Ã£o
+          Sem repetição
         </label>
         <label>
           <input
@@ -1224,14 +1224,14 @@ function RecurringControls({ tx }: { tx: any }) {
             checked={mode === "advanced"}
             onChange={() => setMode("advanced")}
           />
-          AvanÃ§ado
+          Avançado
         </label>
       </div>
 
       {showInstallment ? (
         <div className="fg-legacy-repeat-grid">
           <label className="fg-field-label">
-            NÂº da parcela atual
+            Nº da parcela atual
             <input
               type="number"
               name="installment_current"
@@ -1281,7 +1281,7 @@ function RecurringControls({ tx }: { tx: any }) {
               onChange={(event) => setRepeatEvery(parseRepeatEvery(event.target.value))}
             >
               <option value="week">Semana</option>
-              <option value="month">MÃªs</option>
+              <option value="month">Mês</option>
               <option value="year">Ano</option>
             </select>
           </label>
@@ -1297,7 +1297,7 @@ function RecurringControls({ tx }: { tx: any }) {
           </label>
 
           <label className="fg-field-label">
-            NÂº da parcela atual
+            Nº da parcela atual
             <input
               type="number"
               name="installment_current"
@@ -1323,7 +1323,7 @@ function RecurringControls({ tx }: { tx: any }) {
           </label>
 
           <div className="fg-field-note">
-            As recorrentes serÃ£o vinculadas e exibidas com indicador visual na lista.
+            As recorrentes serão vinculadas e exibidas com indicador visual na lista.
           </div>
         </div>
       ) : null}
@@ -1385,7 +1385,7 @@ function mapTransactionTypeToFilter(type: string | null | undefined) {
     return "income" as const;
   }
 
-  if (normalized === "transfer" || normalized === "transferencia" || normalized === "transferÃªncia") {
+  if (normalized === "transfer" || normalized === "transferencia" || normalized === "transferência") {
     return "transfer" as const;
   }
 
@@ -1485,8 +1485,8 @@ function getRecurrenceInfo(tx: any): RecurrenceInfo {
   if (defaultMode === "installment") {
     badgeLabel = `Parcela ${installmentCurrent} de ${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)}`;
   } else if (defaultMode === "advanced") {
-    if (repeatForever) badgeLabel = `Recorrente â€¢ ${formatRepeatEveryLabel(repeatEvery)}`;
-    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} â€¢ ${formatRepeatEveryLabel(repeatEvery)}`;
+    if (repeatForever) badgeLabel = `Recorrente • ${formatRepeatEveryLabel(repeatEvery)}`;
+    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} • ${formatRepeatEveryLabel(repeatEvery)}`;
   }
 
   const amountAbs = Math.abs(Number(tx?.amount || 0));

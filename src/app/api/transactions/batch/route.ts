@@ -20,11 +20,11 @@ export async function POST(req: Request) {
   );
 
   if (!txIds.length) {
-    return NextResponse.json({ error: "Selecione ao menos uma transacao." }, { status: 400 });
+    return NextResponse.json({ error: "Selecione ao menos uma transação." }, { status: 400 });
   }
 
   if (!["delete", "consolidate", "unconsolidate", "reclassify"].includes(intent)) {
-    return NextResponse.json({ error: "Acao invalida para lote." }, { status: 400 });
+    return NextResponse.json({ error: "Ação inválida para lote." }, { status: 400 });
   }
 
   if (intent === "delete") {

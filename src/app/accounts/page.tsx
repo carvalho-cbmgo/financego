@@ -355,14 +355,14 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
     missing_fields: "Preencha os campos obrigatorios da conta.",
     missing_bank_name: "Informe o nome do banco.",
     invalid_bank: "Banco invalido para esta conta.",
-    bank_not_found: "Banco nao encontrado para edicao.",
-    missing_bank: "Banco invalido para exclusao.",
-    bank_delete_not_found: "Banco nao encontrado para exclusao.",
-    bank_has_accounts: "Nao foi possivel excluir: existem contas vinculadas a este banco.",
-    bank_delete_failed: "Nao foi possivel excluir o banco agora.",
-    missing_account: "Conta invalida para exclusao.",
-    account_not_found: "Conta nao encontrada para exclusao.",
-    delete_failed: "Nao foi possivel excluir a conta agora.",
+    bank_not_found: "Banco não encontrado para edição.",
+    missing_bank: "Banco inválido para exclusão.",
+    bank_delete_not_found: "Banco não encontrado para exclusão.",
+    bank_has_accounts: "Não foi possível excluir: existem contas vinculadas a este banco.",
+    bank_delete_failed: "Não foi possível excluir o banco agora.",
+    missing_account: "Conta inválida para exclusão.",
+    account_not_found: "Conta não encontrada para exclusão.",
+    delete_failed: "Não foi possível excluir a conta agora.",
   };
 
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };

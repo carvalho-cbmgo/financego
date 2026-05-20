@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const returnUrl = safeReturnUrl(String(body?.return_url || ""));
 
   if (!oldCategory || !newCategory) {
-    return NextResponse.json({ error: "Categorias invalidas para renomeacao." }, { status: 400 });
+    return NextResponse.json({ error: "Categorias inválidas para renomeação." }, { status: 400 });
   }
 
   if (oldCategory === newCategory) {

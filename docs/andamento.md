@@ -137,12 +137,20 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.2` em aparelho Android real e validar abertura, login, sincronizacao e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.3` em aparelho Android real e validar abertura, login, sincronizacao, fluxo financeiro mensal e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
+  - [x] Ocultar a URL de producao na tela de login do APK.
+  - [x] Remodelar login nativo com visual mais sofisticado.
+  - [x] Implementar overlay global `Carregando...` para login, sincronizacao e transicoes internas.
+  - [x] Substituir `Saldo geral` por seletor de mes, saldo anterior, entradas, saidas e saldo atual.
+  - [x] Implementar tela de detalhe por conta com saldo inicial/final e transacoes da conta.
+  - [x] Adicionar acesso a `Perfil` no topo da tela de transacoes do APK.
+  - [x] Ajustar cadastro/edicao nativa de transacoes com transferencia e recorrencia.
+  - [x] Corrigir acentuacao de textos nas paginas web alteradas.
   - [x] Compilar novo APK nativo.
-  - [ ] Reinstalar APK `debug` atualizado no celular.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.3`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -150,7 +158,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.2` abre e faz login no dominio `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.3` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar criacao nativa de transacoes sem repeticao, parceladas e avancadas.
+  - [ ] Testar tela de detalhe de conta no APK para cartao de credito e conta corrente.
   - [ ] Configurar assinatura de produção para gerar APK release assinado.
   - [ ] Instalar `app-debug.apk` em celular real e validar login nativo, sincronização e listener.
   - [ ] Exibir no app Android o último payload capturado e o último status HTTP de envio.
@@ -165,3 +175,30 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - Regra obrigatoria: **sempre atualizar os arquivos da pasta `/docs` apos qualquer mudanca no sistema**.
 - Regra obrigatoria: **sempre realizar commit + push apos alteracoes no sistema para acionar deploy automatico no Vercel**.
 - Antes de publicar, validar `npm run build`.
+
+- Data: `2026-05-20`
+- Entrega principal: remodelagem aprofundada do APK nativo Finance GO e ajustes de API para experiencia mensal, perfil, contas e recorrencias.
+- Resultado entregue:
+  - Android nativo:
+    - Tela de login remodelada, sem exibir campo/URL `https` ao usuario.
+    - Removido texto `Controle financeiro nativo, sincronizado e pronto para notificacoes bancarias`.
+    - Overlay central `Carregando...` com indicador visual aplicado em login, sincronizacao, salvamento e transicoes internas.
+    - Topo da tela principal passou a exibir `Finance GO`, seletor de mes com setas e botao `Perfil`.
+    - `Saldo geral` substituido por `Saldo anterior`, `Entradas`, `Saidas` e `Saldo atual`.
+    - Checkbox `Incluir saldo anterior` fica marcado por padrao; ao desmarcar, oculta o saldo anterior e recalcula o saldo atual.
+    - Botoes `NOVA TRANSACAO`, `ATUALIZAR` e `SAIR` foram compactados para caberem na mesma linha.
+    - Lista de contas ordenada por banco/conta com saldo e marcador visual `CREDITO` ou `CORRENTE`.
+    - Ao tocar em uma conta, abre tela propria com transacoes daquela conta, seletor de mes, saldo inicial e saldo final.
+    - Cadastro/edicao de transacao no APK passou a seguir a ordem: tipo, descricao, conta origem, conta destino quando transferencia, categoria, valor, consolidada, repeticao, observacoes e botoes.
+    - Modos de repeticao nativos: `Sem repeticao`, `Parcelamento (mensal)` e `Avancado`, com campos dinamicos.
+  - APIs:
+    - `POST /api/android/transactions/save` passou a aceitar recorrencias, parcelamento e transferencias com multiplas ocorrencias.
+    - `GET /api/android/bootstrap` passou a retornar mais historico de transacoes e categorias dinamicas.
+    - `POST /api/profile/update` passou a ser consumido pelo APK para atualizar nome completo.
+  - Web:
+    - Textos alterados recentemente foram revisados para corrigir acentuacao e caracteres quebrados.
+    - Varredura complementar aplicada em componentes de mes, orcamento, pareamento mobile, contas e exportacoes.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `scripts/build-android-financego.ps1 -Mode validate` executado com sucesso.
+    - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.

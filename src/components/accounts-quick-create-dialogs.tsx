@@ -42,7 +42,7 @@ export function AccountsQuickCreateDialogs(input: {
         </button>
         <button type="button" className="fg-accounts-action-pill" onClick={() => setDialogMode("credit")} disabled={!hasBanks}>
           <span className="fg-accounts-action-icon">CR</span>
-          Cadastrar cartao
+          Cadastrar cartão
         </button>
       </div>
 
@@ -60,7 +60,7 @@ export function AccountsQuickCreateDialogs(input: {
                   <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
                   <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
                   <div className="fg-account-actions">
-                    <button className="fg-btn">Confirmar criacao</button>
+                    <button className="fg-btn">Confirmar criação</button>
                     <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
                   </div>
                 </form>
@@ -82,7 +82,7 @@ export function AccountsQuickCreateDialogs(input: {
                   <input name="account_name" required placeholder="Nome da conta" className="fg-input" />
                   <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
                   <div className="fg-account-actions">
-                    <button className="fg-btn">Confirmar criacao</button>
+                    <button className="fg-btn">Confirmar criação</button>
                     <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
                   </div>
                 </form>
@@ -91,7 +91,7 @@ export function AccountsQuickCreateDialogs(input: {
 
             {dialogMode === "credit" ? (
               <>
-                <div className="fg-card-title">Cadastrar cartao</div>
+                <div className="fg-card-title">Cadastrar cartão</div>
                 <form action="/api/accounts/save" method="post" className="fg-form">
                   <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
                   <select name="bank_id" required className="fg-select" defaultValue={String(input.banks[0]?.id || "")}>
@@ -101,10 +101,10 @@ export function AccountsQuickCreateDialogs(input: {
                       </option>
                     ))}
                   </select>
-                  <input name="account_name" required placeholder="Nome do cartao" className="fg-input" />
+                  <input name="account_name" required placeholder="Nome do cartão" className="fg-input" />
                   <input name="balance" type="number" step="0.01" placeholder="Fatura inicial (opcional)" className="fg-input" />
                   <div className="fg-account-actions">
-                    <button className="fg-btn">Confirmar criacao</button>
+                    <button className="fg-btn">Confirmar criação</button>
                     <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
                   </div>
                 </form>

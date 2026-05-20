@@ -46,7 +46,7 @@ function getBrowserClient() {
 
 function getAdminClient() {
   if (typeof window !== "undefined") {
-    throw new Error("supabaseAdmin nao pode ser usado no browser.");
+    throw new Error("supabaseAdmin não pode ser usado no browser.");
   }
 
   if (!adminClient) {

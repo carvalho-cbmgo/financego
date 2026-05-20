@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (!account?.id) {
-      return NextResponse.json({ error: "Conta invÃ¡lida para este usuÃ¡rio." }, { status: 400 });
+      return NextResponse.json({ error: "Conta inválida para este usuário." }, { status: 400 });
     }
 
     let fileName: string | null = null;
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        throw new Error(`Falha ao salvar transaÃ§Ã£o importada (${error.code || "sem-codigo"}): ${error.message}`);
+        throw new Error(`Falha ao salvar transação importada (${error.code || "sem-codigo"}): ${error.message}`);
       }
 
       imported++;

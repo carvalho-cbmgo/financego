@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { getApiUserFromRequest, unauthorized } from "@/lib/auth-server";
 import { createUserDb } from "@/lib/user-db";
 import { brl } from "@/lib/format";
+import { ROOT_CATEGORY_NAME } from "@/lib/category-catalog";
+
+function relationMissing(error: any) {
+  const message = String(error?.message || "");
+  const code = String(error?.code || "");
+  return code === "PGRST205" || /relation .*categories.* does not exist/i.test(message);
+}
 
 export async function GET(req: Request) {
   const user = await getApiUserFromRequest(req);
@@ -24,11 +31,31 @@ export async function GET(req: Request) {
       .order("created_at", { ascending: false }),
     supabase
       .from("transactions")
-      .select("id, account_id, description, amount, posted_at, type, app_category, is_consolidated, raw")
+      .select("id, account_id, description, amount, posted_at, type, app_category, is_consolidated, installment_current, installment_total, installment_group_key, raw")
       .eq("profile_id", user.id)
       .order("posted_at", { ascending: false })
-      .limit(80),
+      .limit(2000),
   ]);
+
+  const { data: categoryRows, error: categoryError } = await supabase
+    .from("categories")
+    .select("id, name, parent_id")
+    .eq("profile_id", user.id)
+    .order("name");
+
+  let categories = categoryRows || [];
+  if (categoryError && !relationMissing(categoryError)) throw categoryError;
+  if (categoryError && relationMissing(categoryError)) categories = [];
+
+  const categoryNames = new Set<string>([ROOT_CATEGORY_NAME, "Outros", "Transferências"]);
+  for (const tx of transactions || []) {
+    const category = String((tx as any).app_category || "").trim();
+    if (category) categoryNames.add(category);
+  }
+  for (const category of categories || []) {
+    const name = String((category as any).name || "").trim();
+    if (name) categoryNames.add(name);
+  }
 
   const accountBalances = new Map<string, number>();
   for (const tx of transactions || []) {
@@ -68,6 +95,9 @@ export async function GET(req: Request) {
       computed_balance: accountBalances.get(String(account.id)) || Number(account.balance || 0),
     })),
     transactions: transactions || [],
+    categories: Array.from(categoryNames)
+      .sort((a, b) => a.localeCompare(b, "pt-BR"))
+      .map((name) => ({ name })),
     required_setup: {
       full_name: !String(profile?.full_name || "").trim(),
       notification_listener: true,

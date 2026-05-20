@@ -242,3 +242,33 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: incluir pacote `com.financego.companion` na whitelist do `NotificationForwarderService`.
 - Motivo: permitir que o listener capture a notificacao de simulacao emitida pelo proprio companion.
 - Impacto: teste local ganhou previsibilidade e reduz falsos negativos de configuracao.
+
+- Data: `2026-05-20`
+- Decisao: o APK nativo deve esconder a URL de producao do usuario e usar `BuildConfig.DEFAULT_BASE_URL` internamente.
+- Motivo: reduzir ruido visual e evitar que o usuario final precise lidar com configuracao tecnica.
+- Impacto: login fica mais simples, profissional e menos sujeito a erro de digitacao.
+
+- Data: `2026-05-20`
+- Decisao: aplicar overlay global `Carregando...` em acoes Android de login, sincronizacao, salvamento e navegacao interna.
+- Motivo: dar feedback imediato durante operacoes remotas e evitar impressao de travamento.
+- Impacto: experiencia mobile mais clara e previsivel.
+
+- Data: `2026-05-20`
+- Decisao: a tela principal do APK deve ser orientada por mes de referencia, com setas de navegacao e opcao `Incluir saldo anterior`.
+- Motivo: alinhar o comportamento do APK ao fluxo financeiro mensal usado no sistema web.
+- Impacto: o usuario consegue analisar saldo anterior, entradas, saidas e saldo atual no celular sem abrir navegador.
+
+- Data: `2026-05-20`
+- Decisao: as contas no APK devem aparecer ordenadas por banco/conta e marcadas visualmente como `CREDITO` ou `CORRENTE`.
+- Motivo: facilitar leitura rapida das contas e distinguir cartoes de credito de contas correntes.
+- Impacto: painel de contas ficou mais resumitivo e acionavel.
+
+- Data: `2026-05-20`
+- Decisao: o cadastro nativo de transacoes deve suportar os mesmos conceitos da web: transferencia interna, consolidacao, parcelamento e recorrencia avancada.
+- Motivo: permitir uso real do Finance GO pelo APK sem depender do navegador para operacoes principais.
+- Impacto: API Android de salvamento passou a criar multiplas ocorrencias e movimentacoes de transferencia quando necessario.
+
+- Data: `2026-05-20`
+- Decisao: `GET /api/android/bootstrap` deve retornar categorias dinamicas e historico ampliado de transacoes.
+- Motivo: permitir que o app nativo exiba listas, saldos mensais e seletores de categoria com dados reais do Supabase.
+- Impacto: tela Android fica sincronizada com categorias criadas no sistema web.

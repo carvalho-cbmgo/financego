@@ -55,9 +55,9 @@ export default async function MobilePairPage({ searchParams }: { searchParams: P
           <article className="fg-mobile-card">
             <ol className="fg-mobile-pair-steps">
               <li>Se abriu automaticamente, apenas confirme no app companion e toque em salvar.</li>
-              <li>Caso o auto pareamento nao abra, preencha manualmente URL, Device Public ID e Device Token.</li>
-              <li>Conceda permissao de leitura de notificacoes.</li>
-              <li>Desative otimizacao de bateria para manter captura em tempo real.</li>
+              <li>Caso o auto pareamento não abra, preencha manualmente URL, Device Public ID e Device Token.</li>
+              <li>Conceda permissão de leitura de notificações.</li>
+              <li>Desative otimização de bateria para manter captura em tempo real.</li>
             </ol>
             <p className="fg-mobile-pair-help">
               Companion Android minimo incluido no repositorio em <code>android-companion-min/</code>.
@@ -124,9 +124,9 @@ function buildStatusMessage(okValue?: string, errorValue?: string) {
   };
 
   const errorMap: Record<string, string> = {
-    missing_device: "Dispositivo invalido para exclusao.",
-    device_not_found: "Dispositivo nao encontrado para este usuario.",
-    delete_failed: "Nao foi possivel excluir o dispositivo agora.",
+    missing_device: "Dispositivo inválido para exclusão.",
+    device_not_found: "Dispositivo não encontrado para este usuário.",
+    delete_failed: "Não foi possível excluir o dispositivo agora.",
   };
 
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };

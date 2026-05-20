@@ -11,8 +11,8 @@ android {
     applicationId = "com.financego.mobile"
     minSdk = 26
     targetSdk = 35
-    versionCode = 3
-    versionName = "1.0.2"
+    versionCode = 4
+    versionName = "1.0.3"
 
     buildConfigField("String", "DEFAULT_BASE_URL", "\"https://financego-eight.vercel.app\"")
   }

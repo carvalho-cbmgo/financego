@@ -46,8 +46,8 @@ export function BudgetsMonthPicker({ value }: { value: string }) {
         className="fg-btn-secondary fg-legacy-month-shift"
         onClick={() => shiftMonth(-1)}
         disabled={isPending}
-        aria-label="Ir para o mes anterior"
-        title="Mes anterior"
+        aria-label="Ir para o mês anterior"
+        title="Mês anterior"
       >
         ‹
       </button>
@@ -57,15 +57,15 @@ export function BudgetsMonthPicker({ value }: { value: string }) {
         onChange={(event) => updateMonth(event.target.value)}
         className="fg-input fg-legacy-month-input"
         disabled={isPending}
-        aria-label="Selecionar mes e ano"
+        aria-label="Selecionar mês e ano"
       />
       <button
         type="button"
         className="fg-btn-secondary fg-legacy-month-shift"
         onClick={() => shiftMonth(1)}
         disabled={isPending}
-        aria-label="Ir para o proximo mes"
-        title="Proximo mes"
+        aria-label="Ir para o próximo mês"
+        title="Próximo mês"
       >
         ›
       </button>

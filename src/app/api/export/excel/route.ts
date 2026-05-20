@@ -36,11 +36,11 @@ export async function GET(req: NextRequest) {
     workbook.creator = "Finance GO";
     workbook.created = new Date();
 
-    const txSheet = workbook.addWorksheet("Transacoes");
+    const txSheet = workbook.addWorksheet("Transações");
     txSheet.columns = [
       { header: "Data", key: "posted_at", width: 16 },
       { header: "Banco", key: "bank_key", width: 18 },
-      { header: "Descricao", key: "description", width: 48 },
+      { header: "Descrição", key: "description", width: 48 },
       { header: "Estabelecimento", key: "merchant", width: 28 },
       { header: "Categoria", key: "app_category", width: 20 },
       { header: "Valor", key: "amount", width: 14 },
@@ -57,9 +57,9 @@ export async function GET(req: NextRequest) {
     txSheet.getRow(1).font = { bold: true };
     txSheet.getColumn("amount").numFmt = '"R$"#,##0.00;[Red]-"R$"#,##0.00';
 
-    const budgetSheet = workbook.addWorksheet("Orcamento");
+    const budgetSheet = workbook.addWorksheet("Orçamento");
     budgetSheet.columns = [
-      { header: "Mes", key: "month_ref", width: 12 },
+      { header: "Mês", key: "month_ref", width: 12 },
       { header: "Categoria", key: "category", width: 24 },
       { header: "Planejado", key: "planned_amount", width: 16 },
     ];

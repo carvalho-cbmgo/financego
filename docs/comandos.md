@@ -116,6 +116,31 @@ android-financego/app/build/outputs/apk/debug/app-debug.apk
 android-financego/app/build/outputs/apk/release/app-release-unsigned.apk
 ```
 
+## Validar APK nativo atual
+```powershell
+# Build completo web + Android
+npm run build
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate
+
+# Conferir APKs gerados
+Get-ChildItem -Path android-financego\app\build\outputs\apk -Recurse -Filter *.apk |
+  ForEach-Object { "{0} | {1:N0} bytes | {2}" -f $_.FullName, $_.Length, $_.LastWriteTime }
+
+# Verificar assinatura do APK debug
+$apksigner = Join-Path $env:LOCALAPPDATA "Android\Sdk\build-tools\35.0.0\apksigner.bat"
+& $apksigner verify --verbose android-financego\app\build\outputs\apk\debug\app-debug.apk
+
+# Conferir aparelhos conectados
+$adb = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
+& $adb devices -l
+```
+
+## Instalar APK debug em aparelho conectado
+```powershell
+$adb = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
+& $adb install -r android-financego\app\build\outputs\apk\debug\app-debug.apk
+```
+
 ## Fluxo Android nativo
 ```txt
 1) Abrir o APK nativo Finance GO
@@ -133,6 +158,19 @@ $body = @{ email = "maykocarvalho@gmail.com"; password = "123456" } | ConvertTo-
 $response = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json; charset=utf-8" -Body $body
 $response.ok
 $response.user.email
+```
+
+## Fluxo de teste do APK nativo `1.0.3`
+```txt
+1) Instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+2) Abrir Finance GO.
+3) Confirmar que a tela de login nao exibe URL tecnica.
+4) Tocar em ENTRAR e verificar overlay `Carregando...`.
+5) Conferir seletor de mes, saldo anterior, entradas, saidas e saldo atual.
+6) Desmarcar `Incluir saldo anterior` e verificar recalculo.
+7) Abrir uma conta e conferir transacoes filtradas por conta.
+8) Criar transacao sem repeticao, parcelada e avancada.
+9) Abrir Perfil e testar atualizacao de nome completo.
 ```
 
 ## Git

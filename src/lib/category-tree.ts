@@ -13,15 +13,15 @@ export type CategoryGroupStats = {
 
 const CATEGORY_TEMPLATE: Record<string, string[]> = {
   Moradia: ["Aluguel", "Condominio", "Energia", "Agua", "Internet", "Gas", "IPTU", "Casa"],
-  Alimentacao: ["Supermercado", "Restaurantes", "Padaria", "Delivery", "Assinaturas"],
-  Transporte: ["Combustivel", "Transporte", "Mobilidade", "Estacionamento", "Manutencao do Carro"],
-  Saude: ["Farmacia", "Plano de Saude", "Consulta", "Seguro"],
-  Educacao: ["Cursos", "Escola", "Livros"],
-  Lazer: ["Lazer", "Viagem", "Entretenimento", "Eletronicos"],
-  Compras: ["Vestuário", "Vestimenta", "Mobilia-Eletro-Moveis", "Higiene Pessoal", "Sala"],
-  Financeiro: ["Taxas", "Juros", "Investimentos", "Transferencia", "Transferencias"],
+  Alimentação: ["Supermercado", "Restaurantes", "Padaria", "Delivery", "Assinaturas"],
+  Transporte: ["Combustível", "Transporte", "Mobilidade", "Estacionamento", "Manutenção do Carro"],
+  Saúde: ["Farmácia", "Plano de Saúde", "Consulta", "Seguro"],
+  Educação: ["Cursos", "Escola", "Livros"],
+  Lazer: ["Lazer", "Viagem", "Entretenimento", "Eletrônicos"],
+  Compras: ["Vestuário", "Vestimenta", "Mobília-Eletro-Móveis", "Higiene Pessoal", "Sala"],
+  Financeiro: ["Taxas", "Juros", "Investimentos", "Transferência", "Transferências"],
   Receitas: ["Receitas", "Salario", "Renda Extra"],
-  Outros: ["Outros", "Nao classificado"],
+  Outros: ["Outros", "Não classificado"],
 };
 
 function normalizeValue(input?: string | null) {
@@ -45,10 +45,10 @@ function detectGroup(categoryName: string, leafToGroup: Map<string, string>) {
   if (direct) return direct;
 
   if (/aluguel|condominio|energia|agua|internet|gas|iptu|moradia|casa/.test(normalized)) return "Moradia";
-  if (/supermerc|mercado|restaurante|delivery|aliment|padaria/.test(normalized)) return "Alimentacao";
+  if (/supermerc|mercado|restaurante|delivery|aliment|padaria/.test(normalized)) return "Alimentação";
   if (/combust|transporte|mobilidade|uber|99|estacion|pedagio|carro/.test(normalized)) return "Transporte";
-  if (/farmacia|saude|medic|plano|seguro/.test(normalized)) return "Saude";
-  if (/curso|escola|educa|livro/.test(normalized)) return "Educacao";
+  if (/farmacia|saude|medic|plano|seguro/.test(normalized)) return "Saúde";
+  if (/curso|escola|educa|livro/.test(normalized)) return "Educação";
   if (/lazer|viagem|entretenimento|show|eletron/.test(normalized)) return "Lazer";
   if (/vest|higiene|mobilia|moveis|sala|compras/.test(normalized)) return "Compras";
   if (/taxa|juros|invest|transfer|pix|ted/.test(normalized)) return "Financeiro";

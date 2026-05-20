@@ -44,7 +44,7 @@ export function MobileMonthPicker({ value }: { value: string }) {
         className="fg-mobile-month-btn"
         onClick={() => shiftMonth(-1)}
         disabled={isPending}
-        aria-label="Mes anterior"
+        aria-label="Mês anterior"
       >
         &lt;
       </button>
@@ -61,7 +61,7 @@ export function MobileMonthPicker({ value }: { value: string }) {
         className="fg-mobile-month-btn"
         onClick={() => shiftMonth(1)}
         disabled={isPending}
-        aria-label="Proximo mes"
+        aria-label="Próximo mês"
       >
         &gt;
       </button>

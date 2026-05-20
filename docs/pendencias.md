@@ -135,3 +135,31 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: instalar APK manualmente em dispositivo com politicas de seguranca mais restritivas.
 - Status: em monitoramento
 - Responsavel: time de desenvolvimento
+
+- ID: `AND-012`
+- Descricao: validar em aparelho real o APK nativo `1.0.3` apos remodelagem de login, dashboard mensal, detalhe de conta, perfil e transacoes recorrentes.
+- Severidade: alta
+- Como reproduzir: instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`, entrar com usuario de teste, trocar meses, abrir uma conta, criar transacao e testar recorrencias.
+- Status: pendente de teste fisico
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-013`
+- Descricao: validar no celular se o overlay `Carregando...` aparece de forma consistente em login, atualizacao, salvamento e abertura de telas.
+- Severidade: media
+- Como reproduzir: executar acoes com rede movel lenta ou Wi-Fi instavel e observar feedback visual.
+- Status: pendente de teste fisico
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-014`
+- Descricao: validar transferencia nativa entre contas do usuario no APK, incluindo saldo da conta origem e da conta destino.
+- Severidade: alta
+- Como reproduzir: criar transferencia no APK selecionando conta origem/destino diferentes e conferir lancamentos no app e no web.
+- Status: pendente de teste funcional
+- Responsavel: time de desenvolvimento
+
+- ID: `WEB-015`
+- Descricao: revisar demais paginas antigas da web que nao foram alteradas nesta etapa para garantir acentuacao e padrao visual uniformes.
+- Severidade: baixa
+- Como reproduzir: navegar por todas as abas web e procurar textos sem acento ou com caracteres quebrados.
+- Status: em monitoramento
+- Responsavel: time de desenvolvimento

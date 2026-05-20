@@ -78,13 +78,13 @@ export async function GET(req: NextRequest) {
     <div class="card"><div class="label">Saldo</div><div class="value">${brl(income - expense)}</div></div>
   </div>
 
-  <h2>Transacoes</h2>
+  <h2>Transações</h2>
   <table>
     <thead>
       <tr>
         <th>Data</th>
         <th>Banco</th>
-        <th>Descricao</th>
+        <th>Descrição</th>
         <th>Categoria</th>
         <th>Valor</th>
       </tr>

@@ -10,7 +10,7 @@ function typeFromAction(action: string) {
   const normalized = action.trim().toLowerCase();
 
   if (normalized === "receita" || normalized === "credit") return "credit" as const;
-  if (normalized === "transferencia" || normalized === "transferÃªncia" || normalized === "transfer") return "transfer" as const;
+  if (normalized === "transferencia" || normalized === "transferência" || normalized === "transfer") return "transfer" as const;
 
   return "debit" as const;
 }
@@ -29,7 +29,7 @@ function safeReturnUrl(input: string) {
 function parseRepeatMode(input: string): RepeatMode {
   const mode = String(input || "").trim().toLowerCase();
   if (mode === "installment" || mode === "parcelamento") return "installment";
-  if (mode === "advanced" || mode === "avancado" || mode === "avanÃ§ado") return "advanced";
+  if (mode === "advanced" || mode === "avancado" || mode === "avançado") return "advanced";
   return "none";
 }
 

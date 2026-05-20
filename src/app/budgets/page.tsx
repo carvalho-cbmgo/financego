@@ -90,24 +90,24 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
     <PageShell>
       <div className="fg-stack fg-budgets-page">
         <SectionIntro
-          title="Orcamento por categoria"
-          subtitle="Escolha o mes de referencia, defina um limite mensal por categoria e acompanhe o consumo em R$ e percentual."
+          title="Orçamento por categoria"
+          subtitle="Escolha o mês de referência, defina um limite mensal por categoria e acompanhe o consumo em R$ e percentual."
         />
 
         {status ? <div className={`fg-accounts-status ${status.tone === "error" ? "is-error" : "is-ok"}`}>{status.text}</div> : null}
 
-        <Card title="Mes de referencia">
+        <Card title="Mês de referência">
           <div className="fg-budgets-month-wrap">
             <BudgetsMonthPicker value={selectedMonthRef} />
           </div>
         </Card>
 
         <div className="fg-grid-4">
-          <Stat label="Mes de referencia" value={selectedMonthRef} />
+          <Stat label="Mês de referência" value={selectedMonthRef} />
           <Stat label="Total orcado" value={brl(totalPlanned)} />
           <Stat label="Gasto nas categorias orcadas" value={brl(totalSpent)} tone="negative" />
           <Stat
-            label="Saldo do mes orcado"
+            label="Saldo do mês orçado"
             value={brl(totalRemaining)}
             tone={totalRemaining >= 0 ? "positive" : "negative"}
           />
@@ -128,7 +128,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
             <div className="fg-budgets-summary-stack">
               <SummaryRow label="Categorias orcadas" value={String(budgetRows.length)} />
               <SummaryRow label="Consumo medio das categorias orcadas" value={`${totalConsumptionPct.toFixed(1)}%`} />
-              <SummaryRow label="Gasto fora do orcamento" value={brl(unbudgetedSpent)} />
+              <SummaryRow label="Gasto fora do orçamento" value={brl(unbudgetedSpent)} />
               {budgetPieModel ? (
                 <BudgetPiePanel model={budgetPieModel} totalConsumptionPct={totalConsumptionPct} />
               ) : (
@@ -144,7 +144,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
               <thead>
                 <tr>
                   <th>Categoria</th>
-                  <th>Orcamento (R$)</th>
+                  <th>Orçamento (R$)</th>
                   <th>Gasto (R$)</th>
                   <th>Saldo (R$)</th>
                   <th>Consumo</th>
@@ -177,7 +177,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                 ) : (
                   <tr>
                     <td colSpan={5}>
-                      Nenhuma categoria orcada neste mes. Selecione categorias no bloco acima e salve para iniciar o acompanhamento.
+                      Nenhuma categoria orçada neste mês. Selecione categorias no bloco acima e salve para iniciar o acompanhamento.
                     </td>
                   </tr>
                 )}
@@ -288,13 +288,13 @@ function buildAvailableCategories(input: {
 
 function buildStatusMessage(okValue?: string, errorValue?: string) {
   const okMap: Record<string, string> = {
-    saved: "Orcamento mensal salvo com sucesso.",
-    saved_replicated: "Orcamento salvo e replicado automaticamente para os meses seguintes deste ano.",
+    saved: "Orçamento mensal salvo com sucesso.",
+    saved_replicated: "Orçamento salvo e replicado automaticamente para os meses seguintes deste ano.",
   };
 
   const errorMap: Record<string, string> = {
-    invalid_month_ref: "Mes de referencia invalido.",
-    save_failed: "Nao foi possivel salvar o orcamento agora.",
+    invalid_month_ref: "Mês de referência inválido.",
+    save_failed: "Não foi possível salvar o orçamento agora.",
   };
 
   if (errorValue && errorMap[errorValue]) return { tone: "error" as const, text: errorMap[errorValue] };

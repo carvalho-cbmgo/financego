@@ -28,6 +28,13 @@ class FinanceGoApi(private val store: SessionStore) {
   fun sendNotification(payload: JSONObject): JSONObject =
     request("POST", "/api/android/notifications/ingest", payload, authenticated = true)
 
+  fun updateProfile(fullName: String): JSONObject {
+    val body = JSONObject().put("full_name", fullName)
+    val response = request("POST", "/api/profile/update", body, authenticated = true)
+    store.fullName = response.optString("full_name", fullName)
+    return response
+  }
+
   private fun request(method: String, path: String, body: JSONObject?, authenticated: Boolean): JSONObject {
     val base = store.baseUrl.trim().trimEnd('/')
     val conn = try {

@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       ["Salario recebido", 8500.0, "Receitas", "2026-03-05T12:00:00Z"],
       ["Supermercado Central", -420.55, "Casa", "2026-03-07T12:00:00Z"],
       ["Uber", -38.9, "Transporte", "2026-03-08T12:00:00Z"],
-      ["iFood", -72.1, "Alimentacao", "2026-03-09T12:00:00Z"],
+      ["iFood", -72.1, "Alimentação", "2026-03-09T12:00:00Z"],
       ["Posto Shell", -250.0, "Transporte", "2026-03-12T12:00:00Z"],
       ["Cinema", -85.0, "Lazer", "2026-03-15T12:00:00Z"],
     ];
