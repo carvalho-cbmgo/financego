@@ -21,6 +21,10 @@ npm run start
 ## Build do FinanceGO Android (APK)
 > Recomendado: usar o script do repositório. Ele configura Java do Android Studio, Android SDK, Gradle local e truststore automaticamente.
 
+URL de producao usada pelo APK: `https://financego-eight.vercel.app`.
+
+Observacao: o script limpa atributos `ReadOnly` das pastas de build Android antes de chamar o Gradle, evitando falhas locais como `AccessDeniedException` em `app/build/generated`.
+
 ```powershell
 # Validacao completa: teste, lint, debug e release
 powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate
@@ -120,6 +124,15 @@ android-financego/app/build/outputs/apk/release/app-release-unsigned.apk
 4) O app sincroniza perfil, contas e transações por `/api/android/bootstrap`
 5) O listener envia notificações para `/api/android/notifications/ingest`
 6) A criação/edição nativa usa `/api/android/transactions/save`
+```
+
+## Testar login Android no Vercel
+```powershell
+$url = "https://financego-eight.vercel.app/api/android/login"
+$body = @{ email = "maykocarvalho@gmail.com"; password = "123456" } | ConvertTo-Json -Compress
+$response = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json; charset=utf-8" -Body $body
+$response.ok
+$response.user.email
 ```
 
 ## Git

@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-20`
+- Decisao: definir `https://financego-eight.vercel.app` como URL oficial de producao do APK Android.
+- Motivo: o dominio real usado pelo sistema web no Vercel e `https://financego-eight.vercel.app/`; a URL antiga `https://app-financego.vercel.app` causava falha de login no app.
+- Impacto: APK `1.0.2` usa o dominio correto por padrao e migra automaticamente instalacoes que ainda tenham a URL antiga salva no armazenamento interno.
+
+- Data: `2026-05-20`
+- Decisao: o script `scripts/build-android-financego.ps1` deve limpar atributos `ReadOnly` em pastas de build Android antes de executar o Gradle.
+- Motivo: o Windows marcou subpastas geradas do Gradle como somente leitura e isso bloqueou `generateDebugBuildConfig`.
+- Impacto: validacoes Android ficam mais repetiveis sem precisar limpeza manual de `android-financego/app/build`.
+
+- Data: `2026-05-20`
 - Decisao: usar `android.app.Activity` no APK nativo em vez de `AppCompatActivity`.
 - Motivo: o app Android usa tema nativo (`android:style/Theme.Material.Light.NoActionBar`); `AppCompatActivity` exige tema `Theme.AppCompat` e pode causar crash imediato na abertura.
 - Impacto: o APK `1.0.1` fica alinhado ao tema nativo, remove dependencia AppCompat desnecessaria e reduz risco de falha antes da tela de login.

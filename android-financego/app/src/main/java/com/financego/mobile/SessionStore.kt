@@ -6,8 +6,8 @@ class SessionStore(context: Context) {
   private val prefs = context.getSharedPreferences("financego_session", Context.MODE_PRIVATE)
 
   var baseUrl: String
-    get() = prefs.getString("base_url", BuildConfig.DEFAULT_BASE_URL) ?: BuildConfig.DEFAULT_BASE_URL
-    set(value) = prefs.edit().putString("base_url", value.trim().trimEnd('/')).apply()
+    get() = normalizeBaseUrl(prefs.getString("base_url", BuildConfig.DEFAULT_BASE_URL))
+    set(value) = prefs.edit().putString("base_url", normalizeBaseUrl(value)).apply()
 
   var accessToken: String
     get() = prefs.getString("access_token", "") ?: ""
@@ -23,7 +23,30 @@ class SessionStore(context: Context) {
 
   fun isLoggedIn(): Boolean = accessToken.isNotBlank()
 
+  fun migrateLegacyBaseUrl() {
+    val current = prefs.getString("base_url", null)
+    val normalized = normalizeBaseUrl(current)
+    if (current == null || current.trim().trimEnd('/') != normalized) {
+      prefs.edit().putString("base_url", normalized).apply()
+    }
+  }
+
   fun clear() {
     prefs.edit().clear().apply()
+  }
+
+  private fun normalizeBaseUrl(value: String?): String {
+    val raw = value.orEmpty().trim().trimEnd('/')
+    val withScheme = when {
+      raw.isBlank() -> BuildConfig.DEFAULT_BASE_URL
+      raw.startsWith("http://", ignoreCase = true) || raw.startsWith("https://", ignoreCase = true) -> raw
+      else -> "https://$raw"
+    }.trimEnd('/')
+
+    return when (withScheme.lowercase()) {
+      "https://app-financego.vercel.app",
+      "http://app-financego.vercel.app" -> BuildConfig.DEFAULT_BASE_URL
+      else -> withScheme
+    }
   }
 }

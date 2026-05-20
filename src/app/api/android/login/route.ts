@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { ensureProfile } from "@/lib/auth-server";
 import { supabaseAdmin } from "@/lib/supabase";

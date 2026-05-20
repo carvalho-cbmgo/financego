@@ -65,6 +65,21 @@ if (Test-Path $TrustStore) {
   $env:GRADLE_OPTS = "-Djavax.net.ssl.trustStore=$TrustStore -Djavax.net.ssl.trustStorePassword=changeit -Dcom.sun.net.ssl.checkRevocation=false"
 }
 
+function Clear-ReadOnlyAttributes {
+  param([string]$Path)
+
+  if (Test-Path $Path) {
+    Get-ChildItem -LiteralPath $Path -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {
+      $_.Attributes = $_.Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
+    }
+    $Item = Get-Item -LiteralPath $Path -Force
+    $Item.Attributes = $Item.Attributes -band (-bnot [System.IO.FileAttributes]::ReadOnly)
+  }
+}
+
+Clear-ReadOnlyAttributes (Join-Path $AndroidDir "app\build")
+Clear-ReadOnlyAttributes (Join-Path $AndroidDir "build")
+
 $TaskGroups = @{
   debug = @(":app:assembleDebug")
   release = @(":app:assembleRelease")

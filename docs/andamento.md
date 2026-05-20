@@ -4,6 +4,28 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-20`
+- Entrega principal: correcao da URL de producao usada pelo APK Android no login.
+- Resultado entregue:
+  - Android:
+    - URL padrao de producao alterada de `https://app-financego.vercel.app` para `https://financego-eight.vercel.app`.
+    - Versao Android atualizada para `versionCode=3` e `versionName=1.0.2`.
+    - `SessionStore` passou a migrar automaticamente URL antiga salva no celular para a URL atual do Vercel.
+    - URLs digitadas sem `https://` passam a ser normalizadas automaticamente.
+    - Mensagem de erro de conexao no Android passou a informar a URL usada quando nao for possivel conectar.
+  - Backend:
+    - Mensagem de login invalido da rota `/api/android/login` teve acentuacao corrigida.
+  - Validacoes:
+    - Endpoint `https://financego-eight.vercel.app/api/android/login` respondeu corretamente.
+    - Login real de teste em producao retornou `ok=true` e token de acesso.
+    - `npm run build` executado com sucesso.
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate` executado com sucesso.
+    - APK `debug` verificado como assinado pelo `apksigner`.
+    - BuildConfig gerado confirmou `DEFAULT_BASE_URL = "https://financego-eight.vercel.app"`.
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+- Data: `2026-05-20`
 - Entrega principal: hotfix do crash imediato ao abrir o APK Android nativo.
 - Resultado entregue:
   - Android:
@@ -115,9 +137,10 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.1` em aparelho Android real e validar abertura, login, sincronizacao e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.2` em aparelho Android real e validar abertura, login, sincronizacao e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
+  - [x] Corrigir URL de producao usada pelo APK Android.
   - [x] Compilar novo APK nativo.
   - [ ] Reinstalar APK `debug` atualizado no celular.
   - [ ] Fazer login no aplicativo Android nativo.
@@ -127,7 +150,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.1` abre sem fechar imediatamente.
+  - [ ] Confirmar em aparelho real que o APK `1.0.2` abre e faz login no dominio `https://financego-eight.vercel.app`.
   - [ ] Configurar assinatura de produção para gerar APK release assinado.
   - [ ] Instalar `app-debug.apk` em celular real e validar login nativo, sincronização e listener.
   - [ ] Exibir no app Android o último payload capturado e o último status HTTP de envio.

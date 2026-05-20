@@ -17,6 +17,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -
 ```
 
 ## Observações
-- A URL padrão de produção é `https://app-financego.vercel.app`.
+- A URL padrão de produção é `https://financego-eight.vercel.app`.
+- URLs antigas salvas no celular, como `https://app-financego.vercel.app`, são migradas automaticamente na abertura do app.
 - A tela de configuração orienta o usuário a habilitar o acesso às notificações quando necessário.
 - A classificação de PIX/transferências usa o nome completo salvo no perfil do usuário no Finance GO.

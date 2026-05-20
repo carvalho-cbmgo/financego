@@ -3,7 +3,7 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Reinstalar o APK Android nativo versao `1.0.1` e confirmar que o aplicativo abre sem fechar imediatamente.
+- [ ] Reinstalar o APK Android nativo versao `1.0.2` e confirmar login usando `https://financego-eight.vercel.app`.
 - [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
 - [ ] Validar login nativo no APK com usuário real.
 - [ ] Habilitar acesso às notificações para o app Finance GO Android e testar captura em segundo plano.
@@ -49,6 +49,13 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Criar pipeline de build Android automatizado (CI) para gerar APK por commit/tag.
 
 ## Bugs conhecidos
+- ID: `AND-012`
+- Descricao: APK Android usava como URL padrao `https://app-financego.vercel.app`, mas o dominio real do FinanceGO no Vercel e `https://financego-eight.vercel.app/`.
+- Severidade: alta
+- Como reproduzir: instalar APK anterior, abrir tela de login e clicar em `Entrar` usando a URL antiga.
+- Status: corrigido em `2026-05-20` na versao `1.0.2`; endpoint e login real em producao foram validados.
+- Responsavel: time de desenvolvimento
+
 - ID: `AND-011`
 - Descricao: APK Android nativo `1.0.0` fechava imediatamente ao abrir em aparelho real.
 - Severidade: alta

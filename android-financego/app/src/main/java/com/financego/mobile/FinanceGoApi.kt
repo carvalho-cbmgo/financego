@@ -30,7 +30,11 @@ class FinanceGoApi(private val store: SessionStore) {
 
   private fun request(method: String, path: String, body: JSONObject?, authenticated: Boolean): JSONObject {
     val base = store.baseUrl.trim().trimEnd('/')
-    val conn = (URL(base + path).openConnection() as HttpURLConnection).apply {
+    val conn = try {
+      URL(base + path).openConnection() as HttpURLConnection
+    } catch (error: Exception) {
+      throw IllegalStateException("URL do Finance GO inválida: $base")
+    }.apply {
       requestMethod = method
       connectTimeout = 15_000
       readTimeout = 20_000
@@ -46,7 +50,11 @@ class FinanceGoApi(private val store: SessionStore) {
       OutputStreamWriter(conn.outputStream, Charsets.UTF_8).use { it.write(body.toString()) }
     }
 
-    val code = conn.responseCode
+    val code = try {
+      conn.responseCode
+    } catch (error: Exception) {
+      throw IllegalStateException("Não foi possível conectar ao Finance GO em $base. Verifique a internet e a URL do Vercel.")
+    }
     val stream = if (code in 200..299) conn.inputStream else conn.errorStream
     val text = stream?.let {
       BufferedReader(InputStreamReader(it, Charsets.UTF_8)).use { reader -> reader.readText() }

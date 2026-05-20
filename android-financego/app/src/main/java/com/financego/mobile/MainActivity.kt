@@ -38,6 +38,7 @@ class MainActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     store = SessionStore(this)
+    store.migrateLegacyBaseUrl()
     api = FinanceGoApi(store)
     if (store.isLoggedIn()) loadHome() else showLogin()
   }

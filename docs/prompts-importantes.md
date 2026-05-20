@@ -3,6 +3,16 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir erro de login no APK Android causado por URL de producao incorreta.
+- Prompt base: "instalei o app-debug.apk e executei o aplicativo no celular, mas na tela inicial de login, tudo está preenchido, mas ao clicar em 'ENTRAR' aparece um erro. Será que o https utilizado está incorreto? O link utilizado para acessar o FinanceGO pelo vercel no sistema web é https://financego-eight.vercel.app/"
+- Resultado:
+  - URL padrao do APK alterada para `https://financego-eight.vercel.app`.
+  - Migracao automatica criada para substituir URL antiga salva no celular.
+  - Versao Android atualizada para `1.0.2`.
+  - Script de build Android reforcado para remover atributos `ReadOnly` das pastas geradas antes do Gradle.
+  - Endpoint `/api/android/login` validado em producao.
+  - Login real em producao validado com retorno `ok=true`.
+
 - Objetivo: corrigir crash imediato do APK Android nativo ao abrir no celular.
 - Prompt base: "Instalei o app-debug.apk no meu celular andoid, mas ao tentar iniciar o aplicativo não foi possível, pois deu erro e o aplicativo fechou imediatamente."
 - Resultado:
