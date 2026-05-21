@@ -232,6 +232,24 @@ Registro das decisoes arquiteturais, de interface e de dados.
 ## Decisoes de interface
 - Data: `2026-05-21`
 - Tela: APK Android / topo
+- Decisao: concentrar acoes secundarias em um menu de 3 pontos e manter `Sair` como icone direto.
+- Motivo: reduzir poluicao visual no topo e preservar a acao de logout como acesso rapido.
+- Impacto: tela principal exibe `Atualizar` e `Perfil` no menu; tela de conta exibe `Edicao de Conta`, `Atualizar` e `Perfil` no menu.
+
+- Data: `2026-05-21`
+- Tela: APK Android / conta especifica
+- Decisao: manter o botao flutuante de nova transacao na tela da conta e preselecionar essa conta como origem.
+- Motivo: acelerar lancamentos relacionados a uma conta especifica e evitar selecao manual repetitiva.
+- Impacto: o usuario cria transacoes de uma conta em menos toques e com menor risco de escolher a conta errada.
+
+- Data: `2026-05-21`
+- Tela: APK Android / cards de transacao
+- Decisao: terceira linha dos cards deve mostrar apenas banco em selo roxo e tipo da conta.
+- Motivo: simplificar leitura da lista principal e manter consistencia com os cards de contas.
+- Impacto: o nome completo da conta deixa de ocupar a terceira linha, deixando banco/tipo mais claros.
+
+- Data: `2026-05-21`
+- Tela: APK Android / topo
 - Decisao: trocar icones textuais por drawables vetoriais nativos.
 - Motivo: melhorar legibilidade, profissionalismo e consistencia visual do app.
 - Impacto: `Atualizar`, `Perfil`, `Sair` e `Editar conta` passam a usar miniaturas visuais.

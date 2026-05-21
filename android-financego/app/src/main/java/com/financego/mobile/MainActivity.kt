@@ -189,7 +189,7 @@ class MainActivity : Activity() {
     addAccountSummary(root, initial, rows)
     root.addView(section("Transações da conta"))
     addTransactionRows(root, rows)
-    setContentView(scroll(root))
+    setContentViewWithFab(root, account.optString("id"))
   }
 
   private fun showProfilePage() {
@@ -385,12 +385,7 @@ class MainActivity : Activity() {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
     }
-    accountRow.addView(TextView(this@MainActivity).apply {
-      text = account?.let { accountTitle(it) } ?: "Conta não identificada"
-      textSize = 12f
-      setTextColor(COLOR_MUTED)
-      setSingleLine(false)
-    }, weightWrap(1f))
+    accountRow.addView(bankBadge(account?.optString("institution_name") ?: "Banco"))
     accountRow.addView(typeBadge(account?.optString("type") ?: "", topMargin = 0))
     info.addView(accountRow)
 
@@ -457,7 +452,7 @@ class MainActivity : Activity() {
     dialog.show()
   }
 
-  private fun openTransactionDialog(tx: JSONObject?, repeatScope: String = "single") {
+  private fun openTransactionDialog(tx: JSONObject?, repeatScope: String = "single", preferredAccountId: String? = null) {
     val data = bootstrap ?: JSONObject()
     val accounts = accountsList(data)
     if (accounts.isEmpty()) {
@@ -488,7 +483,7 @@ class MainActivity : Activity() {
       inputType = InputType.TYPE_CLASS_DATETIME
     }
     val description = input("Descrição", stripRecurrenceSuffix(tx?.optString("description") ?: ""))
-    val originSpinner = accountSpinner(accounts, tx?.optString("account_id"))
+    val originSpinner = accountSpinner(accounts, tx?.optString("account_id") ?: preferredAccountId)
     val destinationSpinner = accountSpinner(accounts, null)
     val categories = categoryOptions(data)
     val currentCategory = tx?.optString("app_category") ?: "Outros"
@@ -1036,13 +1031,27 @@ class MainActivity : Activity() {
       addView(muted(text))
     }, weightWrap(1f))
     if (showProfile) {
-      editAccount?.let {
-        addView(iconImageButton(R.drawable.ic_edit, "Editar conta").apply { setOnClickListener { openAccountDialog(editAccount) } }, fixed(dp(42), dp(42)))
-      }
-      addView(iconImageButton(R.drawable.ic_refresh, "Atualizar dados").apply { setOnClickListener { loadHome() } }, fixed(dp(42), dp(42)))
-      addView(iconImageButton(R.drawable.ic_profile, "Perfil").apply { setOnClickListener { showProfilePage() } }, fixed(dp(42), dp(42)))
+      addView(iconImageButton(R.drawable.ic_more_vert, "Mais opções").apply { setOnClickListener { showHeaderMenu(editAccount) } }, fixed(dp(42), dp(42)))
       addView(iconImageButton(R.drawable.ic_logout, "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
     }
+  }
+
+  private fun showHeaderMenu(editAccount: JSONObject?) {
+    val labels = if (editAccount != null) {
+      arrayOf("Edição de Conta", "Atualizar", "Perfil")
+    } else {
+      arrayOf("Atualizar", "Perfil")
+    }
+    AlertDialog.Builder(this)
+      .setItems(labels) { dialog, which ->
+        dialog.dismiss()
+        when (labels[which]) {
+          "Edição de Conta" -> editAccount?.let { openAccountDialog(it) }
+          "Atualizar" -> loadHome()
+          "Perfil" -> showProfilePage()
+        }
+      }
+      .show()
   }
 
   private fun isNotificationListenerEnabled(): Boolean {
@@ -1092,7 +1101,7 @@ class MainActivity : Activity() {
 
   private fun verticalRoot(): LinearLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
   private fun scroll(view: View): ScrollView = ScrollView(this).apply { setBackgroundColor(COLOR_BG); addView(view) }
-  private fun setContentViewWithFab(root: LinearLayout) {
+  private fun setContentViewWithFab(root: LinearLayout, preferredAccountId: String? = null) {
     val frame = FrameLayout(this).apply { setBackgroundColor(COLOR_BG) }
     frame.addView(scroll(root), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
     val fab = primaryButton("+").apply {
@@ -1100,7 +1109,7 @@ class MainActivity : Activity() {
       contentDescription = "Nova transação"
       setPadding(0, 0, 0, dp(4))
       background = rounded(COLOR_PRIMARY, 0, 0, dp(32))
-      setOnClickListener { openTransactionDialog(null) }
+      setOnClickListener { openTransactionDialog(null, preferredAccountId = preferredAccountId) }
     }
     frame.addView(fab, FrameLayout.LayoutParams(dp(62), dp(62)).apply {
       gravity = Gravity.BOTTOM or Gravity.END

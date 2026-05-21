@@ -226,3 +226,14 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Marca `Finance GO` recebeu destaque visual no `GO`.
   - Rotas Android `/api/android/accounts/save` e `/api/android/accounts/delete` criadas.
   - Versao Android atualizada para `1.0.7`.
+
+- Objetivo: compactar o topo do APK com menu de 3 pontos e manter nova transacao na tela de conta.
+- Prompt base: "Ajustar o apk para que o sistema mantenha o botão flutuante de nova transação da tela principal na tela de uma conta específica... crie um botão com uma imagem de 3 pontos verticais..."
+- Resultado:
+  - Tela principal passou a exibir menu de 3 pontos com `Atualizar` e `Perfil`, alem do icone direto `Sair`.
+  - Tela de conta passou a exibir menu de 3 pontos com `Edicao de Conta`, `Atualizar` e `Perfil`, alem do icone direto `Sair`.
+  - Icones separados de atualizar/perfil/edicao foram removidos do topo.
+  - Botao flutuante `+` foi mantido na tela de conta.
+  - Nova transacao criada pela tela de conta ja preseleciona aquela conta como `Conta Origem`.
+  - Terceira linha dos cards de transacao passou a exibir banco em selo roxo e tipo de conta.
+  - Versao Android atualizada para `1.0.8`.
