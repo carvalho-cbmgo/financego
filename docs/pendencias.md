@@ -3,11 +3,11 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Reinstalar o APK Android nativo versao `1.0.5` e confirmar login usando `https://financego-eight.vercel.app`.
+- [ ] Reinstalar o APK Android nativo versao `1.0.6` e confirmar login usando `https://financego-eight.vercel.app`.
 - [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
 - [ ] Validar login nativo no APK com usuário real.
 - [ ] Validar no APK os filtros de periodo `ate hoje`, `amanha ate o final do mes` e `mes completo`.
-- [ ] Validar no APK a criacao de parcelamento mensal com borda azul e legenda de parcela.
+- [ ] Validar no APK a criacao de parcelamento mensal com selo azul e legenda de parcela.
 - [ ] Validar no APK a edicao de recorrencia nao consolidada usando os escopos `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.
 - [ ] Habilitar acesso às notificações para o app Finance GO Android e testar captura em segundo plano.
 - [ ] Validar classificação real de notificações: PIX recebido, PIX realizado e transferência entre contas próprias.
@@ -140,7 +140,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-012`
-- Descricao: validar em aparelho real o APK nativo `1.0.5` apos remodelagem de login, dashboard mensal, detalhe de conta, filtro de periodo, perfil e transacoes recorrentes.
+- Descricao: validar em aparelho real o APK nativo `1.0.6` apos remodelagem de login, dashboard mensal, detalhe de conta, filtro de periodo, perfil e transacoes recorrentes.
 - Severidade: alta
 - Como reproduzir: instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`, entrar com usuario de teste, trocar meses, abrir uma conta, criar transacao e testar recorrencias.
 - Status: pendente de teste fisico
@@ -170,7 +170,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - ID: `AND-016`
 - Descricao: validar no celular se os icones de atualizar, perfil, sair e nova transacao estao intuitivos e nao cortam em telas menores.
 - Severidade: media
-- Como reproduzir: instalar APK `1.0.5`, abrir a tela de transacoes e testar em diferentes escalas/fontes do Android.
+- Como reproduzir: instalar APK `1.0.6`, abrir a tela de transacoes e testar em diferentes escalas/fontes do Android.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
 
@@ -191,13 +191,20 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - ID: `AND-019`
 - Descricao: validar no celular se o seletor de periodo do APK recalcula corretamente resumo e saldos de contas.
 - Severidade: alta
-- Como reproduzir: instalar APK `1.0.5`, alternar entre `Inicio do mes ate hoje`, `Amanha ate o final do mes` e `Mes completo`, e conferir `Entradas`, `Saidas`, `Saldo atual` e saldos de contas.
+- Como reproduzir: instalar APK `1.0.6`, alternar entre `Inicio do mes ate hoje`, `Amanha ate o final do mes` e `Mes completo`, e conferir `Entradas`, `Saidas`, `Saldo atual` e saldos de contas.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-020`
-- Descricao: validar no celular se parcelamentos/recorrencias criados no APK ficam vinculados, destacados em azul e editaveis por escopo.
+- Descricao: validar no celular se parcelamentos/recorrencias criados no APK ficam vinculados, destacados com selo azul e editaveis por escopo.
 - Severidade: alta
 - Como reproduzir: criar uma transacao em `Parcelamento (mensal)`, conferir parcelas mes a mes e editar uma parcela nao consolidada usando cada opcao de escopo.
+- Status: pendente de teste fisico
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-021`
+- Descricao: validar no celular se os cards de transacao do APK exibem as tres linhas solicitadas e se o botao `Excluir` funciona no modal de edicao.
+- Severidade: alta
+- Como reproduzir: instalar APK `1.0.6`, abrir transacoes, conferir data/descricao, selos, conta/tipo, valor a direita e excluir uma transacao de teste.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento

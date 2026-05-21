@@ -4,13 +4,37 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-21`
+- Entrega principal: refinamento visual dos cards de transacao do APK e exclusao nativa de transacoes.
+- Resultado entregue:
+  - Android nativo:
+    - Cards de transacao passaram a usar a mesma borda das contas no painel de contas.
+    - Transacoes passaram a exibir a primeira linha como `DD/MM/AAAA - Descricao`.
+    - Sufixos de parcela/recorrencia foram removidos da descricao exibida e movidos para selos proprios.
+    - Segunda linha passou a exibir categoria em selo com borda verde e, quando aplicavel, `Parcela X de Y` ou `Recorrente` em selo com borda azul.
+    - Terceira linha passou a exibir a conta relacionada e o tipo da conta em selo `CREDITO` com borda vermelha ou `CORRENTE` com borda verde.
+    - Valor da transacao fica alinhado a direita e centralizado verticalmente no card.
+    - Correção visual: somente transacoes da modalidade `Avancado` aparecem como `Recorrente`; parcelamentos aparecem como `Parcela X de Y`.
+    - Modal de edicao passou a ter botao `Excluir` vermelho alinhado a direita na linha de `Editar Transacao`.
+    - Versao Android atualizada para `versionCode=7` e `versionName=1.0.6`.
+  - API Android:
+    - Nova rota `POST /api/android/transactions/delete` criada para exclusao autenticada pelo APK.
+    - Exclusao considera pares de transferencia interna quando a transacao pertence a grupo de transferencia.
+    - Exclusao tambem aceita escopo de repeticao para remover transacoes vinculadas nao consolidadas quando o formulario foi aberto por uma opcao de escopo.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate` executado com sucesso (`testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease`).
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+- Data: `2026-05-21`
 - Entrega principal: filtro de periodo financeiro no APK e edicao estruturada de transacoes recorrentes.
 - Resultado entregue:
   - Android nativo:
     - Tela de transacoes passou a ter seletor de periodo acima do seletor de mes, com opcoes dinamicas como `Inicio de MAIO ate hoje`, `Amanha ate o final de MAIO` e `MAIO (1 a 31)`.
     - O periodo selecionado passou a ser a base dos calculos de `Entradas`, `Saidas`, `Saldo atual` e saldos exibidos em `Contas`.
     - Icones de `Atualizar` e `Sair` foram ajustados no topo da tela principal.
-    - Transacoes recorrentes/parceladas passaram a receber destaque visual com borda azul e texto de parcela, como `Parcela 1 de 10`.
+    - Transacoes recorrentes/parceladas passaram a receber destaque visual por selo azul, com texto como `Parcela 1 de 10` ou `Recorrente`.
     - Ao tocar em transacao recorrente nao consolidada, o app abre uma janela inicial perguntando qual escopo alterar: somente esta, a partir desta ou a partir da primeira.
     - Campo `R$ Total` no formulario de repeticao passou a ser somente leitura e calculado automaticamente por `valor da parcela x total de parcelas`.
     - Botoes `Cancelar` e `Salvar` do formulario nativo foram centralizados horizontalmente.
@@ -161,7 +185,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.5` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, recorrencias/parcelamentos e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.6` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, layout dos cards, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -178,7 +202,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Implementar destaque visual de parcelas/recorrencias no APK.
   - [x] Implementar escolha de escopo antes de editar recorrencias nao consolidadas.
   - [x] Automatizar `R$ Total` em parcelamento/recorrencia no APK.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.5`.
+  - [x] Remodelar card de transacao do APK em tres linhas com selos visuais.
+  - [x] Adicionar exclusao nativa de transacao no APK.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.6`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -186,7 +212,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.5` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.6` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar no aparelho real se cards de transacao exibem data/descricao, selos, conta/tipo e valor alinhado.
+  - [ ] Testar botao `Excluir` no APK para transacao simples, transferencia e parcela/recorrencia nao consolidada.
   - [ ] Testar no aparelho real os filtros de periodo: ate hoje, futuro do mes e mes completo.
   - [ ] Testar criacao nativa de transacoes sem repeticao, parceladas e avancadas.
   - [ ] Testar edicao de transacao recorrente com os escopos `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.

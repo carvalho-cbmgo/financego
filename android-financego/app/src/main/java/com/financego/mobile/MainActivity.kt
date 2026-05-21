@@ -349,31 +349,44 @@ class MainActivity : Activity() {
   }
 
   private fun transactionCard(tx: JSONObject): View = surface().apply {
-    val isRecurring = isRecurringTransaction(tx)
+    val data = bootstrap ?: JSONObject()
+    val account = accountForTransaction(data, tx.optString("account_id"))
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(10), dp(12), dp(10))
-    if (isRecurring) background = rounded(0xFFFFFFFF.toInt(), dp(2), COLOR_BLUE, dp(18))
     setOnClickListener { openTransactionForEdit(tx) }
 
     val info = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL }
     info.addView(TextView(this@MainActivity).apply {
-      text = tx.optString("description", "Transação")
+      val date = formatDateForInput(tx.optString("posted_at", "").take(10))
+      text = "$date - ${stripRecurrenceSuffix(tx.optString("description", "Transação"))}"
       textSize = 13f
       setTextColor(COLOR_TEXT)
       setTypeface(typeface, Typeface.BOLD)
     })
-    val details = listOf(
-      tx.optString("app_category", "Outros"),
-      tx.optString("posted_at", "").take(10),
-      recurrenceLabel(tx),
-    ).filter { it.isNotBlank() }.joinToString(" • ")
-    info.addView(muted(details).apply {
-      if (isRecurring) {
-        setTextColor(COLOR_BLUE)
-        setTypeface(typeface, Typeface.BOLD)
-      }
-    })
+
+    val tagRow = LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(0, dp(5), 0, dp(5))
+    }
+    tagRow.addView(outlineBadge(tx.optString("app_category", "Outros"), COLOR_GREEN))
+    recurrenceBadgeText(tx)?.let { tagRow.addView(outlineBadge(it, COLOR_BLUE)) }
+    info.addView(tagRow)
+
+    val accountRow = LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+    }
+    accountRow.addView(TextView(this@MainActivity).apply {
+      text = account?.let { accountTitle(it) } ?: "Conta não identificada"
+      textSize = 12f
+      setTextColor(COLOR_MUTED)
+      setSingleLine(false)
+    }, weightWrap(1f))
+    accountRow.addView(typeBadge(account?.optString("type") ?: "", topMargin = 0))
+    info.addView(accountRow)
+
     addView(info, weightWrap(1f))
     addView(TextView(this@MainActivity).apply {
       val displayAmount = transactionAmount(tx)
@@ -386,7 +399,7 @@ class MainActivity : Activity() {
   }
 
   private fun openTransactionForEdit(tx: JSONObject) {
-    if (isRecurringTransaction(tx) && !tx.optBoolean("is_consolidated", true)) {
+    if (isRepeatedTransaction(tx) && !tx.optBoolean("is_consolidated", true)) {
       showRecurringEditChoice(tx)
       return
     }
@@ -446,6 +459,21 @@ class MainActivity : Activity() {
     }
 
     val box = verticalRoot().apply { setPadding(dp(10), 0, dp(10), 0) }
+    val deleteButton = tx?.let {
+      secondaryButton("Excluir").apply {
+        textSize = 12f
+        setTextColor(COLOR_DANGER)
+        background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(12))
+      }
+    }
+    box.addView(LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(0, dp(4), 0, dp(12))
+      addView(title(if (tx == null) "Nova Transação" else "Editar Transação", 18f), weightWrap(1f))
+      deleteButton?.let { addView(it, fixed(dp(96), dp(40))) }
+    })
+
     val typeValues = listOf("debit", "credit", "transfer")
     val typeLabels = listOf("Despesa", "Receita", "Transferência")
     val typeSpinner = spinner(typeLabels, typeValues.indexOf(tx?.optString("type") ?: "debit").coerceAtLeast(0))
@@ -566,11 +594,29 @@ class MainActivity : Activity() {
     updateTotalAmount()
 
     val dialog = AlertDialog.Builder(this)
-      .setTitle(if (tx == null) "Nova Transação" else "Editar Transação")
       .setView(scroll(box))
       .create()
 
     cancelButton.setOnClickListener { dialog.dismiss() }
+    deleteButton?.setOnClickListener {
+      AlertDialog.Builder(this)
+        .setTitle("Excluir transação")
+        .setMessage("Deseja realmente excluir esta transação?")
+        .setNegativeButton("Cancelar", null)
+        .setPositiveButton("Excluir") { _, _ ->
+          dialog.dismiss()
+          showLoading("Carregando...")
+          runAsync(
+            work = { api.deleteTransaction(tx.optString("id"), repeatScope) },
+            done = { loadHome() },
+            fail = {
+              toast(it)
+              bootstrap?.let { data -> showDashboard(data) } ?: showLogin()
+            },
+          )
+        }
+        .show()
+    }
     saveButton.setOnClickListener {
       val selectedType = typeValues[typeSpinner.selectedItemPosition]
       val repeatMode = repeatValues[repeatSpinner.selectedItemPosition]
@@ -638,8 +684,10 @@ class MainActivity : Activity() {
       .replace(Regex("""\s*-\s*recorrente\s*#\d+\s*$""", RegexOption.IGNORE_CASE), "")
       .trim()
 
-  private fun isRecurringTransaction(tx: JSONObject): Boolean =
-    tx.optString("installment_group_key").isNotBlank() || tx.optInt("installment_current", 0) > 0
+  private fun isRepeatedTransaction(tx: JSONObject): Boolean {
+    val mode = repeatModeForTransaction(tx)
+    return mode == "installment" || mode == "advanced"
+  }
 
   private fun repeatModeForTransaction(tx: JSONObject?): String {
     if (tx == null) return "none"
@@ -649,12 +697,19 @@ class MainActivity : Activity() {
     return "none"
   }
 
-  private fun recurrenceLabel(tx: JSONObject): String {
+  private fun recurrenceBadgeText(tx: JSONObject): String? {
+    return when (repeatModeForTransaction(tx)) {
+      "installment" -> installmentLabel(tx)
+      "advanced" -> "Recorrente"
+      else -> null
+    }
+  }
+
+  private fun installmentLabel(tx: JSONObject): String {
     val current = tx.optInt("installment_current", 0)
     val total = tx.optInt("installment_total", 0)
     if (current > 0 && total > 0) return "Parcela $current de $total"
-    if (isRecurringTransaction(tx)) return "Transação recorrente"
-    return ""
+    return "Parcelamento"
   }
 
   private fun transactionAmount(tx: JSONObject): Double {
@@ -812,10 +867,27 @@ class MainActivity : Activity() {
 
   private fun accountIdAt(accounts: List<JSONObject>, index: Int): String = accounts.getOrNull(index.coerceAtLeast(0))?.optString("id") ?: ""
 
+  private fun accountForTransaction(data: JSONObject, accountId: String): JSONObject? =
+    accountsList(data).firstOrNull { it.optString("id") == accountId }
+
   private fun accountTitle(account: JSONObject): String =
     "${account.optString("institution_name", "Banco")} - ${account.optString("name", "Conta")}".replace(Regex("\\s+"), " ").trim()
 
-  private fun typeBadge(type: String): TextView {
+  private fun outlineBadge(text: String, color: Int): TextView =
+    TextView(this).apply {
+      this.text = text.ifBlank { "Sem categoria" }
+      textSize = 10f
+      setTextColor(color)
+      setTypeface(typeface, Typeface.BOLD)
+      setSingleLine(true)
+      setPadding(dp(8), dp(2), dp(8), dp(2))
+      background = rounded(0x00FFFFFF, dp(1), color, dp(9))
+      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        setMargins(0, 0, dp(6), 0)
+      }
+    }
+
+  private fun typeBadge(type: String, topMargin: Int = 4): TextView {
     val isCredit = type.lowercase().contains("credit") || type.lowercase().contains("cart")
     return TextView(this).apply {
       text = if (isCredit) "CRÉDITO" else "CORRENTE"
@@ -825,7 +897,7 @@ class MainActivity : Activity() {
       setPadding(dp(8), dp(2), dp(8), dp(2))
       background = rounded(0x00FFFFFF, dp(1), if (isCredit) COLOR_DANGER else COLOR_GREEN, dp(9))
       layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-        setMargins(0, dp(4), 0, 0)
+        setMargins(dp(6), dp(topMargin), 0, 0)
       }
     }
   }

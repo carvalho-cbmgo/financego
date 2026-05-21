@@ -196,8 +196,21 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - APK ganhou seletor de periodo para calcular resumo financeiro e saldos de contas.
   - Icones de atualizar/sair foram refinados no topo da tela.
   - Parcelamentos mensais criados pelo APK passam a gerar parcelas mes a mes vinculadas.
-  - Transacoes recorrentes/parceladas aparecem com borda azul e legenda `Parcela X de Y`.
+  - Transacoes recorrentes/parceladas aparecem com selo azul e legenda `Parcela X de Y` ou `Recorrente`.
   - Edicao de recorrencias nao consolidadas passou a perguntar o escopo antes de abrir o formulario.
   - Campo `R$ Total` no formulario de repeticao ficou bloqueado e calculado automaticamente.
   - Botoes `Cancelar` e `Salvar` foram centralizados.
   - Versao Android atualizada para `1.0.5`.
+
+- Objetivo: reorganizar visualmente os cards de transacao do APK e permitir exclusao nativa durante edicao.
+- Prompt base: "No apk, ajustar a cor da borda das transações para que ela seja da mesma cor que a borda das contas exibidas no painel de contas... Quando o usuário for editar alguma transação, acrescentar o botão Excluir..."
+- Resultado:
+  - Cards de transacao passaram a usar borda igual aos cards de conta.
+  - Primeira linha exibe `DD/MM/AAAA - Descricao`, sem sufixo de parcela dentro da descricao.
+  - Segunda linha exibe categoria em selo verde e parcela/recorrencia em selo azul.
+  - Terceira linha exibe conta relacionada e selo de tipo da conta.
+  - Valor fica alinhado a direita e centralizado verticalmente.
+  - `Recorrente` passou a ser reservado para modalidade `Avancado`; parcelamento mostra `Parcela X de Y`.
+  - Modal de edicao ganhou botao vermelho `Excluir`.
+  - Nova rota Android `/api/android/transactions/delete` criada.
+  - Versao Android atualizada para `1.0.6`.

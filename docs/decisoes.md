@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-21`
+- Decisao: criar rota Android dedicada para exclusao de transacoes (`POST /api/android/transactions/delete`).
+- Motivo: o APK precisa excluir transacoes sem depender das rotas web e preservando validacao de usuario autenticado.
+- Impacto: a exclusao nativa passa a funcionar para transacao simples, pares de transferencia interna e escopos de repeticao nao consolidada.
+
+- Data: `2026-05-21`
 - Decisao: o APK nativo passa a calcular resumo e saldos por um `periodo de calculo` selecionado pelo usuario.
 - Motivo: permitir analise separada entre realizado ate hoje, previsoes futuras do mes e mes completo.
 - Impacto: `Entradas`, `Saidas`, `Saldo atual` e saldos de `Contas` no APK respeitam o periodo selecionado, preservando a opcao `Incluir saldo anterior`.
@@ -221,10 +226,28 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes de interface
 - Data: `2026-05-21`
+- Tela: APK Android / cards de transacao
+- Decisao: cards de transacao devem usar a mesma borda das contas e organizar informacoes em tres linhas.
+- Motivo: reduzir confusao visual, destacar somente as informacoes importantes e manter consistencia com o painel de contas.
+- Impacto: data/descricao, categoria/parcela/recorrencia, conta/tipo e valor ficam mais legiveis no celular.
+
+- Data: `2026-05-21`
+- Tela: APK Android / cards de transacao
+- Decisao: `Recorrente` deve ser exibido somente para modalidade `Avancado`; parcelamento mensal usa selo `Parcela X de Y`.
+- Motivo: parcelamento e recorrencia sao conceitos diferentes para o usuario.
+- Impacto: evita que transacoes parceladas ou transferencias sejam interpretadas como recorrentes.
+
+- Data: `2026-05-21`
+- Tela: APK Android / edicao de transacao
+- Decisao: o botao `Excluir` deve ficar na mesma linha de `Editar Transacao`, alinhado a direita e em vermelho.
+- Motivo: permitir manutencao rapida da transacao durante a edicao sem ocupar area extra do formulario.
+- Impacto: usuario consegue apagar lancamentos diretamente do modal de edicao.
+
+- Data: `2026-05-21`
 - Tela: APK Android / `Transacoes`
-- Decisao: recorrencias e parcelamentos devem aparecer com borda azul e legenda de parcela.
+- Decisao: recorrencias e parcelamentos devem aparecer com selo azul e legenda de parcela/recorrencia.
 - Motivo: destacar visualmente que o lancamento faz parte de uma serie e evitar confusao com transacao avulsa.
-- Impacto: linhas recorrentes exibem indicativo como `Parcela 1 de 10` e ficam mais reconheciveis na lista.
+- Impacto: linhas parceladas exibem indicativo como `Parcela 1 de 10`; recorrencias avancadas exibem `Recorrente`.
 
 - Data: `2026-05-21`
 - Tela: APK Android / formulario de transacao
