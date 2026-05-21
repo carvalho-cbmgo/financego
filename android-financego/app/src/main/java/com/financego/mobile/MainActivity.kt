@@ -10,7 +10,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.text.Editable
 import android.text.InputType
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +42,8 @@ import kotlin.math.abs
 
 class MainActivity : Activity() {
   private data class CategoryOption(val name: String, val label: String)
+  private data class PeriodRange(val start: LocalDate, val end: LocalDate)
+  private enum class PeriodMode { TO_DATE, FUTURE, FULL_MONTH }
 
   private lateinit var store: SessionStore
   private lateinit var api: FinanceGoApi
@@ -48,6 +52,7 @@ class MainActivity : Activity() {
   private var bootstrap: JSONObject? = null
   private var selectedMonth: YearMonth = YearMonth.now()
   private var includePreviousBalance = true
+  private var selectedPeriodMode = PeriodMode.FULL_MONTH
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -151,6 +156,7 @@ class MainActivity : Activity() {
     bootstrap = data
     val root = screenRoot()
     root.addView(appHeader("Transações", showProfile = true))
+    root.addView(periodSelector { showDashboard(data) })
     root.addView(monthSelector { showDashboard(data) })
 
     val monthRows = monthTransactions(data, null)
@@ -174,6 +180,7 @@ class MainActivity : Activity() {
     val data = bootstrap ?: JSONObject()
     val root = screenRoot()
     root.addView(appHeader(accountTitle(account), showBack = true, showProfile = true))
+    root.addView(periodSelector { showAccountPage(account) })
     root.addView(monthSelector { showAccountPage(account) })
 
     val rows = monthTransactions(data, account.optString("id"))
@@ -212,6 +219,22 @@ class MainActivity : Activity() {
     }, matchWrap())
     root.addView(box, matchWrap())
     setContentView(scroll(root))
+  }
+
+  private fun periodSelector(onChange: () -> Unit): LinearLayout = surface().apply {
+    orientation = LinearLayout.VERTICAL
+    setPadding(dp(14), dp(10), dp(14), dp(10))
+    addView(muted("Período de cálculo"))
+    val labels = periodLabels()
+    val selector = spinner(labels, selectedPeriodMode.ordinal)
+    selector.onItemSelectedListener = simpleSelected {
+      val next = PeriodMode.values().getOrElse(selector.selectedItemPosition) { PeriodMode.FULL_MONTH }
+      if (next != selectedPeriodMode) {
+        selectedPeriodMode = next
+        onChange()
+      }
+    }
+    addView(selector)
   }
 
   private fun monthSelector(onChange: () -> Unit): LinearLayout = surface().apply {
@@ -326,10 +349,12 @@ class MainActivity : Activity() {
   }
 
   private fun transactionCard(tx: JSONObject): View = surface().apply {
+    val isRecurring = isRecurringTransaction(tx)
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(10), dp(12), dp(10))
-    setOnClickListener { openTransactionDialog(tx) }
+    if (isRecurring) background = rounded(0xFFFFFFFF.toInt(), dp(2), COLOR_BLUE, dp(18))
+    setOnClickListener { openTransactionForEdit(tx) }
 
     val info = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL }
     info.addView(TextView(this@MainActivity).apply {
@@ -338,7 +363,17 @@ class MainActivity : Activity() {
       setTextColor(COLOR_TEXT)
       setTypeface(typeface, Typeface.BOLD)
     })
-    info.addView(muted("${tx.optString("app_category", "Outros")} • ${tx.optString("posted_at", "").take(10)}"))
+    val details = listOf(
+      tx.optString("app_category", "Outros"),
+      tx.optString("posted_at", "").take(10),
+      recurrenceLabel(tx),
+    ).filter { it.isNotBlank() }.joinToString(" • ")
+    info.addView(muted(details).apply {
+      if (isRecurring) {
+        setTextColor(COLOR_BLUE)
+        setTypeface(typeface, Typeface.BOLD)
+      }
+    })
     addView(info, weightWrap(1f))
     addView(TextView(this@MainActivity).apply {
       val displayAmount = transactionAmount(tx)
@@ -350,7 +385,59 @@ class MainActivity : Activity() {
     })
   }
 
-  private fun openTransactionDialog(tx: JSONObject?) {
+  private fun openTransactionForEdit(tx: JSONObject) {
+    if (isRecurringTransaction(tx) && !tx.optBoolean("is_consolidated", true)) {
+      showRecurringEditChoice(tx)
+      return
+    }
+    openTransactionDialog(tx)
+  }
+
+  private fun showRecurringEditChoice(tx: JSONObject) {
+    val box = verticalRoot().apply { setPadding(dp(16), dp(8), dp(16), dp(4)) }
+    box.addView(TextView(this).apply {
+      text = "A transação possui repetição. Qual ação deseja executar?"
+      textSize = 15f
+      setTextColor(COLOR_TEXT)
+      setTypeface(typeface, Typeface.BOLD)
+      setPadding(0, 0, 0, dp(10))
+    })
+    val options = listOf(
+      "single" to "Alterar apenas esta",
+      "from_current" to "Alterar a partir desta",
+      "from_first" to "Alterar a partir da primeira",
+    )
+    var selectedScope = "single"
+    val checks = mutableListOf<CheckBox>()
+    for ((value, labelText) in options) {
+      val check = CheckBox(this).apply {
+        text = labelText
+        textSize = 14f
+        setTextColor(COLOR_TEXT)
+        isChecked = value == selectedScope
+        setOnClickListener {
+          selectedScope = value
+          checks.forEach { item -> item.isChecked = item === this }
+        }
+      }
+      checks.add(check)
+      box.addView(check)
+    }
+    val dialog = AlertDialog.Builder(this)
+      .setView(box)
+      .setNegativeButton("Cancelar", null)
+      .setPositiveButton("Alterar", null)
+      .create()
+    dialog.setOnShowListener {
+      dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+        dialog.dismiss()
+        openTransactionDialog(tx, selectedScope)
+      }
+    }
+    dialog.show()
+  }
+
+  private fun openTransactionDialog(tx: JSONObject?, repeatScope: String = "single") {
     val data = bootstrap ?: JSONObject()
     val accounts = accountsList(data)
     if (accounts.isEmpty()) {
@@ -365,7 +452,7 @@ class MainActivity : Activity() {
     val postedAt = input("DD/MM/AAAA", formatDateForInput(tx?.optString("posted_at")?.take(10) ?: defaultPostedAt())).apply {
       inputType = InputType.TYPE_CLASS_DATETIME
     }
-    val description = input("Descrição", tx?.optString("description") ?: "")
+    val description = input("Descrição", stripRecurrenceSuffix(tx?.optString("description") ?: ""))
     val originSpinner = accountSpinner(accounts, tx?.optString("account_id"))
     val destinationSpinner = accountSpinner(accounts, null)
     val categories = categoryOptions(data)
@@ -384,7 +471,8 @@ class MainActivity : Activity() {
     }
     val repeatLabels = listOf("Sem repetição", "Parcelamento (mensal)", "Avançado")
     val repeatValues = listOf("none", "installment", "advanced")
-    val repeatSpinner = spinner(repeatLabels, 0)
+    val initialRepeatMode = repeatModeForTransaction(tx)
+    val repeatSpinner = spinner(repeatLabels, repeatValues.indexOf(initialRepeatMode).coerceAtLeast(0))
     val repeatBox = verticalRoot()
     val note = EditText(this).apply {
       hint = "Observações"
@@ -395,9 +483,13 @@ class MainActivity : Activity() {
       background = rounded(0xFFFFFFFF.toInt(), dp(1), 0xFFD9E0CF.toInt(), dp(12))
     }
 
-    val current = input("1", "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
-    val total = input("1", "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
-    val totalAmount = input("0,00", "").apply { inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+    val current = input("1", tx?.optInt("installment_current", 1)?.takeIf { it > 0 }?.toString() ?: "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
+    val total = input("1", tx?.optInt("installment_total", 1)?.takeIf { it > 0 }?.toString() ?: "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
+    val totalAmount = input("R$ Total", "").apply {
+      isEnabled = false
+      setTextColor(COLOR_TEXT)
+      background = rounded(0xFFEFF4E8.toInt(), dp(1), 0xFFD9E0CF.toInt(), dp(12))
+    }
     val repeatEvery = spinner(listOf("Semana", "Mês", "Ano"), 1)
     val forever = CheckBox(this).apply {
       text = "Repetir infinitamente"
@@ -418,8 +510,15 @@ class MainActivity : Activity() {
           repeatBox.addView(fieldRow("Repetir infinitamente", forever))
           repeatBox.addView(fieldRow("Nº parcela atual", current))
           repeatBox.addView(fieldRow("Total parcelas", total))
+          repeatBox.addView(fieldRow("R$ Total", totalAmount))
         }
       }
+    }
+
+    fun updateTotalAmount() {
+      val amountValue = parseAmountInput(amount.text.toString())
+      val totalParcels = total.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1
+      totalAmount.setText(money(abs(amountValue) * totalParcels))
     }
 
     lateinit var destinationRow: LinearLayout
@@ -435,7 +534,9 @@ class MainActivity : Activity() {
 
     destinationRow = fieldRow("Conta Destino", destinationSpinner)
     typeSpinner.onItemSelectedListener = simpleSelected { updateTypeVisibility() }
-    repeatSpinner.onItemSelectedListener = simpleSelected { rebuildRepeatBox() }
+    repeatSpinner.onItemSelectedListener = simpleSelected { rebuildRepeatBox(); updateTotalAmount() }
+    watchText(amount) { updateTotalAmount() }
+    watchText(total) { updateTotalAmount() }
 
     box.addView(fieldRow("Data", postedAt))
     box.addView(fieldRow("Tipo", typeSpinner))
@@ -451,7 +552,7 @@ class MainActivity : Activity() {
 
     val actions = LinearLayout(this).apply {
       orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.END
+      gravity = Gravity.CENTER
       setPadding(0, dp(14), 0, dp(4))
     }
     val cancelButton = secondaryButton("Cancelar")
@@ -462,6 +563,7 @@ class MainActivity : Activity() {
 
     updateTypeVisibility()
     rebuildRepeatBox()
+    updateTotalAmount()
 
     val dialog = AlertDialog.Builder(this)
       .setTitle(if (tx == null) "Nova Transação" else "Editar Transação")
@@ -481,19 +583,20 @@ class MainActivity : Activity() {
       val payload = JSONObject()
         .put("id", tx?.optString("id") ?: "")
         .put("description", description.text.toString())
-        .put("amount", amount.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0)
+        .put("amount", parseAmountInput(amount.text.toString()))
         .put("type", selectedType)
         .put("posted_at", parseDateInput(postedAt.text.toString()))
         .put("account_id", accountIdAt(accounts, originSpinner.selectedItemPosition))
         .put("destination_account_id", accountIdAt(accounts, destinationSpinner.selectedItemPosition))
         .put("category", selectedCategory)
         .put("is_consolidated", consolidated.isChecked)
+        .put("repeat_scope", repeatScope)
         .put("repeat_mode", repeatMode)
         .put("repeat_every", repeatEveryValue)
         .put("repeat_forever", forever.isChecked)
         .put("installment_current", current.text.toString().toIntOrNull() ?: 1)
         .put("installment_total", total.text.toString().toIntOrNull() ?: 1)
-        .put("installment_total_amount", totalAmount.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0)
+        .put("installment_total_amount", abs(parseAmountInput(amount.text.toString())) * (total.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1))
         .put("note", note.text.toString())
       dialog.dismiss()
       showLoading("Carregando...")
@@ -515,6 +618,45 @@ class MainActivity : Activity() {
     override fun onNothingSelected(parent: android.widget.AdapterView<*>?) = Unit
   }
 
+  private fun watchText(input: EditText, afterChange: () -> Unit) {
+    input.addTextChangedListener(object : TextWatcher {
+      override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+      override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+      override fun afterTextChanged(s: Editable?) = afterChange()
+    })
+  }
+
+  private fun parseAmountInput(value: String): Double {
+    val clean = value.trim().replace("R$", "", ignoreCase = true).replace(" ", "")
+    val normalized = if (clean.contains(",")) clean.replace(".", "").replace(',', '.') else clean
+    return normalized.toDoubleOrNull() ?: 0.0
+  }
+
+  private fun stripRecurrenceSuffix(value: String): String =
+    value
+      .replace(Regex("""\s*-\s*\d+\s+de\s+\d+\s*$""", RegexOption.IGNORE_CASE), "")
+      .replace(Regex("""\s*-\s*recorrente\s*#\d+\s*$""", RegexOption.IGNORE_CASE), "")
+      .trim()
+
+  private fun isRecurringTransaction(tx: JSONObject): Boolean =
+    tx.optString("installment_group_key").isNotBlank() || tx.optInt("installment_current", 0) > 0
+
+  private fun repeatModeForTransaction(tx: JSONObject?): String {
+    if (tx == null) return "none"
+    val mode = tx.optJSONObject("raw")?.optJSONObject("recurrence")?.optString("mode").orEmpty()
+    if (mode == "installment" || mode == "advanced") return mode
+    if (tx.optInt("installment_current", 0) > 0) return "installment"
+    return "none"
+  }
+
+  private fun recurrenceLabel(tx: JSONObject): String {
+    val current = tx.optInt("installment_current", 0)
+    val total = tx.optInt("installment_total", 0)
+    if (current > 0 && total > 0) return "Parcela $current de $total"
+    if (isRecurringTransaction(tx)) return "Transação recorrente"
+    return ""
+  }
+
   private fun transactionAmount(tx: JSONObject): Double {
     val raw = tx.optDouble("amount", 0.0)
     return when (tx.optString("type").lowercase()) {
@@ -526,12 +668,21 @@ class MainActivity : Activity() {
   }
 
   private fun accountBalance(data: JSONObject, account: JSONObject): Double {
-    val computed = account.optDouble("computed_balance", Double.NaN)
-    if (!computed.isNaN()) return computed
     val accountId = account.optString("id")
-    val related = allTransactions(data).filter { it.optString("account_id") == accountId }
-    if (related.isNotEmpty()) return related.sumOf { transactionAmount(it) }
-    return account.optDouble("computed_balance", account.optDouble("balance", 0.0))
+    val range = periodRange()
+    val previous = if (includePreviousBalance) {
+      allTransactions(data).filter { tx ->
+        val date = txDate(tx) ?: return@filter false
+        tx.optString("account_id") == accountId && date.isBefore(range.start)
+      }.sumOf { transactionAmount(it) }
+    } else {
+      0.0
+    }
+    val periodNet = allTransactions(data).filter { tx ->
+      val date = txDate(tx) ?: return@filter false
+      tx.optString("account_id") == accountId && !date.isBefore(range.start) && !date.isAfter(range.end)
+    }.sumOf { transactionAmount(it) }
+    return previous + periodNet
   }
 
   private fun accountsList(data: JSONObject): List<JSONObject> {
@@ -549,17 +700,16 @@ class MainActivity : Activity() {
   }
 
   private fun monthTransactions(data: JSONObject, accountId: String?): List<JSONObject> {
-    val start = selectedMonth.atDay(1)
-    val end = selectedMonth.atEndOfMonth()
+    val range = periodRange()
     return allTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       val matchesAccount = accountId.isNullOrBlank() || tx.optString("account_id") == accountId
-      matchesAccount && !date.isBefore(start) && !date.isAfter(end)
+      matchesAccount && !date.isBefore(range.start) && !date.isAfter(range.end)
     }
   }
 
   private fun previousBalance(data: JSONObject, accountId: String?): Double {
-    val start = selectedMonth.atDay(1)
+    val start = periodRange().start
     return allTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       val matchesAccount = accountId.isNullOrBlank() || tx.optString("account_id") == accountId
@@ -577,6 +727,29 @@ class MainActivity : Activity() {
     val today = LocalDate.now()
     val day = if (YearMonth.from(today) == selectedMonth) today.dayOfMonth else 1
     return selectedMonth.atDay(day.coerceAtMost(selectedMonth.lengthOfMonth())).toString()
+  }
+
+  private fun periodRange(): PeriodRange {
+    val first = selectedMonth.atDay(1)
+    val last = selectedMonth.atEndOfMonth()
+    val today = LocalDate.now()
+    return when (selectedPeriodMode) {
+      PeriodMode.TO_DATE -> PeriodRange(first, if (YearMonth.from(today) == selectedMonth) today else last)
+      PeriodMode.FUTURE -> {
+        val start = if (YearMonth.from(today) == selectedMonth) today.plusDays(1) else first
+        PeriodRange(start, last)
+      }
+      PeriodMode.FULL_MONTH -> PeriodRange(first, last)
+    }
+  }
+
+  private fun periodLabels(): List<String> {
+    val month = selectedMonth.month.getDisplayName(TextStyle.FULL, Locale("pt", "BR")).uppercase(Locale("pt", "BR"))
+    return listOf(
+      "Início de $month até hoje",
+      "Amanhã até o final de $month",
+      "$month (1 a ${selectedMonth.lengthOfMonth()})",
+    )
   }
 
   private fun categoryOptions(data: JSONObject): List<CategoryOption> {
@@ -668,9 +841,9 @@ class MainActivity : Activity() {
       addView(muted(text))
     }, weightWrap(1f))
     if (showProfile) {
-      addView(iconActionButton("\u21BB", "Atualizar dados").apply { setOnClickListener { loadHome() } }, fixed(dp(42), dp(42)))
+      addView(iconActionButton("⟳", "Atualizar dados").apply { setOnClickListener { loadHome() } }, fixed(dp(42), dp(42)))
       addView(iconActionButton("\uD83D\uDC64", "Perfil").apply { setOnClickListener { showProfilePage() } }, fixed(dp(42), dp(42)))
-      addView(iconActionButton("\u23FB", "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
+      addView(iconActionButton("⇥", "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
     }
   }
 
@@ -853,6 +1026,7 @@ class MainActivity : Activity() {
     private val COLOR_MUTED = 0xFF667085.toInt()
     private val COLOR_PRIMARY = 0xFF6E9B18.toInt()
     private val COLOR_GREEN = 0xFF139B5A.toInt()
+    private val COLOR_BLUE = 0xFF2563EB.toInt()
     private val COLOR_DANGER = 0xFFC62828.toInt()
   }
 }

@@ -3,6 +3,30 @@
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
+- Data: `2026-05-21`
+- Entrega principal: filtro de periodo financeiro no APK e edicao estruturada de transacoes recorrentes.
+- Resultado entregue:
+  - Android nativo:
+    - Tela de transacoes passou a ter seletor de periodo acima do seletor de mes, com opcoes dinamicas como `Inicio de MAIO ate hoje`, `Amanha ate o final de MAIO` e `MAIO (1 a 31)`.
+    - O periodo selecionado passou a ser a base dos calculos de `Entradas`, `Saidas`, `Saldo atual` e saldos exibidos em `Contas`.
+    - Icones de `Atualizar` e `Sair` foram ajustados no topo da tela principal.
+    - Transacoes recorrentes/parceladas passaram a receber destaque visual com borda azul e texto de parcela, como `Parcela 1 de 10`.
+    - Ao tocar em transacao recorrente nao consolidada, o app abre uma janela inicial perguntando qual escopo alterar: somente esta, a partir desta ou a partir da primeira.
+    - Campo `R$ Total` no formulario de repeticao passou a ser somente leitura e calculado automaticamente por `valor da parcela x total de parcelas`.
+    - Botoes `Cancelar` e `Salvar` do formulario nativo foram centralizados horizontalmente.
+    - Versao Android atualizada para `versionCode=6` e `versionName=1.0.5`.
+  - API Android:
+    - `POST /api/android/transactions/save` passou a receber `repeat_scope` para aplicar alteracoes em somente uma transacao, em transacoes futuras vinculadas ou na serie recorrente nao consolidada.
+    - Parcelamento mensal passou a criar ocorrencias mes a mes vinculadas por `installment_group_key`, iniciando na data/mes de referencia informado pelo app.
+    - Parcelas passam a ser salvas como nao consolidadas por padrao quando geradas por recorrencia.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug` executado com sucesso.
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate` executado com sucesso (`testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease`).
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
 - Data: `2026-05-20`
 - Entrega principal: correcao da URL de producao usada pelo APK Android no login.
 - Resultado entregue:
@@ -137,7 +161,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.4` em aparelho Android real e validar abertura, login, sincronizacao, fluxo financeiro mensal e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.5` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, recorrencias/parcelamentos e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -150,7 +174,11 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Ajustar cadastro/edicao nativa de transacoes com transferencia e recorrencia.
   - [x] Corrigir acentuacao de textos nas paginas web alteradas.
   - [x] Compilar novo APK nativo.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.4`.
+  - [x] Implementar seletor de periodo para calculo financeiro no APK.
+  - [x] Implementar destaque visual de parcelas/recorrencias no APK.
+  - [x] Implementar escolha de escopo antes de editar recorrencias nao consolidadas.
+  - [x] Automatizar `R$ Total` em parcelamento/recorrencia no APK.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.5`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -158,8 +186,10 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.4` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.5` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar no aparelho real os filtros de periodo: ate hoje, futuro do mes e mes completo.
   - [ ] Testar criacao nativa de transacoes sem repeticao, parceladas e avancadas.
+  - [ ] Testar edicao de transacao recorrente com os escopos `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.
   - [ ] Testar tela de detalhe de conta no APK para cartao de credito e conta corrente.
   - [ ] Configurar assinatura de produção para gerar APK release assinado.
   - [ ] Instalar `app-debug.apk` em celular real e validar login nativo, sincronização e listener.

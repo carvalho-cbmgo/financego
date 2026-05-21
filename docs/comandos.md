@@ -160,20 +160,24 @@ $response.ok
 $response.user.email
 ```
 
-## Fluxo de teste do APK nativo `1.0.4`
+## Fluxo de teste do APK nativo `1.0.5`
 ```txt
 1) Instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
 2) Abrir Finance GO.
 3) Confirmar que a tela de login nao exibe URL tecnica.
 4) Tocar em ENTRAR e verificar overlay `Carregando...`.
-5) Conferir seletor de mes, saldo anterior, entradas, saidas e saldo atual.
-6) Desmarcar `Incluir saldo anterior` e verificar recalculo.
-7) Abrir uma conta e conferir transacoes filtradas por conta.
-8) Criar transacao sem repeticao, parcelada e avancada.
-9) Abrir Perfil e testar atualizacao de nome completo.
-10) Conferir icones de atualizar, perfil, sair e nova transacao.
-11) Conferir se categorias aparecem com recuo no seletor.
-12) Conferir se saldos por conta batem com as transacoes normalizadas.
+5) Conferir seletor de periodo acima do seletor de mes.
+6) Alternar entre `Inicio do mes ate hoje`, `Amanha ate o final do mes` e `Mes completo`.
+7) Conferir saldo anterior, entradas, saidas, saldo atual e saldos por conta em cada periodo.
+8) Desmarcar `Incluir saldo anterior` e verificar recalculo.
+9) Abrir uma conta e conferir transacoes filtradas por conta.
+10) Criar transacao sem repeticao, parcelada e avancada.
+11) Confirmar que parcelamento mensal cria parcelas mes a mes com borda azul e legenda `Parcela X de Y`.
+12) Editar parcela nao consolidada e testar `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.
+13) Abrir Perfil e testar atualizacao de nome completo.
+14) Conferir icones de atualizar, perfil, sair e nova transacao.
+15) Conferir se categorias aparecem com recuo no seletor.
+16) Conferir se saldos por conta batem com as transacoes normalizadas.
 ```
 
 ## Git

@@ -189,3 +189,15 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Categoria no APK passou a exibir recuo por profundidade.
   - Saldos por conta passaram a usar normalizacao backend por tipo da transacao.
   - Parser de notificacoes corrigido para `Compra no credito aprovada` como despesa e `estorno` como receita.
+
+- Objetivo: adicionar filtro de periodo financeiro no APK, melhorar icones e estruturar criacao/edicao de recorrencias.
+- Prompt base: "Na tela de transações do apk, alterar os ícones dos botões ATUALIZAR e SAIR... implementar um seletor com as opções Inicio de MAIO ate hoje, Amanha ate o final de MAIO e MAIO (1 a 31)... ao clicar para editar transações com repetição..."
+- Resultado:
+  - APK ganhou seletor de periodo para calcular resumo financeiro e saldos de contas.
+  - Icones de atualizar/sair foram refinados no topo da tela.
+  - Parcelamentos mensais criados pelo APK passam a gerar parcelas mes a mes vinculadas.
+  - Transacoes recorrentes/parceladas aparecem com borda azul e legenda `Parcela X de Y`.
+  - Edicao de recorrencias nao consolidadas passou a perguntar o escopo antes de abrir o formulario.
+  - Campo `R$ Total` no formulario de repeticao ficou bloqueado e calculado automaticamente.
+  - Botoes `Cancelar` e `Salvar` foram centralizados.
+  - Versao Android atualizada para `1.0.5`.

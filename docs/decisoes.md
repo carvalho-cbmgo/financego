@@ -3,6 +3,21 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-21`
+- Decisao: o APK nativo passa a calcular resumo e saldos por um `periodo de calculo` selecionado pelo usuario.
+- Motivo: permitir analise separada entre realizado ate hoje, previsoes futuras do mes e mes completo.
+- Impacto: `Entradas`, `Saidas`, `Saldo atual` e saldos de `Contas` no APK respeitam o periodo selecionado, preservando a opcao `Incluir saldo anterior`.
+
+- Data: `2026-05-21`
+- Decisao: transacoes parceladas/recorrentes criadas no APK devem compartilhar `installment_group_key` e ser editadas por escopo.
+- Motivo: o usuario precisa alterar somente uma parcela, as parcelas futuras ou a serie recorrente nao consolidada sem perder o vinculo entre lancamentos.
+- Impacto: `/api/android/transactions/save` aceita `repeat_scope` e recria apenas o conjunto elegivel de transacoes nao consolidadas.
+
+- Data: `2026-05-21`
+- Decisao: o campo `R$ Total` no APK deve ser derivado automaticamente de `valor da parcela x total de parcelas`.
+- Motivo: evitar divergencia manual entre valor da parcela, quantidade e total da compra/recorrencia.
+- Impacto: o campo fica bloqueado para edicao e serve como conferencia visual durante criacao/edicao.
+
 - Data: `2026-05-20`
 - Decisao: definir `https://financego-eight.vercel.app` como URL oficial de producao do APK Android.
 - Motivo: o dominio real usado pelo sistema web no Vercel e `https://financego-eight.vercel.app/`; a URL antiga `https://app-financego.vercel.app` causava falha de login no app.
@@ -205,6 +220,18 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Impacto: validação em campo ficou direta e imediata.
 
 ## Decisoes de interface
+- Data: `2026-05-21`
+- Tela: APK Android / `Transacoes`
+- Decisao: recorrencias e parcelamentos devem aparecer com borda azul e legenda de parcela.
+- Motivo: destacar visualmente que o lancamento faz parte de uma serie e evitar confusao com transacao avulsa.
+- Impacto: linhas recorrentes exibem indicativo como `Parcela 1 de 10` e ficam mais reconheciveis na lista.
+
+- Data: `2026-05-21`
+- Tela: APK Android / formulario de transacao
+- Decisao: botoes `Cancelar` e `Salvar` devem ficar centralizados no final do formulario.
+- Motivo: manter simetria visual e facilitar toque em telas pequenas.
+- Impacto: o formulario fica mais equilibrado para criacao e edicao.
+
 - Data: `2026-05-17`
 - Tela: `mobile`
 - Decisao: remover o componente/banner com texto `Nova experiencia` da tela principal mobile.

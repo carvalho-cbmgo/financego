@@ -6,6 +6,7 @@ import { bankKeyFromBankName } from "@/lib/accounts";
 type TxType = "debit" | "credit" | "transfer";
 type RepeatMode = "none" | "installment" | "advanced";
 type RepeatEvery = "week" | "month" | "year";
+type RepeatScope = "single" | "from_current" | "from_first";
 
 function parseType(input: any): TxType {
   const value = String(input || "").trim().toLowerCase();
@@ -32,6 +33,13 @@ function parseRepeatEvery(input: any): RepeatEvery {
   if (value === "semana" || value === "week" || value === "weekly") return "week";
   if (value === "ano" || value === "year" || value === "yearly") return "year";
   return "month";
+}
+
+function parseRepeatScope(input: any): RepeatScope {
+  const value = String(input || "").trim().toLowerCase();
+  if (value === "from_current" || value === "future" || value === "a_partir_desta") return "from_current";
+  if (value === "from_first" || value === "all" || value === "a_partir_da_primeira") return "from_first";
+  return "single";
 }
 
 function parsePositiveInt(input: any, fallback: number) {
@@ -94,6 +102,7 @@ function buildOccurrences(input: {
   installmentTotalAmount: number | null;
   repeatEvery: RepeatEvery;
   repeatForever: boolean;
+  groupKey?: string | null;
 }) {
   const firstDate = new Date(`${input.postedAtDate}T12:00:00.000Z`);
   const normalizedDescription = stripRecurrenceSuffix(input.description) || input.description;
@@ -106,13 +115,15 @@ function buildOccurrences(input: {
     };
   }
 
-  const groupKey = `android-rec-${crypto.randomUUID()}`;
+  const groupKey = input.groupKey || `android-rec-${crypto.randomUUID()}`;
   if (input.mode === "installment") {
     const current = Math.max(1, input.installmentCurrent);
     const total = Math.max(current, input.installmentTotal);
     const remainingCount = Math.max(1, total - current + 1);
-    const totalAmount = input.installmentTotalAmount && input.installmentTotalAmount > 0 ? input.installmentTotalAmount : Math.abs(input.baseAmount) * remainingCount;
-    const pieces = splitAmount(totalAmount, remainingCount);
+    const perInstallment = input.installmentTotalAmount && input.installmentTotalAmount > 0
+      ? input.installmentTotalAmount / total
+      : Math.abs(input.baseAmount);
+    const pieces = splitAmount(perInstallment * remainingCount, remainingCount);
     return {
       groupKey,
       forceUnconsolidated: true,
@@ -168,6 +179,32 @@ async function getBankName(profileId: string, bankId?: string | null, fallback?:
   return data?.name || fallback || "GENERICO";
 }
 
+async function getExistingTransaction(profileId: string, id: string) {
+  if (!id) return null;
+  const { data } = await supabaseAdmin
+    .from("transactions")
+    .select("id, posted_at, type, installment_group_key, installment_current, installment_total, is_consolidated")
+    .eq("profile_id", profileId)
+    .eq("id", id)
+    .maybeSingle();
+  return data;
+}
+
+async function getRecurringTargets(profileId: string, groupKey: string, scope: RepeatScope, selectedPostedAt: string) {
+  let query = supabaseAdmin
+    .from("transactions")
+    .select("id, posted_at, installment_current, installment_total, is_consolidated")
+    .eq("profile_id", profileId)
+    .eq("installment_group_key", groupKey)
+    .eq("is_consolidated", false)
+    .order("posted_at", { ascending: true });
+
+  if (scope === "from_current") query = query.gte("posted_at", selectedPostedAt);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
 export async function POST(req: Request) {
   const user = await getApiUserFromRequest(req);
   if (!user) return unauthorized();
@@ -181,6 +218,7 @@ export async function POST(req: Request) {
   const postedAtDate = String(body.posted_at || new Date().toISOString().slice(0, 10)).slice(0, 10);
   const amount = Number(body.amount || 0);
   const type = parseType(body.type || body.action);
+  const repeatScope = parseRepeatScope(body.repeat_scope);
   const repeatMode = parseRepeatMode(body.repeat_mode);
   const repeatEvery = parseRepeatEvery(body.repeat_every);
   const repeatForever = body.repeat_forever === true;
@@ -201,7 +239,36 @@ export async function POST(req: Request) {
   const bankName = await getBankName(user.id, account.bank_id, account.institution_name);
   const bankKey = bankKeyFromBankName(bankName);
   const baseAmount = signedAmount(type, amount);
-  const recurrence = buildOccurrences({ mode: repeatMode, description, postedAtDate, type, baseAmount, installmentCurrent, installmentTotal, installmentTotalAmount, repeatEvery, repeatForever });
+  const existingTx = await getExistingTransaction(user.id, id);
+  const existingGroupKey = String((existingTx as any)?.installment_group_key || "");
+  const existingPostedAt = String((existingTx as any)?.posted_at || `${postedAtDate}T12:00:00.000Z`);
+  const recurringTargets = id && existingGroupKey && repeatScope !== "single"
+    ? await getRecurringTargets(user.id, existingGroupKey, repeatScope, existingPostedAt)
+    : [];
+  const firstTarget: any = recurringTargets[0] || existingTx || null;
+  const occurrencePostedAtDate = repeatScope !== "single" && firstTarget?.posted_at
+    ? String(firstTarget.posted_at).slice(0, 10)
+    : postedAtDate;
+  const occurrenceInstallmentCurrent = repeatScope !== "single" && firstTarget?.installment_current
+    ? parsePositiveInt(firstTarget.installment_current, installmentCurrent)
+    : installmentCurrent;
+  const occurrenceInstallmentTotal = installmentTotal > 1
+    ? installmentTotal
+    : parsePositiveInt((existingTx as any)?.installment_total, installmentTotal);
+  const recurrenceGroupKey = repeatScope !== "single" && existingGroupKey ? existingGroupKey : null;
+  const recurrence = buildOccurrences({
+    mode: repeatMode,
+    description,
+    postedAtDate: occurrencePostedAtDate,
+    type,
+    baseAmount,
+    installmentCurrent: occurrenceInstallmentCurrent,
+    installmentTotal: occurrenceInstallmentTotal,
+    installmentTotalAmount,
+    repeatEvery,
+    repeatForever,
+    groupKey: recurrenceGroupKey,
+  });
 
   if (type === "transfer") {
     if (!destinationAccountId || destinationAccountId === accountId) return NextResponse.json({ error: "Informe contas de origem e destino diferentes." }, { status: 400 });
@@ -254,10 +321,48 @@ export async function POST(req: Request) {
         },
       ];
     });
-    if (id) await supabaseAdmin.from("transactions").delete().eq("profile_id", user.id).eq("id", id);
+    if (id && repeatScope !== "single" && existingGroupKey && recurringTargets.length) {
+      const targetIds = recurringTargets.map((row: any) => row.id).filter(Boolean);
+      if (targetIds.length) {
+        const { error: deleteError } = await supabaseAdmin.from("transactions").delete().eq("profile_id", user.id).in("id", targetIds);
+        if (deleteError) throw deleteError;
+      }
+    } else if (id) {
+      const { error: deleteError } = await supabaseAdmin.from("transactions").delete().eq("profile_id", user.id).eq("id", id);
+      if (deleteError) throw deleteError;
+    }
     const { data, error } = await supabaseAdmin.from("transactions").insert(rows).select("id");
     if (error) throw error;
     return NextResponse.json({ ok: true, ids: (data || []).map((row: any) => row.id) });
+  }
+
+  if (id && repeatScope === "single") {
+    const currentForSingle = installmentCurrent || parsePositiveInt((existingTx as any)?.installment_current, 1);
+    const totalForSingle = installmentTotal > 1 ? installmentTotal : parsePositiveInt((existingTx as any)?.installment_total, 1);
+    const singleDescription = repeatMode !== "none" && totalForSingle > 1
+      ? `${stripRecurrenceSuffix(description)} - ${currentForSingle} de ${totalForSingle}`
+      : description;
+    const singleRow = {
+      account_id: accountId,
+      bank_key: bankKey,
+      description: singleDescription,
+      amount: baseAmount,
+      posted_at: `${postedAtDate}T12:00:00.000Z`,
+      status: isConsolidated ? "posted" : "planned",
+      type,
+      source_category: "android",
+      app_category: category,
+      app_subcategory: null,
+      is_transfer: false,
+      is_consolidated: isConsolidated,
+      installment_current: repeatMode === "none" ? null : currentForSingle,
+      installment_total: repeatMode === "none" ? null : totalForSingle,
+      installment_group_key: repeatMode === "none" ? null : (existingGroupKey || recurrence.groupKey),
+      raw: { source: "android_app", recurrence: { mode: repeatMode, repeatEvery, repeatForever }, note: note || null },
+    };
+    const { data, error } = await supabaseAdmin.from("transactions").update(singleRow).eq("profile_id", user.id).eq("id", id).select("id").single();
+    if (error) throw error;
+    return NextResponse.json({ ok: true, id: data?.id });
   }
 
   const rows = recurrence.items.map((item) => ({
@@ -279,6 +384,17 @@ export async function POST(req: Request) {
     installment_group_key: recurrence.groupKey,
     raw: { source: "android_app", recurrence: recurrence.metadata, note: note || null },
   }));
+
+  if (id && repeatScope !== "single" && existingGroupKey && recurringTargets.length) {
+    const targetIds = recurringTargets.map((row: any) => row.id).filter(Boolean);
+    if (targetIds.length) {
+      const { error: deleteError } = await supabaseAdmin.from("transactions").delete().eq("profile_id", user.id).in("id", targetIds);
+      if (deleteError) throw deleteError;
+    }
+    const { data, error } = await supabaseAdmin.from("transactions").insert(rows).select("id");
+    if (error) throw error;
+    return NextResponse.json({ ok: true, ids: (data || []).map((row: any) => row.id) });
+  }
 
   if (id && repeatMode === "none") {
     const { data, error } = await supabaseAdmin.from("transactions").update(rows[0]).eq("profile_id", user.id).eq("id", id).select("id").single();
