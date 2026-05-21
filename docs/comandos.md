@@ -160,7 +160,7 @@ $response.ok
 $response.user.email
 ```
 
-## Fluxo de teste do APK nativo `1.0.3`
+## Fluxo de teste do APK nativo `1.0.4`
 ```txt
 1) Instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
 2) Abrir Finance GO.
@@ -171,6 +171,9 @@ $response.user.email
 7) Abrir uma conta e conferir transacoes filtradas por conta.
 8) Criar transacao sem repeticao, parcelada e avancada.
 9) Abrir Perfil e testar atualizacao de nome completo.
+10) Conferir icones de atualizar, perfil, sair e nova transacao.
+11) Conferir se categorias aparecem com recuo no seletor.
+12) Conferir se saldos por conta batem com as transacoes normalizadas.
 ```
 
 ## Git

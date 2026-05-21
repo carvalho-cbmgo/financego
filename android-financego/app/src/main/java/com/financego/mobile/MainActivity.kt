@@ -13,12 +13,14 @@ import android.provider.Settings
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.ProgressBar
@@ -37,6 +39,8 @@ import java.util.concurrent.Executors
 import kotlin.math.abs
 
 class MainActivity : Activity() {
+  private data class CategoryOption(val name: String, val label: String)
+
   private lateinit var store: SessionStore
   private lateinit var api: FinanceGoApi
   private val executor = Executors.newSingleThreadExecutor()
@@ -152,7 +156,6 @@ class MainActivity : Activity() {
     val monthRows = monthTransactions(data, null)
     val previous = previousBalance(data, null)
     addSummary(root, previous, monthRows, accountMode = false)
-    root.addView(actionBar())
 
     root.addView(section("Contas"))
     val accounts = accountsList(data)
@@ -164,7 +167,7 @@ class MainActivity : Activity() {
 
     root.addView(section("Transações do mês"))
     addTransactionRows(root, monthRows)
-    setContentView(scroll(root))
+    setContentViewWithFab(root)
   }
 
   private fun showAccountPage(account: JSONObject) {
@@ -209,15 +212,6 @@ class MainActivity : Activity() {
     }, matchWrap())
     root.addView(box, matchWrap())
     setContentView(scroll(root))
-  }
-
-  private fun actionBar(): LinearLayout = LinearLayout(this).apply {
-    orientation = LinearLayout.HORIZONTAL
-    gravity = Gravity.CENTER
-    setPadding(0, dp(8), 0, dp(10))
-    addView(compactActionButton("NOVA TRANSAÇÃO", true).apply { setOnClickListener { openTransactionDialog(null) } }, weightWrap(1f))
-    addView(compactActionButton("ATUALIZAR", false).apply { setOnClickListener { loadHome() } }, weightWrap(1f))
-    addView(compactActionButton("SAIR", false).apply { setOnClickListener { store.clear(); showLogin() } }, weightWrap(1f))
   }
 
   private fun monthSelector(onChange: () -> Unit): LinearLayout = surface().apply {
@@ -271,17 +265,19 @@ class MainActivity : Activity() {
   }
 
   private fun addSummary(root: LinearLayout, previous: Double, rows: List<JSONObject>, accountMode: Boolean) {
-    val income = rows.filter { it.optString("type") == "credit" }.sumOf { abs(it.optDouble("amount", 0.0)) }
-    val expense = rows.filter { it.optString("type") == "debit" }.sumOf { abs(it.optDouble("amount", 0.0)) }
-    val net = rows.sumOf { it.optDouble("amount", 0.0) }
+    val income = rows.filter { it.optString("type") == "credit" }.sumOf { abs(transactionAmount(it)) }
+    val expense = rows.filter { it.optString("type") == "debit" }.sumOf { abs(transactionAmount(it)) }
+    val net = rows.sumOf { transactionAmount(it) }
     val current = (if (includePreviousBalance) previous else 0.0) + net
 
-    val grid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-    if (includePreviousBalance) grid.addView(metricCard(if (accountMode) "Saldo inicial" else "Saldo anterior", money(previous)))
-    grid.addView(metricCard("Entradas", money(income), positive = true))
-    grid.addView(metricCard("Saídas", money(-expense), positive = false))
-    grid.addView(metricCard(if (accountMode) "Saldo final" else "Saldo atual", money(current), highlight = true))
-    root.addView(grid)
+    val panel = surface().apply {
+      setPadding(dp(14), dp(10), dp(14), dp(10))
+    }
+    if (includePreviousBalance) panel.addView(summaryLine(if (accountMode) "Saldo inicial" else "Saldo anterior", money(previous)))
+    panel.addView(summaryLine("Entradas", money(income), COLOR_GREEN))
+    panel.addView(summaryLine("Saídas", money(-expense), COLOR_DANGER))
+    panel.addView(summaryLine(if (accountMode) "Saldo final" else "Saldo atual", money(current), COLOR_TEXT, true))
+    root.addView(panel)
   }
 
   private fun addAccountSummary(root: LinearLayout, initial: Double, rows: List<JSONObject>) {
@@ -289,9 +285,7 @@ class MainActivity : Activity() {
   }
 
   private fun accountCard(data: JSONObject, account: JSONObject): View {
-    val balance = allTransactions(data)
-      .filter { it.optString("account_id") == account.optString("id") }
-      .sumOf { it.optDouble("amount", 0.0) }
+    val balance = accountBalance(data, account)
     val box = surface().apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
@@ -347,11 +341,11 @@ class MainActivity : Activity() {
     info.addView(muted("${tx.optString("app_category", "Outros")} • ${tx.optString("posted_at", "").take(10)}"))
     addView(info, weightWrap(1f))
     addView(TextView(this@MainActivity).apply {
-      val amount = tx.optDouble("amount", 0.0)
-      text = money(amount)
+      val displayAmount = transactionAmount(tx)
+      text = money(displayAmount)
       textSize = 13f
       setTypeface(typeface, Typeface.BOLD)
-      setTextColor(if (amount < 0) COLOR_DANGER else COLOR_GREEN)
+      setTextColor(if (displayAmount < 0) COLOR_DANGER else COLOR_GREEN)
       gravity = Gravity.END
     })
   }
@@ -364,21 +358,30 @@ class MainActivity : Activity() {
       return
     }
 
-    val box = verticalRoot().apply { setPadding(dp(8), 0, dp(8), 0) }
+    val box = verticalRoot().apply { setPadding(dp(10), 0, dp(10), 0) }
     val typeValues = listOf("debit", "credit", "transfer")
     val typeLabels = listOf("Despesa", "Receita", "Transferência")
     val typeSpinner = spinner(typeLabels, typeValues.indexOf(tx?.optString("type") ?: "debit").coerceAtLeast(0))
+    val postedAt = input("DD/MM/AAAA", formatDateForInput(tx?.optString("posted_at")?.take(10) ?: defaultPostedAt())).apply {
+      inputType = InputType.TYPE_CLASS_DATETIME
+    }
     val description = input("Descrição", tx?.optString("description") ?: "")
     val originSpinner = accountSpinner(accounts, tx?.optString("account_id"))
-    val destinationLabel = label("Conta Destino")
     val destinationSpinner = accountSpinner(accounts, null)
-    val categoryNames = categoryNames(data)
+    val categories = categoryOptions(data)
     val currentCategory = tx?.optString("app_category") ?: "Outros"
-    val categorySpinner = spinner(categoryNames, categoryNames.indexOf(currentCategory).takeIf { it >= 0 } ?: 0)
-    val amount = input("Valor", abs(tx?.optDouble("amount", 0.0) ?: 0.0).takeIf { it > 0 }?.toString() ?: "").apply {
+    val fallbackCategory = categories.indexOfFirst { it.name == "Outros" }.coerceAtLeast(0)
+    val categoryIndex = categories.indexOfFirst { it.name == currentCategory }.takeIf { it >= 0 } ?: fallbackCategory
+    val categorySpinner = spinner(categories.map { it.label }, categoryIndex)
+    val amount = input("0,00", abs(transactionAmount(tx ?: JSONObject())).takeIf { it > 0 }?.toString() ?: "").apply {
       inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
     }
-    val consolidated = CheckBox(this).apply { text = "Consolidada"; isChecked = tx?.optBoolean("is_consolidated", true) ?: true }
+    val consolidated = CheckBox(this).apply {
+      text = "Consolidada"
+      textSize = 13f
+      setTextColor(COLOR_TEXT)
+      isChecked = tx?.optBoolean("is_consolidated", true) ?: true
+    }
     val repeatLabels = listOf("Sem repetição", "Parcelamento (mensal)", "Avançado")
     val repeatValues = listOf("none", "installment", "advanced")
     val repeatSpinner = spinner(repeatLabels, 0)
@@ -388,99 +391,147 @@ class MainActivity : Activity() {
       minLines = 2
       maxLines = 4
       textSize = 14f
+      setPadding(dp(12), dp(8), dp(12), dp(8))
+      background = rounded(0xFFFFFFFF.toInt(), dp(1), 0xFFD9E0CF.toInt(), dp(12))
     }
 
-    val current = input("Nº da parcela atual", "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
-    val total = input("Quantidade total de parcelas", "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
-    val totalAmount = input("R$ Total", "").apply { inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+    val current = input("1", "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
+    val total = input("1", "1").apply { inputType = InputType.TYPE_CLASS_NUMBER }
+    val totalAmount = input("0,00", "").apply { inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
     val repeatEvery = spinner(listOf("Semana", "Mês", "Ano"), 1)
-    val forever = CheckBox(this).apply { text = "Repetir infinitamente" }
+    val forever = CheckBox(this).apply {
+      text = "Repetir infinitamente"
+      textSize = 13f
+      setTextColor(COLOR_TEXT)
+    }
 
     fun rebuildRepeatBox() {
       repeatBox.removeAllViews()
       when (repeatValues[repeatSpinner.selectedItemPosition]) {
         "installment" -> {
-          repeatBox.addView(current)
-          repeatBox.addView(total)
-          repeatBox.addView(totalAmount)
+          repeatBox.addView(fieldRow("Nº parcela atual", current))
+          repeatBox.addView(fieldRow("Total parcelas", total))
+          repeatBox.addView(fieldRow("R$ Total", totalAmount))
         }
         "advanced" -> {
-          repeatBox.addView(label("Repetir a cada"))
-          repeatBox.addView(repeatEvery)
-          repeatBox.addView(forever)
-          repeatBox.addView(current)
-          repeatBox.addView(total)
+          repeatBox.addView(fieldRow("Repetir a cada", repeatEvery))
+          repeatBox.addView(fieldRow("Repetir infinitamente", forever))
+          repeatBox.addView(fieldRow("Nº parcela atual", current))
+          repeatBox.addView(fieldRow("Total parcelas", total))
         }
       }
     }
 
+    lateinit var destinationRow: LinearLayout
     fun updateTypeVisibility() {
       val isTransfer = typeValues[typeSpinner.selectedItemPosition] == "transfer"
-      destinationLabel.visibility = if (isTransfer) View.VISIBLE else View.GONE
-      destinationSpinner.visibility = if (isTransfer) View.VISIBLE else View.GONE
+      destinationRow.visibility = if (isTransfer) View.VISIBLE else View.GONE
+      categorySpinner.isEnabled = !isTransfer
+      if (isTransfer) {
+        val transferIndex = categories.indexOfFirst { it.name == "Transferências" }
+        if (transferIndex >= 0) categorySpinner.setSelection(transferIndex)
+      }
     }
 
+    destinationRow = fieldRow("Conta Destino", destinationSpinner)
     typeSpinner.onItemSelectedListener = simpleSelected { updateTypeVisibility() }
     repeatSpinner.onItemSelectedListener = simpleSelected { rebuildRepeatBox() }
 
-    box.addView(label("Tipo")); box.addView(typeSpinner)
-    box.addView(description)
-    box.addView(label("Conta Origem")); box.addView(originSpinner)
-    box.addView(destinationLabel); box.addView(destinationSpinner)
-    box.addView(label("Categoria")); box.addView(categorySpinner)
-    box.addView(amount)
-    box.addView(consolidated)
-    box.addView(label("Repetir Transação")); box.addView(repeatSpinner)
+    box.addView(fieldRow("Data", postedAt))
+    box.addView(fieldRow("Tipo", typeSpinner))
+    box.addView(fieldRow("Descrição", description))
+    box.addView(fieldRow("Conta Origem", originSpinner))
+    box.addView(destinationRow)
+    box.addView(fieldRow("Categoria", categorySpinner))
+    box.addView(fieldRow("Valor", amount))
+    box.addView(fieldRow("Consolidada", consolidated))
+    box.addView(fieldRow("Repetir Transação", repeatSpinner))
     box.addView(repeatBox)
-    box.addView(note)
+    box.addView(fieldRow("Observações", note))
+
+    val actions = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.END
+      setPadding(0, dp(14), 0, dp(4))
+    }
+    val cancelButton = secondaryButton("Cancelar")
+    val saveButton = primaryButton("Salvar")
+    actions.addView(cancelButton, fixed(dp(118), dp(46)))
+    actions.addView(saveButton, fixed(dp(118), dp(46)))
+    box.addView(actions)
+
     updateTypeVisibility()
     rebuildRepeatBox()
 
-    AlertDialog.Builder(this)
+    val dialog = AlertDialog.Builder(this)
       .setTitle(if (tx == null) "Nova Transação" else "Editar Transação")
       .setView(scroll(box))
-      .setNegativeButton("Cancelar", null)
-      .setPositiveButton("Salvar") { _, _ ->
-        val selectedType = typeValues[typeSpinner.selectedItemPosition]
-        val repeatMode = repeatValues[repeatSpinner.selectedItemPosition]
-        val repeatEveryValue = when (repeatEvery.selectedItemPosition) {
-          0 -> "week"
-          2 -> "year"
-          else -> "month"
-        }
-        val payload = JSONObject()
-          .put("id", tx?.optString("id") ?: "")
-          .put("description", description.text.toString())
-          .put("amount", amount.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0)
-          .put("type", selectedType)
-          .put("posted_at", tx?.optString("posted_at")?.take(10) ?: defaultPostedAt())
-          .put("account_id", accountIdAt(accounts, originSpinner.selectedItemPosition))
-          .put("destination_account_id", accountIdAt(accounts, destinationSpinner.selectedItemPosition))
-          .put("category", if (selectedType == "transfer") "Transferências" else categoryNames[categorySpinner.selectedItemPosition])
-          .put("is_consolidated", consolidated.isChecked)
-          .put("repeat_mode", repeatMode)
-          .put("repeat_every", repeatEveryValue)
-          .put("repeat_forever", forever.isChecked)
-          .put("installment_current", current.text.toString().toIntOrNull() ?: 1)
-          .put("installment_total", total.text.toString().toIntOrNull() ?: 1)
-          .put("installment_total_amount", totalAmount.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0)
-          .put("note", note.text.toString())
-        showLoading("Carregando...")
-        runAsync(
-          work = { api.saveTransaction(payload) },
-          done = { loadHome() },
-          fail = {
-            toast(it)
-            bootstrap?.let { data -> showDashboard(data) } ?: showLogin()
-          },
-        )
+      .create()
+
+    cancelButton.setOnClickListener { dialog.dismiss() }
+    saveButton.setOnClickListener {
+      val selectedType = typeValues[typeSpinner.selectedItemPosition]
+      val repeatMode = repeatValues[repeatSpinner.selectedItemPosition]
+      val repeatEveryValue = when (repeatEvery.selectedItemPosition) {
+        0 -> "week"
+        2 -> "year"
+        else -> "month"
       }
-      .show()
+      val selectedCategory = if (selectedType == "transfer") "Transferências" else categoryNameAt(categories, categorySpinner.selectedItemPosition)
+      val payload = JSONObject()
+        .put("id", tx?.optString("id") ?: "")
+        .put("description", description.text.toString())
+        .put("amount", amount.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0)
+        .put("type", selectedType)
+        .put("posted_at", parseDateInput(postedAt.text.toString()))
+        .put("account_id", accountIdAt(accounts, originSpinner.selectedItemPosition))
+        .put("destination_account_id", accountIdAt(accounts, destinationSpinner.selectedItemPosition))
+        .put("category", selectedCategory)
+        .put("is_consolidated", consolidated.isChecked)
+        .put("repeat_mode", repeatMode)
+        .put("repeat_every", repeatEveryValue)
+        .put("repeat_forever", forever.isChecked)
+        .put("installment_current", current.text.toString().toIntOrNull() ?: 1)
+        .put("installment_total", total.text.toString().toIntOrNull() ?: 1)
+        .put("installment_total_amount", totalAmount.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0)
+        .put("note", note.text.toString())
+      dialog.dismiss()
+      showLoading("Carregando...")
+      runAsync(
+        work = { api.saveTransaction(payload) },
+        done = { loadHome() },
+        fail = {
+          toast(it)
+          bootstrap?.let { data -> showDashboard(data) } ?: showLogin()
+        },
+      )
+    }
+
+    dialog.show()
   }
 
   private fun simpleSelected(onSelected: () -> Unit) = object : android.widget.AdapterView.OnItemSelectedListener {
     override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) = onSelected()
     override fun onNothingSelected(parent: android.widget.AdapterView<*>?) = Unit
+  }
+
+  private fun transactionAmount(tx: JSONObject): Double {
+    val raw = tx.optDouble("amount", 0.0)
+    return when (tx.optString("type").lowercase()) {
+      "debit" -> -abs(raw)
+      "credit" -> abs(raw)
+      "transfer" -> raw
+      else -> raw
+    }
+  }
+
+  private fun accountBalance(data: JSONObject, account: JSONObject): Double {
+    val computed = account.optDouble("computed_balance", Double.NaN)
+    if (!computed.isNaN()) return computed
+    val accountId = account.optString("id")
+    val related = allTransactions(data).filter { it.optString("account_id") == accountId }
+    if (related.isNotEmpty()) return related.sumOf { transactionAmount(it) }
+    return account.optDouble("computed_balance", account.optDouble("balance", 0.0))
   }
 
   private fun accountsList(data: JSONObject): List<JSONObject> {
@@ -513,7 +564,7 @@ class MainActivity : Activity() {
       val date = txDate(tx) ?: return@filter false
       val matchesAccount = accountId.isNullOrBlank() || tx.optString("account_id") == accountId
       matchesAccount && date.isBefore(start)
-    }.sumOf { it.optDouble("amount", 0.0) }
+    }.sumOf { transactionAmount(it) }
   }
 
   private fun txDate(tx: JSONObject): LocalDate? = try {
@@ -528,15 +579,56 @@ class MainActivity : Activity() {
     return selectedMonth.atDay(day.coerceAtMost(selectedMonth.lengthOfMonth())).toString()
   }
 
-  private fun categoryNames(data: JSONObject): List<String> {
-    val names = linkedSetOf("Outros", "Transferências")
+  private fun categoryOptions(data: JSONObject): List<CategoryOption> {
+    val options = mutableListOf<CategoryOption>()
+    val seen = linkedSetOf<String>()
+    fun add(name: String, depth: Int = 0) {
+      val clean = name.trim()
+      if (clean.isBlank() || clean == "Raiz" || !seen.add(clean)) return
+      val prefix = "    ".repeat(depth.coerceAtLeast(0))
+      options.add(CategoryOption(clean, "$prefix$clean"))
+    }
+
+    add("Outros")
+    add("Transferências")
     val arr = data.optJSONArray("categories") ?: JSONArray()
     for (i in 0 until arr.length()) {
       val item = arr.optJSONObject(i)
       val name = item?.optString("name")?.trim().orEmpty()
-      if (name.isNotBlank() && name != "Raiz") names.add(name)
+      val depth = item?.optInt("depth", 0) ?: 0
+      add(name, depth)
     }
-    return names.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
+    return options
+  }
+
+  private fun categoryNameAt(categories: List<CategoryOption>, index: Int): String =
+    categories.getOrNull(index.coerceAtLeast(0))?.name ?: "Outros"
+
+  private fun formatDateForInput(value: String): String {
+    return try {
+      val date = LocalDate.parse(value.take(10))
+      "%02d/%02d/%04d".format(date.dayOfMonth, date.monthValue, date.year)
+    } catch (_: Exception) {
+      value
+    }
+  }
+
+  private fun parseDateInput(value: String): String {
+    val clean = value.trim()
+    return try {
+      if (Regex("""\d{4}-\d{2}-\d{2}""").matches(clean)) return clean
+      val match = Regex("""(\d{1,2})/(\d{1,2})/(\d{2,4})""").matchEntire(clean)
+      if (match != null) {
+        val day = match.groupValues[1].toInt().coerceIn(1, 31)
+        val month = match.groupValues[2].toInt().coerceIn(1, 12)
+        var year = match.groupValues[3].toInt()
+        if (year < 100) year += 2000
+        return LocalDate.of(year, month, day).toString()
+      }
+      defaultPostedAt()
+    } catch (_: Exception) {
+      defaultPostedAt()
+    }
   }
 
   private fun accountSpinner(accounts: List<JSONObject>, selectedId: String?): Spinner {
@@ -559,6 +651,9 @@ class MainActivity : Activity() {
       setTypeface(typeface, Typeface.BOLD)
       setPadding(dp(8), dp(2), dp(8), dp(2))
       background = rounded(0x00FFFFFF, dp(1), if (isCredit) COLOR_DANGER else COLOR_GREEN, dp(9))
+      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        setMargins(0, dp(4), 0, 0)
+      }
     }
   }
 
@@ -572,7 +667,11 @@ class MainActivity : Activity() {
       addView(title("Finance GO", 20f))
       addView(muted(text))
     }, weightWrap(1f))
-    if (showProfile) addView(secondaryButton("Perfil").apply { setOnClickListener { showProfilePage() } }, fixed(dp(92), dp(42)))
+    if (showProfile) {
+      addView(iconActionButton("\u21BB", "Atualizar dados").apply { setOnClickListener { loadHome() } }, fixed(dp(42), dp(42)))
+      addView(iconActionButton("\uD83D\uDC64", "Perfil").apply { setOnClickListener { showProfilePage() } }, fixed(dp(42), dp(42)))
+      addView(iconActionButton("\u23FB", "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
+    }
   }
 
   private fun isNotificationListenerEnabled(): Boolean {
@@ -622,6 +721,22 @@ class MainActivity : Activity() {
 
   private fun verticalRoot(): LinearLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
   private fun scroll(view: View): ScrollView = ScrollView(this).apply { setBackgroundColor(COLOR_BG); addView(view) }
+  private fun setContentViewWithFab(root: LinearLayout) {
+    val frame = FrameLayout(this).apply { setBackgroundColor(COLOR_BG) }
+    frame.addView(scroll(root), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+    val fab = primaryButton("+").apply {
+      textSize = 28f
+      contentDescription = "Nova transação"
+      setPadding(0, 0, 0, dp(4))
+      background = rounded(COLOR_PRIMARY, 0, 0, dp(32))
+      setOnClickListener { openTransactionDialog(null) }
+    }
+    frame.addView(fab, FrameLayout.LayoutParams(dp(62), dp(62)).apply {
+      gravity = Gravity.BOTTOM or Gravity.END
+      setMargins(0, 0, dp(18), dp(22))
+    })
+    setContentView(frame)
+  }
   private fun spacer(size: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(size)) }
   private fun title(text: String, size: Float): TextView = TextView(this).apply { this.text = text; textSize = size; setTextColor(COLOR_TEXT); setTypeface(typeface, Typeface.BOLD) }
   private fun section(text: String): TextView = title(text, 17f).apply { setPadding(0, dp(16), 0, dp(6)) }
@@ -631,6 +746,11 @@ class MainActivity : Activity() {
 
   private fun primaryButton(text: String): Button = Button(this).apply { this.text = text; setTextColor(0xFFFFFFFF.toInt()); background = rounded(COLOR_PRIMARY, 0, 0, dp(14)); setTypeface(typeface, Typeface.BOLD) }
   private fun secondaryButton(text: String): Button = Button(this).apply { this.text = text; setTextColor(COLOR_TEXT); background = rounded(0xFFFFFFFF.toInt(), dp(1), 0xFFE0E5D8.toInt(), dp(14)); setTypeface(typeface, Typeface.BOLD) }
+  private fun iconActionButton(symbol: String, description: String): Button = secondaryButton(symbol).apply {
+    contentDescription = description
+    textSize = 20f
+    setPadding(0, 0, 0, dp(2))
+  }
   private fun compactActionButton(text: String, primary: Boolean): Button =
     (if (primary) primaryButton(text) else secondaryButton(text)).apply { textSize = 10f; setSingleLine(true); setPadding(0, 0, 0, 0) }
   private fun iconButton(text: String): Button = secondaryButton(text).apply { textSize = 22f; setPadding(0, 0, 0, dp(2)) }
@@ -658,6 +778,40 @@ class MainActivity : Activity() {
     val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
     lp.setMargins(0, dp(4), 0, dp(6))
     layoutParams = lp
+  }
+
+  private fun summaryLine(label: String, value: String, valueColor: Int = COLOR_TEXT, strong: Boolean = false): LinearLayout =
+    LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(0, dp(7), 0, dp(7))
+      addView(TextView(this@MainActivity).apply {
+        text = label
+        textSize = if (strong) 15f else 14f
+        setTextColor(COLOR_MUTED)
+        setTypeface(typeface, if (strong) Typeface.BOLD else Typeface.NORMAL)
+      }, weightWrap(1f))
+      addView(TextView(this@MainActivity).apply {
+        text = value
+        textSize = if (strong) 16f else 14f
+        gravity = Gravity.END
+        setTextColor(valueColor)
+        setTypeface(typeface, Typeface.BOLD)
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+    }
+
+  private fun fieldRow(labelText: String, field: View): LinearLayout = LinearLayout(this).apply {
+    (field.parent as? ViewGroup)?.removeView(field)
+    orientation = LinearLayout.HORIZONTAL
+    gravity = Gravity.CENTER_VERTICAL
+    setPadding(0, dp(5), 0, dp(5))
+    addView(TextView(this@MainActivity).apply {
+      text = labelText
+      textSize = 12f
+      setTextColor(COLOR_MUTED)
+      setTypeface(typeface, Typeface.BOLD)
+    }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.34f))
+    addView(field, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 0.66f))
   }
 
   private fun infoRow(label: String, value: String): TextView = TextView(this).apply {

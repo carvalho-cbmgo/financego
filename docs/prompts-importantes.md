@@ -178,3 +178,14 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Nova transacao nativa passou a suportar transferencia, consolidacao, parcelamento e recorrencia avancada.
   - APIs Android ajustadas para categorias dinamicas e salvamento recorrente.
   - Acentuacao de textos web alterados foi revisada, incluindo orcamento, pareamento mobile, contas, seletores de mes e exportacoes.
+
+- Objetivo: refinar tela de transacoes do APK com icones, resumo compacto, FAB, formulario em linhas e corrigir classificacao de notificacoes.
+- Prompt base: "Na tela de transações do apk, exibir os seguintes conjuntos de textos e valores... Corrigir para que o sistema identifique corretamente uma transação de despesa em relação a uma transação de receita..."
+- Resultado:
+  - Resumo financeiro no APK passou para linhas com texto a esquerda e valor a direita.
+  - Acoes `Atualizar`, `Perfil` e `Sair` passaram para icones no topo.
+  - `Nova Transacao` passou a ser botao flutuante `+`.
+  - Formulario de nova/edicao de transacao passou a usar uma linha por campo.
+  - Categoria no APK passou a exibir recuo por profundidade.
+  - Saldos por conta passaram a usar normalizacao backend por tipo da transacao.
+  - Parser de notificacoes corrigido para `Compra no credito aprovada` como despesa e `estorno` como receita.

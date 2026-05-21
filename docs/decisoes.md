@@ -272,3 +272,23 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: `GET /api/android/bootstrap` deve retornar categorias dinamicas e historico ampliado de transacoes.
 - Motivo: permitir que o app nativo exiba listas, saldos mensais e seletores de categoria com dados reais do Supabase.
 - Impacto: tela Android fica sincronizada com categorias criadas no sistema web.
+
+- Data: `2026-05-21`
+- Decisao: o resumo financeiro do APK deve usar linhas compactas `rotulo + valor`, em vez de cards grandes.
+- Motivo: melhorar leitura em telas pequenas e reduzir ocupacao vertical.
+- Impacto: `Saldo anterior`, `Entradas`, `Saidas` e `Saldo atual` ficam visiveis de forma mais direta no celular.
+
+- Data: `2026-05-21`
+- Decisao: a navegacao principal do APK deve usar icones no topo para atualizar, perfil e sair, e botao flutuante para nova transacao.
+- Motivo: liberar area util da tela e aproximar a experiencia de um aplicativo nativo moderno.
+- Impacto: botoes textuais foram removidos da linha de acoes e substituidos por icones compactos.
+
+- Data: `2026-05-21`
+- Decisao: o APK deve receber categorias do backend com `depth` para representar hierarquia visual no seletor.
+- Motivo: o usuario precisa identificar categoria pai e subcategorias no momento da classificacao.
+- Impacto: `/api/android/bootstrap` passa a devolver categorias estruturadas para o app.
+
+- Data: `2026-05-21`
+- Decisao: classificacao automatica de notificacoes deve tratar `Compra no credito aprovada` como despesa e `estorno`/`reembolso` como receita.
+- Motivo: evitar inversao de sinais no registro automatico de cartao de credito e devolucoes.
+- Impacto: notificacoes bancarias ficam mais confiaveis e coerentes com o controle financeiro.

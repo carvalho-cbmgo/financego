@@ -3,7 +3,7 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Reinstalar o APK Android nativo versao `1.0.2` e confirmar login usando `https://financego-eight.vercel.app`.
+- [ ] Reinstalar o APK Android nativo versao `1.0.4` e confirmar login usando `https://financego-eight.vercel.app`.
 - [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
 - [ ] Validar login nativo no APK com usuário real.
 - [ ] Habilitar acesso às notificações para o app Finance GO Android e testar captura em segundo plano.
@@ -137,7 +137,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-012`
-- Descricao: validar em aparelho real o APK nativo `1.0.3` apos remodelagem de login, dashboard mensal, detalhe de conta, perfil e transacoes recorrentes.
+- Descricao: validar em aparelho real o APK nativo `1.0.4` apos remodelagem de login, dashboard mensal, detalhe de conta, perfil e transacoes recorrentes.
 - Severidade: alta
 - Como reproduzir: instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`, entrar com usuario de teste, trocar meses, abrir uma conta, criar transacao e testar recorrencias.
 - Status: pendente de teste fisico
@@ -162,4 +162,25 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Severidade: baixa
 - Como reproduzir: navegar por todas as abas web e procurar textos sem acento ou com caracteres quebrados.
 - Status: em monitoramento
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-016`
+- Descricao: validar no celular se os icones de atualizar, perfil, sair e nova transacao estao intuitivos e nao cortam em telas menores.
+- Severidade: media
+- Como reproduzir: instalar APK `1.0.4`, abrir a tela de transacoes e testar em diferentes escalas/fontes do Android.
+- Status: pendente de teste fisico
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-017`
+- Descricao: validar no celular se o seletor de categorias do APK exibe corretamente categorias pai e subcategorias com recuo.
+- Severidade: media
+- Como reproduzir: criar categorias/subcategorias na web, abrir o formulario de transacao no APK e conferir a hierarquia.
+- Status: pendente de teste fisico
+- Responsavel: time de desenvolvimento
+
+- ID: `NTF-018`
+- Descricao: validar com notificacoes reais se `Compra no credito aprovada` vira despesa e `estorno` vira receita.
+- Severidade: alta
+- Como reproduzir: receber notificacoes reais do banco/cartao ou simular payloads equivalentes e conferir o tipo/valor gerado.
+- Status: pendente de teste funcional em campo
 - Responsavel: time de desenvolvimento

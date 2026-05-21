@@ -137,7 +137,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.3` em aparelho Android real e validar abertura, login, sincronizacao, fluxo financeiro mensal e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.4` em aparelho Android real e validar abertura, login, sincronizacao, fluxo financeiro mensal e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -150,7 +150,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Ajustar cadastro/edicao nativa de transacoes com transferencia e recorrencia.
   - [x] Corrigir acentuacao de textos nas paginas web alteradas.
   - [x] Compilar novo APK nativo.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.3`.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.4`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -158,7 +158,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.3` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.4` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
   - [ ] Testar criacao nativa de transacoes sem repeticao, parceladas e avancadas.
   - [ ] Testar tela de detalhe de conta no APK para cartao de credito e conta corrente.
   - [ ] Configurar assinatura de produção para gerar APK release assinado.
@@ -202,3 +202,29 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
     - `scripts/build-android-financego.ps1 -Mode validate` executado com sucesso.
     - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+
+- Data: `2026-05-21`
+- Entrega principal: refinamento da tela de transacoes do APK e correcao da classificacao financeira de notificacoes.
+- Resultado entregue:
+  - Android nativo:
+    - Resumo da tela de transacoes passou a exibir `Saldo anterior`, `Entradas`, `Saidas` e `Saldo atual` em linhas compactas, com texto a esquerda e valor a direita.
+    - Botao `SAIR` foi movido para o topo ao lado do icone de `Perfil`.
+    - Botoes textuais `PERFIL`, `SAIR` e `ATUALIZAR` foram substituidos por icones no topo da tela.
+    - Botao `NOVA TRANSACAO` foi substituido por botao flutuante `+` no canto inferior direito.
+    - Marcadores `CREDITO` e `CORRENTE` foram ajustados para ocupar apenas o tamanho do texto.
+    - Formulario de criacao/edicao de transacao passou a usar uma linha por conjunto `rotulo + campo`.
+    - Campo `Data` foi adicionado ao formulario nativo.
+    - Criacao e edicao de transacoes passaram a usar a mesma estrutura visual.
+    - Seletor de categorias no APK passou a receber categorias com profundidade e exibir subcategorias com recuo.
+    - Saldos por conta no APK passaram a usar o saldo calculado normalizado pelo backend.
+    - Versao do APK atualizada para `1.0.4`.
+  - APIs e parser:
+    - `/api/android/bootstrap` passou a normalizar saldos por tipo da transacao: despesa negativa, receita positiva e transferencia preservando o sinal.
+    - `/api/android/bootstrap` passou a devolver categorias com `parent_name` e `depth` para exibicao hierarquica no APK.
+    - Parser de notificacoes passou a classificar `Compra no credito aprovada` como despesa.
+    - Parser de notificacoes passou a classificar textos de `estorno`/`reembolso` como receita.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `scripts/build-android-financego.ps1 -Mode debug` executado com sucesso.
+    - `testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease` executados com sucesso.
+    - Observacao: `assembleRelease` teve uma falha transitoria de `AccessDeniedException` em intermediario gerado do Gradle; a pasta gerada foi removida com verificacao de caminho dentro do workspace e o release foi recompilado com sucesso.

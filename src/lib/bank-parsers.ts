@@ -96,9 +96,14 @@ function buildShortNotificationDescription(input: {
 }) {
   const suffix = input.counterparty ? ` - ${input.counterparty}` : "";
 
+  if (/estorno|reembolso/.test(input.normalizedText)) return `Estorno${suffix}`;
   if (input.type === "transfer") return `Transferência${suffix}`;
   if (input.type === "credit") return `PIX Recebido${suffix}`;
   if (/pix|transferencia|transfer[eê]ncia/.test(input.normalizedText)) return `PIX realizado${suffix}`;
+  if (/compra.*credito|credito.*aprovad|cartao.*credito/.test(input.normalizedText)) {
+    const merchantFromText = input.rawText.match(/\bem\s+([^|.,;]+)/i)?.[1]?.replace(/\s+/g, " ").trim();
+    return merchantFromText ? `Compra - ${merchantFromText.slice(0, 60)}` : "Compra no crédito";
+  }
 
   const merchant = extractMerchant(input.rawText);
   return merchant ? `Compra - ${merchant}` : "Despesa registrada";
@@ -277,11 +282,19 @@ export function parseNotificationByBank(input: {
   const counterparty = extractPixCounterparty(full);
   const isOwnCounterparty = looksSamePerson(counterparty, input.profileFullName);
   let forcedType: ParsedBankTransaction["type"] | undefined;
+  const looksRefund = /estorno|reembolso|devolucao|devolução/.test(s);
+  const looksApprovedCreditPurchase = /compra.*credito|compra.*crédito|credito.*aprovad|crédito.*aprovad|cartao de credito|cartão de crédito|no credito|no crédito/.test(s);
 
-  if (isOwnCounterparty && /pix|transferencia|transfer[eê]ncia|ted|doc/.test(s)) {
+  if (looksRefund) {
+    forcedType = "credit";
+    signedAmount = Math.abs(money);
+  } else if (looksApprovedCreditPurchase || /compra|pagamento aprovado|debito|débito|cartao|cartão|parcela/.test(s)) {
+    forcedType = "debit";
+    signedAmount = -Math.abs(money);
+  } else if (isOwnCounterparty && /pix|transferencia|transfer[eê]ncia|ted|doc/.test(s)) {
     forcedType = "transfer";
     signedAmount = /recebido|credito|deposito|entrada/.test(s) ? Math.abs(money) : -Math.abs(money);
-  } else if (/recebido|credito|deposito|entrada|pix recebido/.test(s)) {
+  } else if (/pix recebido|recebido|deposito|depósito|entrada|salario|salário/.test(s)) {
     forcedType = "credit";
     signedAmount = Math.abs(money);
   } else {
@@ -357,11 +370,12 @@ function parseStatementLine(bankKey: BankKey, line: string, profileId: string): 
   if (amount === null) return null;
 
   const s = normalize(line);
-  const looksDebit = /compra|pagamento|debito|parcela|saque|tarifa|pix enviado|transferencia enviada/.test(s);
-  const looksCredit = /credito|recebido|deposito|pix recebido|estorno|reembolso/.test(s);
+  const looksDebit = /compra|pagamento|debito|cartao|parcela|saque|tarifa|pix enviado|transferencia enviada/.test(s);
+  const looksCredit = /recebido|deposito|pix recebido|estorno|reembolso|salario/.test(s)
+    || (/\bcredito\b/.test(s) && !/compra|cartao|aprovad/.test(s));
 
-  if (looksCredit) amount = Math.abs(amount);
-  else if (looksDebit) amount = -Math.abs(amount);
+  if (looksDebit) amount = -Math.abs(amount);
+  else if (looksCredit) amount = Math.abs(amount);
   else if (!String(lastMoney).startsWith("-")) amount = -Math.abs(amount);
 
   return baseBuild({
@@ -403,9 +417,14 @@ export function parseCsvStatement(bankKey: BankKey, csv: string, profileId: stri
     const amount = parseFlexibleMoney(rawAmount);
     if (amount === null) continue;
 
-    const signedAmount = amount > 0 && !/receb|credito|crédito|salario|salário|estorno|reembolso/i.test(rawDescription)
-      ? -Math.abs(amount)
-      : amount;
+    const rawNormalized = normalize(rawDescription);
+    const isIncomeDescription = /receb|deposito|pix recebido|salario|estorno|reembolso/.test(rawNormalized);
+    const isDebitDescription = /compra|pagamento|debito|cartao|parcela|credito.*aprovad/.test(rawNormalized);
+    const signedAmount = isIncomeDescription
+      ? Math.abs(amount)
+      : isDebitDescription || amount > 0
+        ? -Math.abs(amount)
+        : amount;
 
     results.push(baseBuild({
       bankKey,
