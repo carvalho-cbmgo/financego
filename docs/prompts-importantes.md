@@ -214,3 +214,15 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Modal de edicao ganhou botao vermelho `Excluir`.
   - Nova rota Android `/api/android/transactions/delete` criada.
   - Versao Android atualizada para `1.0.6`.
+
+- Objetivo: adicionar edicao/exclusao de contas no APK e refinar topo, icones e marca.
+- Prompt base: "Ajustar o apk para que ao clicar em uma das Contas na tela principal esteja disponível... um outro ícone para edição da conta... Trocar os ícones de ATUALIZAR, PERFIL e SAIR por miniaturas de imagens..."
+- Resultado:
+  - Tela de detalhe da conta ganhou icone de lapis para abrir `Edicao de Conta`.
+  - Modal de conta permite editar banco, nome, tipo e saldo base.
+  - Modal de conta ganhou botao vermelho `Excluir` e botoes `Cancelar`/`Salvar`.
+  - Cards de contas passaram a mostrar banco em selo roxo, tipo ao lado e saldo alinhado a direita.
+  - Icones de topo passaram a usar drawables vetoriais nativos.
+  - Marca `Finance GO` recebeu destaque visual no `GO`.
+  - Rotas Android `/api/android/accounts/save` e `/api/android/accounts/delete` criadas.
+  - Versao Android atualizada para `1.0.7`.

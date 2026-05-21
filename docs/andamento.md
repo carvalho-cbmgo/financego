@@ -4,6 +4,28 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-21`
+- Entrega principal: edicao de contas no APK e refinamento visual do topo/contas.
+- Resultado entregue:
+  - Android nativo:
+    - Tela de detalhe da conta passou a exibir icone de edicao com imagem de lapis ao lado esquerdo do icone de atualizar.
+    - Icones de `Atualizar`, `Perfil`, `Sair` e `Editar conta` passaram a usar drawables vetoriais nativos em vez de caracteres de texto.
+    - Janela `Edicao de Conta` criada com titulo alinhado a esquerda, botao vermelho `Excluir` alinhado a direita, campos editaveis e botoes `Cancelar`/`Salvar` na parte inferior.
+    - Cards de contas da tela principal passaram a mostrar banco em selo roxo, tipo `CORRENTE`/`CREDITO` ao lado e saldo alinhado a direita.
+    - Nome da conta passou a aparecer abaixo dos selos de banco/tipo.
+    - Marca `Finance GO` no topo foi estilizada com destaque visual para `GO`, usando cor verde e fundo suave.
+    - Versao Android atualizada para `versionCode=8` e `versionName=1.0.7`.
+  - API Android:
+    - Novas rotas `POST /api/android/accounts/save` e `POST /api/android/accounts/delete` criadas para edicao/exclusao de contas pelo APK.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug` executado com sucesso.
+    - `testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease` executados com sucesso.
+    - Observacao: houve bloqueio transitorio do Windows/Gradle em pastas geradas `compileDebugKotlin` e `compileReleaseKotlin`; as pastas geradas foram removidas com verificacao de caminho dentro do workspace e as builds foram recompiladas com sucesso.
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+- Data: `2026-05-21`
 - Entrega principal: refinamento visual dos cards de transacao do APK e exclusao nativa de transacoes.
 - Resultado entregue:
   - Android nativo:
@@ -185,7 +207,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.6` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, layout dos cards, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.7` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, layout dos cards, edicao/exclusao de contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -204,7 +226,10 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Automatizar `R$ Total` em parcelamento/recorrencia no APK.
   - [x] Remodelar card de transacao do APK em tres linhas com selos visuais.
   - [x] Adicionar exclusao nativa de transacao no APK.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.6`.
+  - [x] Implementar edicao/exclusao de contas pelo APK.
+  - [x] Substituir icones textuais por miniaturas vetoriais nativas.
+  - [x] Refinar exibicao dos cards de contas e marca `Finance GO`.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.7`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -212,7 +237,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.6` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.7` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar edicao de conta pelo icone de lapis na tela de detalhe da conta.
+  - [ ] Testar exclusao de conta pelo modal `Edicao de Conta`.
   - [ ] Testar no aparelho real se cards de transacao exibem data/descricao, selos, conta/tipo e valor alinhado.
   - [ ] Testar botao `Excluir` no APK para transacao simples, transferencia e parcela/recorrencia nao consolidada.
   - [ ] Testar no aparelho real os filtros de periodo: ate hoje, futuro do mes e mes completo.

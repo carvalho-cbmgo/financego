@@ -23,6 +23,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.ProgressBar
@@ -179,7 +180,7 @@ class MainActivity : Activity() {
   private fun showAccountPage(account: JSONObject) {
     val data = bootstrap ?: JSONObject()
     val root = screenRoot()
-    root.addView(appHeader(accountTitle(account), showBack = true, showProfile = true))
+    root.addView(appHeader(accountTitle(account), showBack = true, showProfile = true, editAccount = account))
     root.addView(periodSelector { showAccountPage(account) })
     root.addView(monthSelector { showAccountPage(account) })
 
@@ -319,13 +320,19 @@ class MainActivity : Activity() {
       }
     }
     val textBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-    textBox.addView(TextView(this).apply {
-      text = accountTitle(account)
-      textSize = 14f
-      setTextColor(COLOR_TEXT)
-      setTypeface(typeface, Typeface.BOLD)
+    textBox.addView(LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      addView(bankBadge(account.optString("institution_name", "Banco")))
+      addView(typeBadge(account.optString("type"), topMargin = 0))
     })
-    textBox.addView(typeBadge(account.optString("type")))
+    textBox.addView(TextView(this).apply {
+      text = account.optString("name", "Conta")
+      textSize = 13f
+      setTextColor(COLOR_MUTED)
+      setTypeface(typeface, Typeface.BOLD)
+      setPadding(0, dp(6), 0, 0)
+    })
     box.addView(textBox, weightWrap(1f))
     box.addView(TextView(this).apply {
       text = money(balance)
@@ -659,6 +666,100 @@ class MainActivity : Activity() {
     dialog.show()
   }
 
+  private fun openAccountDialog(account: JSONObject) {
+    val data = bootstrap ?: JSONObject()
+    val banks = banksList(data)
+    if (banks.isEmpty()) {
+      toast("Cadastre um banco antes de editar a conta.")
+      return
+    }
+
+    val box = verticalRoot().apply { setPadding(dp(10), 0, dp(10), 0) }
+    val deleteButton = secondaryButton("Excluir").apply {
+      textSize = 12f
+      setTextColor(COLOR_DANGER)
+      background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(12))
+    }
+    box.addView(LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(0, dp(4), 0, dp(12))
+      addView(title("Edição de Conta", 18f), weightWrap(1f))
+      addView(deleteButton, fixed(dp(96), dp(40)))
+    })
+
+    val bankSpinner = bankSpinner(banks, account.optString("bank_id"), account.optString("institution_name"))
+    val name = input("Nome da conta", account.optString("name", ""))
+    val typeValues = listOf("CHECKING_ACCOUNT", "CREDIT_CARD")
+    val typeLabels = listOf("CONTA CORRENTE", "CARTÃO DE CRÉDITO")
+    val typeIndex = typeValues.indexOf(accountTypeValue(account.optString("type"))).coerceAtLeast(0)
+    val typeSpinner = spinner(typeLabels, typeIndex)
+    val balance = input("0,00", account.optDouble("balance", 0.0).toString()).apply {
+      inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
+    }
+
+    box.addView(fieldRow("Banco", bankSpinner))
+    box.addView(fieldRow("Nome", name))
+    box.addView(fieldRow("Tipo", typeSpinner))
+    box.addView(fieldRow("Saldo base", balance))
+
+    val actions = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER
+      setPadding(0, dp(14), 0, dp(4))
+    }
+    val cancelButton = secondaryButton("Cancelar")
+    val saveButton = primaryButton("Salvar")
+    actions.addView(cancelButton, fixed(dp(118), dp(46)))
+    actions.addView(saveButton, fixed(dp(118), dp(46)))
+    box.addView(actions)
+
+    val dialog = AlertDialog.Builder(this)
+      .setView(scroll(box))
+      .create()
+
+    cancelButton.setOnClickListener { dialog.dismiss() }
+    saveButton.setOnClickListener {
+      val payload = JSONObject()
+        .put("id", account.optString("id"))
+        .put("bank_id", bankIdAt(banks, bankSpinner.selectedItemPosition))
+        .put("account_name", name.text.toString())
+        .put("account_type", typeValues[typeSpinner.selectedItemPosition])
+        .put("balance", parseAmountInput(balance.text.toString()))
+      dialog.dismiss()
+      showLoading("Carregando...")
+      runAsync(
+        work = { api.saveAccount(payload) },
+        done = { loadHome() },
+        fail = {
+          toast(it)
+          bootstrap?.let { showAccountPage(account) } ?: showLogin()
+        },
+      )
+    }
+    deleteButton.setOnClickListener {
+      AlertDialog.Builder(this)
+        .setTitle("Excluir conta")
+        .setMessage("Deseja realmente excluir esta conta e seus dados vinculados?")
+        .setNegativeButton("Cancelar", null)
+        .setPositiveButton("Excluir") { _, _ ->
+          dialog.dismiss()
+          showLoading("Carregando...")
+          runAsync(
+            work = { api.deleteAccount(account.optString("id")) },
+            done = { loadHome() },
+            fail = {
+              toast(it)
+              bootstrap?.let { showAccountPage(account) } ?: showLogin()
+            },
+          )
+        }
+        .show()
+    }
+
+    dialog.show()
+  }
+
   private fun simpleSelected(onSelected: () -> Unit) = object : android.widget.AdapterView.OnItemSelectedListener {
     override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) = onSelected()
     override fun onNothingSelected(parent: android.widget.AdapterView<*>?) = Unit
@@ -745,6 +846,13 @@ class MainActivity : Activity() {
     val arr = data.optJSONArray("accounts") ?: JSONArray()
     for (i in 0 until arr.length()) arr.optJSONObject(i)?.let { items.add(it) }
     return items.sortedWith(compareBy({ it.optString("institution_name") }, { it.optString("name") }))
+  }
+
+  private fun banksList(data: JSONObject): List<JSONObject> {
+    val items = mutableListOf<JSONObject>()
+    val arr = data.optJSONArray("banks") ?: JSONArray()
+    for (i in 0 until arr.length()) arr.optJSONObject(i)?.let { items.add(it) }
+    return items.sortedBy { it.optString("name") }
   }
 
   private fun allTransactions(data: JSONObject): List<JSONObject> {
@@ -867,11 +975,26 @@ class MainActivity : Activity() {
 
   private fun accountIdAt(accounts: List<JSONObject>, index: Int): String = accounts.getOrNull(index.coerceAtLeast(0))?.optString("id") ?: ""
 
+  private fun bankSpinner(banks: List<JSONObject>, selectedId: String?, selectedName: String?): Spinner {
+    val labels = banks.map { it.optString("name", "Banco") }
+    val selectedIndex = banks.indexOfFirst {
+      it.optString("id") == selectedId || it.optString("name").equals(selectedName, ignoreCase = true)
+    }.coerceAtLeast(0)
+    return spinner(labels, selectedIndex)
+  }
+
+  private fun bankIdAt(banks: List<JSONObject>, index: Int): String = banks.getOrNull(index.coerceAtLeast(0))?.optString("id") ?: ""
+
   private fun accountForTransaction(data: JSONObject, accountId: String): JSONObject? =
     accountsList(data).firstOrNull { it.optString("id") == accountId }
 
   private fun accountTitle(account: JSONObject): String =
     "${account.optString("institution_name", "Banco")} - ${account.optString("name", "Conta")}".replace(Regex("\\s+"), " ").trim()
+
+  private fun accountTypeValue(type: String): String =
+    if (type.lowercase().contains("credit") || type.lowercase().contains("cart")) "CREDIT_CARD" else "CHECKING_ACCOUNT"
+
+  private fun bankBadge(text: String): TextView = outlineBadge(text.ifBlank { "Banco" }, COLOR_PURPLE)
 
   private fun outlineBadge(text: String, color: Int): TextView =
     TextView(this).apply {
@@ -902,20 +1025,23 @@ class MainActivity : Activity() {
     }
   }
 
-  private fun appHeader(text: String, showBack: Boolean = false, showProfile: Boolean = false): LinearLayout = LinearLayout(this).apply {
+  private fun appHeader(text: String, showBack: Boolean = false, showProfile: Boolean = false, editAccount: JSONObject? = null): LinearLayout = LinearLayout(this).apply {
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(0, 0, 0, dp(12))
     if (showBack) addView(iconButton("‹").apply { setOnClickListener { bootstrap?.let { showDashboard(it) } ?: showLogin() } }, fixed(dp(42), dp(42)))
     addView(LinearLayout(this@MainActivity).apply {
       orientation = LinearLayout.VERTICAL
-      addView(title("Finance GO", 20f))
+      addView(brandLogo())
       addView(muted(text))
     }, weightWrap(1f))
     if (showProfile) {
-      addView(iconActionButton("⟳", "Atualizar dados").apply { setOnClickListener { loadHome() } }, fixed(dp(42), dp(42)))
-      addView(iconActionButton("\uD83D\uDC64", "Perfil").apply { setOnClickListener { showProfilePage() } }, fixed(dp(42), dp(42)))
-      addView(iconActionButton("⇥", "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
+      editAccount?.let {
+        addView(iconImageButton(R.drawable.ic_edit, "Editar conta").apply { setOnClickListener { openAccountDialog(editAccount) } }, fixed(dp(42), dp(42)))
+      }
+      addView(iconImageButton(R.drawable.ic_refresh, "Atualizar dados").apply { setOnClickListener { loadHome() } }, fixed(dp(42), dp(42)))
+      addView(iconImageButton(R.drawable.ic_profile, "Perfil").apply { setOnClickListener { showProfilePage() } }, fixed(dp(42), dp(42)))
+      addView(iconImageButton(R.drawable.ic_logout, "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
     }
   }
 
@@ -996,10 +1122,41 @@ class MainActivity : Activity() {
     textSize = 20f
     setPadding(0, 0, 0, dp(2))
   }
+  private fun iconImageButton(drawableId: Int, description: String): ImageButton =
+    ImageButton(this).apply {
+      contentDescription = description
+      setImageResource(drawableId)
+      setColorFilter(COLOR_TEXT)
+      setPadding(dp(10), dp(10), dp(10), dp(10))
+      background = rounded(0xFFFFFFFF.toInt(), dp(1), 0xFFE0E5D8.toInt(), dp(14))
+    }
   private fun compactActionButton(text: String, primary: Boolean): Button =
     (if (primary) primaryButton(text) else secondaryButton(text)).apply { textSize = 10f; setSingleLine(true); setPadding(0, 0, 0, 0) }
   private fun iconButton(text: String): Button = secondaryButton(text).apply { textSize = 22f; setPadding(0, 0, 0, dp(2)) }
   private fun chipText(text: String): TextView = TextView(this).apply { this.text = text.uppercase(); textSize = 11f; letterSpacing = 0.12f; setTextColor(COLOR_PRIMARY); setTypeface(typeface, Typeface.BOLD); gravity = Gravity.CENTER }
+
+  private fun brandLogo(): LinearLayout = LinearLayout(this).apply {
+    orientation = LinearLayout.HORIZONTAL
+    gravity = Gravity.CENTER_VERTICAL
+    addView(TextView(this@MainActivity).apply {
+      text = "Finance"
+      textSize = 21f
+      letterSpacing = 0.02f
+      setTextColor(COLOR_TEXT)
+      setTypeface(typeface, Typeface.BOLD)
+    })
+    addView(TextView(this@MainActivity).apply {
+      text = " GO"
+      textSize = 21f
+      letterSpacing = 0.04f
+      setTextColor(COLOR_PRIMARY)
+      setTypeface(typeface, Typeface.BOLD)
+      setPadding(dp(4), 0, dp(8), dp(1))
+      background = rounded(0xFFEAF4D8.toInt(), dp(1), 0xFFC7DE8D.toInt(), dp(10))
+    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+      setMargins(dp(5), 0, 0, 0)
+    })
+  }
 
   private fun surface(): LinearLayout = verticalRoot().apply {
     setPadding(dp(14), dp(12), dp(14), dp(12))
@@ -1099,6 +1256,7 @@ class MainActivity : Activity() {
     private val COLOR_PRIMARY = 0xFF6E9B18.toInt()
     private val COLOR_GREEN = 0xFF139B5A.toInt()
     private val COLOR_BLUE = 0xFF2563EB.toInt()
+    private val COLOR_PURPLE = 0xFF7C3AED.toInt()
     private val COLOR_DANGER = 0xFFC62828.toInt()
   }
 }

@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-21`
+- Decisao: criar rotas Android dedicadas para salvar e excluir contas.
+- Motivo: o APK precisa editar/excluir contas usando JSON e Bearer token, enquanto as rotas web existentes usam `FormData` e redirecionamento.
+- Impacto: adicionadas `/api/android/accounts/save` e `/api/android/accounts/delete`, consumidas pelo APK nativo.
+
+- Data: `2026-05-21`
 - Decisao: criar rota Android dedicada para exclusao de transacoes (`POST /api/android/transactions/delete`).
 - Motivo: o APK precisa excluir transacoes sem depender das rotas web e preservando validacao de usuario autenticado.
 - Impacto: a exclusao nativa passa a funcionar para transacao simples, pares de transferencia interna e escopos de repeticao nao consolidada.
@@ -225,6 +230,24 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Impacto: validação em campo ficou direta e imediata.
 
 ## Decisoes de interface
+- Data: `2026-05-21`
+- Tela: APK Android / topo
+- Decisao: trocar icones textuais por drawables vetoriais nativos.
+- Motivo: melhorar legibilidade, profissionalismo e consistencia visual do app.
+- Impacto: `Atualizar`, `Perfil`, `Sair` e `Editar conta` passam a usar miniaturas visuais.
+
+- Data: `2026-05-21`
+- Tela: APK Android / contas
+- Decisao: exibir banco em selo roxo, tipo da conta ao lado e saldo alinhado a direita.
+- Motivo: destacar banco e tipo de forma compacta sem perder o saldo como informacao principal.
+- Impacto: painel de contas fica mais sofisticado e facil de escanear no celular.
+
+- Data: `2026-05-21`
+- Tela: APK Android / marca
+- Decisao: destacar `GO` na marca `Finance GO` com cor verde e fundo suave.
+- Motivo: dar mais personalidade visual ao produto sem poluir o topo.
+- Impacto: a marca fica mais reconhecivel nas telas principal e de conta.
+
 - Data: `2026-05-21`
 - Tela: APK Android / cards de transacao
 - Decisao: cards de transacao devem usar a mesma borda das contas e organizar informacoes em tres linhas.
