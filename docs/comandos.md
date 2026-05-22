@@ -160,7 +160,7 @@ $response.ok
 $response.user.email
 ```
 
-## Fluxo de teste do APK nativo `1.0.10`
+## Fluxo de teste do APK nativo `1.0.11`
 ```txt
 1) Instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
 2) Abrir Finance GO.
@@ -179,21 +179,28 @@ $response.user.email
 15) Conferir que o titulo `Transacoes` aparece destacado no topo da tela principal.
 16) Conferir que o topo da tela principal tem menu de 3 pontos e `Sair`, sem icones soltos de atualizar/perfil.
 17) Abrir o menu de 3 pontos da tela principal e testar `Adicionar Conta`, `Atualizar` e `Perfil`.
-18) Criar uma conta de teste pelo menu `Adicionar Conta` e conferir se ela aparece apos sincronizar.
-19) Abrir uma conta e conferir se o texto `Banco - Nome da conta` aparece destacado.
-20) Abrir uma conta e conferir menu de 3 pontos com `Edicao de Conta`, `Atualizar` e `Perfil`.
-21) Tocar em `Edicao de Conta` e testar a janela de conta.
-22) Editar banco, nome, tipo e saldo base da conta; salvar e conferir atualizacao.
-23) Conferir se o saldo base editado entra no `Saldo anterior` da tela principal.
-24) Conferir se o saldo base editado entra no `Saldo inicial` e `Saldo final` da tela da conta.
-25) Conferir se transacoes nao consolidadas ficam em negrito.
-26) Conferir se transacoes consolidadas ficam com texto normal.
-27) Testar o botao vermelho `Excluir` usando uma conta de teste.
-28) Na tela da conta, tocar no `+` e confirmar que `Conta Origem` ja vem selecionada com aquela conta.
-29) Abrir Perfil e testar atualizacao de nome completo.
-30) Conferir icone de sair e nova transacao.
-31) Conferir se categorias aparecem com recuo no seletor.
-32) Conferir se saldos por conta batem com saldo base + transacoes normalizadas.
+18) Confirmar que o menu de 3 pontos da tela principal mostra `Bancos` acima de `Adicionar Conta`.
+19) Abrir `Bancos`, criar um banco de teste, editar nome/codigo e excluir se nao houver contas vinculadas.
+20) Criar uma conta de teste pelo menu `Adicionar Conta` e conferir se ela aparece apos sincronizar.
+21) Tocar no icone de `Graficos` no topo da tela principal.
+22) Conferir periodo de calculo, seletor de mes e checkbox `Incluir saldo anterior` na tela `Graficos`.
+23) Filtrar por todas as contas e por uma ou mais contas especificas.
+24) Conferir grafico pizza por categoria, percentuais e toque na fatia para ver valor em reais.
+25) Conferir lista de categorias com percentual e valor em reais.
+26) Abrir uma conta e conferir se o texto `Banco - Nome da conta` aparece destacado.
+27) Abrir uma conta e conferir menu de 3 pontos com `Edicao de Conta`, `Atualizar` e `Perfil`.
+28) Tocar em `Edicao de Conta` e testar a janela de conta.
+29) Editar banco, nome, tipo e saldo base da conta; salvar e conferir atualizacao.
+30) Conferir se o saldo base editado entra no `Saldo anterior` da tela principal.
+31) Conferir se o saldo base editado entra no `Saldo inicial` e `Saldo final` da tela da conta.
+32) Conferir se transacoes nao consolidadas ficam em negrito.
+33) Conferir se transacoes consolidadas ficam com texto normal.
+34) Testar o botao vermelho `Excluir` usando uma conta de teste.
+35) Na tela da conta, tocar no `+` e confirmar que `Conta Origem` ja vem selecionada com aquela conta.
+36) Abrir Perfil e testar atualizacao de nome completo.
+37) Conferir icone de sair e nova transacao.
+38) Conferir se categorias aparecem com recuo no seletor.
+39) Conferir se saldos por conta batem com saldo base + transacoes normalizadas.
 ```
 
 ## Git

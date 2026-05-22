@@ -3,6 +3,18 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: criar telas nativas de Graficos e Bancos no APK.
+- Prompt base: "Implementar no apk, na pagina de transacoes, criar um botao para uma tela de 'Graficos'... adicionar a opcao 'Bancos' acima da opcao 'Adicionar Conta'..."
+- Resultado:
+  - Icone de `Graficos` adicionado no topo da tela principal do APK.
+  - Tela `Graficos` criada com periodo, mes, saldo anterior, filtro por contas e grafico pizza nativo.
+  - Grafico pizza exibe percentuais e mostra valor em reais ao tocar na fatia.
+  - Detalhamento por categoria lista percentual e valor em reais.
+  - Tela `Bancos` criada com bancos, contas vinculadas e saldos.
+  - Menu principal passou a mostrar `Bancos` acima de `Adicionar Conta`.
+  - Rotas `/api/android/banks/save` e `/api/android/banks/delete` criadas.
+  - Versao Android atualizada para `1.0.11`.
+
 - Objetivo: corrigir saldos do APK usando saldo base e diferenciar visualmente transacoes por consolidacao.
 - Prompt base: "Editei uma conta pelo aplicativo apk e defini um saldo base para ela, mas ao ser exibida pelo sistema, o saldo base dessa conta não considerado nos saldos apresentado na tela de transações e nem na tela das transações daquela conta em específico..."
 - Resultado:

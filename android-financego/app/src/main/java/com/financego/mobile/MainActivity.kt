@@ -4,6 +4,9 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -14,6 +17,7 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
@@ -40,10 +44,16 @@ import java.time.format.TextStyle
 import java.util.Locale
 import java.util.concurrent.Executors
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class MainActivity : Activity() {
   private data class CategoryOption(val name: String, val label: String)
   private data class PeriodRange(val start: LocalDate, val end: LocalDate)
+  private data class ExpenseSlice(val category: String, val amount: Double, val color: Int)
   private enum class PeriodMode { TO_DATE, FUTURE, FULL_MONTH }
 
   private lateinit var store: SessionStore
@@ -54,6 +64,8 @@ class MainActivity : Activity() {
   private var selectedMonth: YearMonth = YearMonth.now()
   private var includePreviousBalance = true
   private var selectedPeriodMode = PeriodMode.FULL_MONTH
+  private var chartAllAccounts = true
+  private val chartSelectedAccountIds = linkedSetOf<String>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -156,7 +168,7 @@ class MainActivity : Activity() {
   private fun showDashboard(data: JSONObject) {
     bootstrap = data
     val root = screenRoot()
-    root.addView(appHeader("Transações", showProfile = true))
+    root.addView(appHeader("Transações", showProfile = true, showCharts = true))
     root.addView(periodSelector { showDashboard(data) })
     root.addView(monthSelector { showDashboard(data) })
 
@@ -175,6 +187,72 @@ class MainActivity : Activity() {
     root.addView(section("Transações do mês"))
     addTransactionRows(root, monthRows)
     setContentViewWithFab(root)
+  }
+
+  private fun showChartsPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    bootstrap = data
+    val root = screenRoot()
+    root.addView(appHeader("Gráficos", showBack = true))
+    root.addView(periodSelector { showChartsPage(data) })
+    root.addView(monthSelector { showChartsPage(data) })
+    addChartAccountSelector(root, data)
+
+    val rows = chartTransactions(data)
+    val slices = expenseSlices(rows)
+    val totalExpense = slices.sumOf { it.amount }
+    val income = rows.filter { it.optString("type") == "credit" }.sumOf { abs(transactionAmount(it)) }
+    val futureExpense = rows
+      .filter { it.optString("type") == "debit" && !it.optBoolean("is_consolidated", true) }
+      .sumOf { abs(transactionAmount(it)) }
+
+    val summary = surface().apply {
+      addView(summaryLine("Gastos analisados", money(totalExpense), COLOR_DANGER, true))
+      addView(summaryLine("Entradas no período", money(income), COLOR_GREEN))
+      addView(summaryLine("Gastos não consolidados", money(futureExpense), COLOR_BLUE))
+      val top = slices.maxByOrNull { it.amount }
+      addView(summaryLine("Maior categoria", top?.let { "${it.category} (${percent(it.amount, totalExpense)})" } ?: "Sem gastos"))
+    }
+    root.addView(summary)
+
+    if (slices.isEmpty()) {
+      root.addView(emptyState("Nenhuma despesa encontrada para o filtro selecionado."))
+    } else {
+      val chartBox = surface().apply {
+        gravity = Gravity.CENTER_HORIZONTAL
+        addView(title("Gastos por categoria", 17f))
+        addView(muted("Toque em uma fatia para ver o valor exato."))
+        addView(PieChartView(slices), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(280)).apply {
+          setMargins(0, dp(8), 0, dp(10))
+        })
+      }
+      root.addView(chartBox)
+
+      val list = surface().apply {
+        addView(title("Detalhamento por categoria", 16f))
+        for (slice in slices) {
+          addView(summaryLine("${slice.category} (${percent(slice.amount, totalExpense)})", money(slice.amount), slice.color))
+        }
+      }
+      root.addView(list)
+    }
+
+    setContentView(scroll(root))
+  }
+
+  private fun showBanksPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    bootstrap = data
+    val root = screenRoot()
+    root.addView(appHeader("Bancos", showBack = true))
+    root.addView(primaryButton("Novo banco").apply { setOnClickListener { openBankDialog(null) } }, matchWrap())
+
+    val banks = banksList(data)
+    if (banks.isEmpty()) {
+      root.addView(emptyState("Nenhum banco cadastrado."))
+    } else {
+      for (bank in banks) root.addView(bankCard(data, bank))
+    }
+
+    setContentView(scroll(root))
   }
 
   private fun showAccountPage(account: JSONObject) {
@@ -264,6 +342,211 @@ class MainActivity : Activity() {
     textSize = 13f
     setTextColor(COLOR_TEXT)
     background = rounded(0xFFFFFFFF.toInt(), dp(1), 0xFFE3E7DA.toInt(), dp(14))
+  }
+
+  private fun addChartAccountSelector(root: LinearLayout, data: JSONObject) {
+    val accounts = accountsList(data)
+    val box = surface().apply {
+      addView(title("Contas analisadas", 16f))
+      addView(muted("Selecione todas as contas ou escolha contas específicas para filtrar os gráficos."))
+    }
+
+    if (accounts.isEmpty()) {
+      box.addView(emptyState("Nenhuma conta cadastrada para análise."))
+      root.addView(box)
+      return
+    }
+
+    val all = CheckBox(this).apply {
+      text = "Todas as contas"
+      textSize = 13f
+      setTextColor(COLOR_TEXT)
+      setTypeface(typeface, Typeface.BOLD)
+      isChecked = chartAllAccounts || chartSelectedAccountIds.isEmpty()
+      setOnCheckedChangeListener { _, checked ->
+        if (checked) {
+          chartAllAccounts = true
+          chartSelectedAccountIds.clear()
+          showChartsPage(data)
+        }
+      }
+    }
+    box.addView(all)
+
+    for (account in accounts) {
+      val accountId = account.optString("id")
+      box.addView(CheckBox(this).apply {
+        text = accountTitle(account)
+        textSize = 12f
+        setTextColor(COLOR_TEXT)
+        isChecked = !chartAllAccounts && chartSelectedAccountIds.contains(accountId)
+        setOnCheckedChangeListener { _, checked ->
+          chartAllAccounts = false
+          if (checked) chartSelectedAccountIds.add(accountId) else chartSelectedAccountIds.remove(accountId)
+          if (chartSelectedAccountIds.isEmpty()) chartAllAccounts = true
+          showChartsPage(data)
+        }
+      })
+    }
+
+    root.addView(box)
+  }
+
+  private fun chartTransactions(data: JSONObject): List<JSONObject> {
+    val accountIds = if (chartAllAccounts || chartSelectedAccountIds.isEmpty()) {
+      accountsList(data).map { it.optString("id") }.toSet()
+    } else {
+      chartSelectedAccountIds.toSet()
+    }
+    val range = periodRange()
+    return allTransactions(data).filter { tx ->
+      val date = txDate(tx) ?: return@filter false
+      accountIds.contains(tx.optString("account_id")) && !date.isBefore(range.start) && !date.isAfter(range.end)
+    }
+  }
+
+  private fun expenseSlices(rows: List<JSONObject>): List<ExpenseSlice> {
+    val grouped = linkedMapOf<String, Double>()
+    rows.filter { it.optString("type") == "debit" }.forEach { tx ->
+      val category = tx.optString("app_category", "Outros").ifBlank { "Outros" }
+      grouped[category] = (grouped[category] ?: 0.0) + abs(transactionAmount(tx))
+    }
+    return grouped.entries
+      .filter { it.value > 0.0 }
+      .sortedByDescending { it.value }
+      .mapIndexed { index, entry -> ExpenseSlice(entry.key, entry.value, pieColor(index)) }
+  }
+
+  private fun pieColor(index: Int): Int {
+    val colors = intArrayOf(
+      0xFFE54B4B.toInt(),
+      0xFFF2C94C.toInt(),
+      0xFF0E8F83.toInt(),
+      0xFF6C2BD9.toInt(),
+      0xFF2F80ED.toInt(),
+      0xFFF97316.toInt(),
+      0xFF16A34A.toInt(),
+      0xFFBE185D.toInt(),
+      0xFF64748B.toInt(),
+    )
+    return colors[index % colors.size]
+  }
+
+  private fun percent(value: Double, total: Double): String =
+    if (total <= 0.0) "0%" else String.format(Locale("pt", "BR"), "%.1f%%", value / total * 100.0)
+
+  private fun bankCard(data: JSONObject, bank: JSONObject): View = surface().apply {
+    val linkedAccounts = accountsForBank(data, bank)
+    val header = LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+    }
+    header.addView(LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.VERTICAL
+      addView(title(bank.optString("name", "Banco"), 16f))
+      val code = bank.optString("code", "").trim()
+      if (code.isNotBlank()) addView(muted("Código: $code"))
+      addView(muted("${linkedAccounts.size} conta(s) vinculada(s)"))
+    }, weightWrap(1f))
+    header.addView(compactActionButton("Editar", false).apply {
+      setOnClickListener { openBankDialog(bank) }
+    }, fixed(dp(78), dp(38)))
+    header.addView(compactActionButton("DEL", false).apply {
+      setTextColor(COLOR_DANGER)
+      background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(12))
+      setOnClickListener { confirmDeleteBank(bank) }
+    }, fixed(dp(56), dp(38)))
+    addView(header)
+
+    if (linkedAccounts.isEmpty()) {
+      addView(muted("Sem contas cadastradas neste banco."))
+    } else {
+      for (account in linkedAccounts) {
+        addView(summaryLine(account.optString("name", "Conta"), "${money(accountBalance(data, account))}  ${if (accountTypeValue(account.optString("type")) == "CREDIT_CARD") "CRÉDITO" else "CORRENTE"}"))
+      }
+    }
+  }
+
+  private fun openBankDialog(bank: JSONObject?) {
+    val box = verticalRoot().apply { setPadding(dp(10), 0, dp(10), 0) }
+    box.addView(title(if (bank == null) "Novo banco" else "Editar banco", 18f))
+    box.addView(spacer(8))
+    val name = input("Nome do banco", bank?.optString("name", "") ?: "")
+    val code = input("Código ou sigla", bank?.optString("code", "") ?: "")
+    box.addView(fieldRow("Nome", name))
+    box.addView(fieldRow("Código", code))
+
+    val actions = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER
+      setPadding(0, dp(14), 0, dp(4))
+    }
+    val cancel = secondaryButton("Cancelar")
+    val save = primaryButton("Salvar")
+    actions.addView(cancel, fixed(dp(118), dp(46)))
+    actions.addView(save, fixed(dp(118), dp(46)))
+    box.addView(actions)
+
+    val dialog = AlertDialog.Builder(this).setView(scroll(box)).create()
+    cancel.setOnClickListener { dialog.dismiss() }
+    save.setOnClickListener {
+      val cleanName = name.text.toString().replace(Regex("\\s+"), " ").trim()
+      if (cleanName.isBlank()) {
+        toast("Informe o nome do banco.")
+        return@setOnClickListener
+      }
+      val payload = JSONObject()
+        .put("bank_name", cleanName)
+        .put("bank_code", code.text.toString().trim())
+      bank?.optString("id")?.takeIf { it.isNotBlank() }?.let { payload.put("id", it) }
+      dialog.dismiss()
+      showLoading("Carregando...")
+      runAsync(
+        work = {
+          api.saveBank(payload)
+          api.bootstrap()
+        },
+        done = { showBanksPage(it) },
+        fail = {
+          toast(it)
+          bootstrap?.let { data -> showBanksPage(data) } ?: showLogin()
+        },
+      )
+    }
+    dialog.show()
+  }
+
+  private fun confirmDeleteBank(bank: JSONObject) {
+    val data = bootstrap ?: JSONObject()
+    val linked = accountsForBank(data, bank)
+    if (linked.isNotEmpty()) {
+      AlertDialog.Builder(this)
+        .setTitle("Banco com contas")
+        .setMessage("Este banco possui ${linked.size} conta(s) vinculada(s). Para proteger seus dados, remova ou mova as contas antes de excluir o banco.")
+        .setPositiveButton("Entendi", null)
+        .show()
+      return
+    }
+
+    AlertDialog.Builder(this)
+      .setTitle("Excluir banco")
+      .setMessage("Deseja realmente excluir ${bank.optString("name", "este banco")}?")
+      .setNegativeButton("Cancelar", null)
+      .setPositiveButton("Excluir") { _, _ ->
+        showLoading("Carregando...")
+        runAsync(
+          work = {
+            api.deleteBank(bank.optString("id"))
+            api.bootstrap()
+          },
+          done = { showBanksPage(it) },
+          fail = {
+            toast(it)
+            bootstrap?.let { data -> showBanksPage(data) } ?: showLogin()
+          },
+        )
+      }
+      .show()
   }
 
   private fun showMonthPicker(onChange: () -> Unit) {
@@ -994,6 +1277,14 @@ class MainActivity : Activity() {
   private fun accountForTransaction(data: JSONObject, accountId: String): JSONObject? =
     accountsList(data).firstOrNull { it.optString("id") == accountId }
 
+  private fun accountsForBank(data: JSONObject, bank: JSONObject): List<JSONObject> {
+    val bankId = bank.optString("id")
+    val bankName = bank.optString("name")
+    return accountsList(data).filter { account ->
+      account.optString("bank_id") == bankId || account.optString("institution_name").equals(bankName, ignoreCase = true)
+    }
+  }
+
   private fun accountTitle(account: JSONObject): String =
     "${account.optString("institution_name", "Banco")} - ${account.optString("name", "Conta")}".replace(Regex("\\s+"), " ").trim()
 
@@ -1031,7 +1322,7 @@ class MainActivity : Activity() {
     }
   }
 
-  private fun appHeader(text: String, showBack: Boolean = false, showProfile: Boolean = false, editAccount: JSONObject? = null): LinearLayout = LinearLayout(this).apply {
+  private fun appHeader(text: String, showBack: Boolean = false, showProfile: Boolean = false, editAccount: JSONObject? = null, showCharts: Boolean = false): LinearLayout = LinearLayout(this).apply {
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(0, 0, 0, dp(12))
@@ -1043,6 +1334,9 @@ class MainActivity : Activity() {
     }, weightWrap(1f))
     if (showProfile) {
       addView(iconImageButton(R.drawable.ic_more_vert, "Mais opções").apply { setOnClickListener { showHeaderMenu(editAccount) } }, fixed(dp(42), dp(42)))
+      if (showCharts) {
+        addView(iconImageButton(R.drawable.ic_charts, "Gráficos").apply { setOnClickListener { showChartsPage() } }, fixed(dp(42), dp(42)))
+      }
       addView(iconImageButton(R.drawable.ic_logout, "Sair").apply { setOnClickListener { store.clear(); showLogin() } }, fixed(dp(42), dp(42)))
     }
   }
@@ -1051,12 +1345,13 @@ class MainActivity : Activity() {
     val labels = if (editAccount != null) {
       arrayOf("Edição de Conta", "Atualizar", "Perfil")
     } else {
-      arrayOf("Adicionar Conta", "Atualizar", "Perfil")
+      arrayOf("Bancos", "Adicionar Conta", "Atualizar", "Perfil")
     }
     AlertDialog.Builder(this)
       .setItems(labels) { dialog, which ->
         dialog.dismiss()
         when (labels[which]) {
+          "Bancos" -> showBanksPage()
           "Adicionar Conta" -> openAccountDialog(null)
           "Edição de Conta" -> editAccount?.let { openAccountDialog(it) }
           "Atualizar" -> loadHome()
@@ -1064,6 +1359,73 @@ class MainActivity : Activity() {
         }
       }
       .show()
+  }
+
+  private inner class PieChartView(private val slices: List<ExpenseSlice>) : View(this@MainActivity) {
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = 0xFFFFFFFF.toInt()
+      textAlign = Paint.Align.CENTER
+      textSize = dp(12).toFloat()
+      typeface = Typeface.DEFAULT_BOLD
+    }
+    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = 0xFFFFFFFF.toInt()
+      style = Paint.Style.STROKE
+      strokeWidth = dp(2).toFloat()
+    }
+    private val total = slices.sumOf { it.amount }.coerceAtLeast(0.0)
+
+    override fun onDraw(canvas: Canvas) {
+      super.onDraw(canvas)
+      if (total <= 0.0) return
+      val size = min(width, height).toFloat()
+      val radius = size * 0.42f
+      val centerX = width / 2f
+      val centerY = height / 2f
+      val rect = RectF(centerX - radius, centerY - radius, centerX + radius, centerY + radius)
+      var cursor = 0f
+
+      for (slice in slices) {
+        val sweep = (slice.amount / total * 360.0).toFloat()
+        fillPaint.color = slice.color
+        canvas.drawArc(rect, -90f + cursor, sweep, true, fillPaint)
+        canvas.drawArc(rect, -90f + cursor, sweep, true, borderPaint)
+
+        if (sweep >= 24f) {
+          val middle = Math.toRadians((-90f + cursor + sweep / 2f).toDouble())
+          val labelRadius = radius * 0.62f
+          val x = centerX + cos(middle).toFloat() * labelRadius
+          val y = centerY + sin(middle).toFloat() * labelRadius + dp(4)
+          canvas.drawText(percent(slice.amount, total), x, y, labelPaint)
+        }
+        cursor += sweep
+      }
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+      if (event.action != MotionEvent.ACTION_UP || total <= 0.0) return true
+      val centerX = width / 2f
+      val centerY = height / 2f
+      val dx = event.x - centerX
+      val dy = event.y - centerY
+      val radius = min(width, height) * 0.42f
+      if (sqrt(dx * dx + dy * dy) > radius) return true
+
+      var angleFromRight = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
+      if (angleFromRight < 0f) angleFromRight += 360f
+      val angleFromTop = (angleFromRight + 90f) % 360f
+      var cursor = 0f
+      for (slice in slices) {
+        val sweep = (slice.amount / total * 360.0).toFloat()
+        if (angleFromTop >= cursor && angleFromTop <= cursor + sweep) {
+          toast("${slice.category}: ${money(slice.amount)} (${percent(slice.amount, total)})")
+          return true
+        }
+        cursor += sweep
+      }
+      return true
+    }
   }
 
   private fun isNotificationListenerEnabled(): Boolean {

@@ -3,7 +3,7 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Reinstalar o APK Android nativo versao `1.0.10` e confirmar login usando `https://financego-eight.vercel.app`.
+- [ ] Reinstalar o APK Android nativo versao `1.0.11` e confirmar login usando `https://financego-eight.vercel.app`.
 - [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
 - [ ] Validar login nativo no APK com usuário real.
 - [ ] Validar no APK os filtros de periodo `ate hoje`, `amanha ate o final do mes` e `mes completo`.
@@ -18,6 +18,8 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Validar no APK a criacao de conta pelo menu de 3 pontos da tela principal.
 - [ ] Validar no APK se o saldo base editado na conta entra no `Saldo anterior`, `Saldo inicial`, `Saldo final` e nos cards de contas.
 - [ ] Validar no APK se transacoes nao consolidadas aparecem em negrito e consolidadas aparecem sem negrito.
+- [ ] Validar no APK a nova tela `Graficos`, incluindo filtro de contas, pizza por categoria e toque em fatias.
+- [ ] Validar no APK a nova tela `Bancos`, incluindo criar, editar e excluir banco sem contas vinculadas.
 - [ ] Validar no APK que nova transacao criada pela tela de conta ja seleciona a conta origem correta.
 - [ ] Habilitar acesso às notificações para o app Finance GO Android e testar captura em segundo plano.
 - [ ] Validar classificação real de notificações: PIX recebido, PIX realizado e transferência entre contas próprias.

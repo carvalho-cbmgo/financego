@@ -4,6 +4,32 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-22`
+- Entrega principal: telas nativas de Graficos e Bancos no APK.
+- Resultado entregue:
+  - Android nativo:
+    - Tela principal de transacoes recebeu icone de `Graficos` no topo, entre o menu de 3 pontos e o botao `Sair`.
+    - Nova tela `Graficos` criada com periodo de calculo, seletor de mes, checkbox `Incluir saldo anterior` e filtro enxuto de contas.
+    - Tela `Graficos` permite analisar todas as contas ou contas especificas.
+    - Tela `Graficos` exibe grafico pizza nativo de gastos por categoria, com percentuais nas fatias.
+    - Ao tocar em uma fatia do grafico, o APK exibe o valor em reais e percentual daquela categoria.
+    - Abaixo do grafico, a tela lista categoria, percentual e valor em reais por linha.
+    - A tela tambem exibe resumo de gastos analisados, entradas no periodo, gastos nao consolidados e maior categoria.
+    - Menu de 3 pontos da tela principal passou a exibir `Bancos` acima de `Adicionar Conta`.
+    - Nova tela `Bancos` criada para listar bancos, contas vinculadas e saldos por conta.
+    - Tela `Bancos` permite criar, editar e excluir bancos sem sair do APK.
+    - Versao Android atualizada para `versionCode=12` e `versionName=1.0.11`.
+  - API Android:
+    - Criada rota `POST /api/android/banks/save` para criar/editar bancos via JSON e Bearer token.
+    - Criada rota `POST /api/android/banks/delete` para excluir bancos sem contas vinculadas.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease` executados com sucesso.
+    - APK debug confirmado com `versionCode=12` e `versionName=1.0.11`.
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+- Data: `2026-05-22`
 - Entrega principal: saldo base considerado no APK e leitura visual de transacoes consolidadas.
 - Resultado entregue:
   - Android nativo:
@@ -271,7 +297,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.10` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, saldo base nas contas, layout dos cards, diferenciacao visual entre transacoes consolidadas/nao consolidadas, menu de 3 pontos, cadastro/edicao/exclusao de contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.11` em aparelho Android real e validar abertura, login, sincronizacao, tela de Graficos, tela de Bancos, filtro de periodo, saldo base nas contas, layout dos cards, diferenciacao visual entre transacoes consolidadas/nao consolidadas, menu de 3 pontos, cadastro/edicao/exclusao de bancos e contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -298,7 +324,10 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Preselecionar a conta origem ao criar transacao pela tela da conta.
   - [x] Considerar saldo base nos saldos da tela principal e da tela de conta.
   - [x] Diferenciar visualmente transacoes consolidadas e nao consolidadas no APK.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.10`.
+  - [x] Implementar tela nativa `Graficos` no APK.
+  - [x] Implementar grafico pizza nativo de gastos por categoria.
+  - [x] Implementar tela nativa `Bancos` com criacao, edicao e exclusao.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.11`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -306,7 +335,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.10` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.11` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar tela `Graficos`, filtro por contas, percentuais da pizza e toque em fatias.
+  - [ ] Testar tela `Bancos`, criacao, edicao e exclusao de bancos sem contas vinculadas.
   - [ ] Testar se o saldo base editado em uma conta entra no saldo anterior/inicial/final.
   - [ ] Testar se transacoes nao consolidadas aparecem em negrito e consolidadas aparecem em peso normal.
   - [ ] Testar se `Transacoes` fica destacado na tela principal.

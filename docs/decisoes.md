@@ -4,6 +4,21 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-22`
+- Decisao: criar uma tela nativa `Graficos` no APK em vez de abrir a pagina web `/charts`.
+- Motivo: manter o uso principal do app Android sem navegador e permitir filtros rapidos por periodo, mes e contas.
+- Impacto: o APK passa a desenhar grafico pizza nativo com percentuais e toque em fatias para exibir valor em reais.
+
+- Data: `2026-05-22`
+- Decisao: criar rotas Android dedicadas para salvar e excluir bancos.
+- Motivo: o APK precisa gerenciar bancos por JSON e Bearer token, sem depender de rotas web baseadas em `FormData` e redirect.
+- Impacto: adicionadas `/api/android/banks/save` e `/api/android/banks/delete`; exclusao de banco bloqueia quando ha contas vinculadas.
+
+- Data: `2026-05-22`
+- Decisao: manter a exclusao de banco bloqueada quando houver contas vinculadas.
+- Motivo: preservar integridade dos dados financeiros e evitar exclusao acidental de banco que ainda organiza contas e transacoes.
+- Impacto: o usuario deve remover ou mover as contas antes de excluir o banco.
+
+- Data: `2026-05-22`
 - Decisao: tratar `accounts.balance` no APK como saldo base da conta.
 - Motivo: ao editar uma conta pelo APK, o usuario espera que o saldo base seja considerado no saldo anterior/inicial e no saldo final, nao apenas exibido no cadastro.
 - Impacto: saldos da tela principal, tela de conta e `computed_balance` do bootstrap Android passam a somar `saldo base + transacoes`.

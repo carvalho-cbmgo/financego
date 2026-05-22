@@ -40,6 +40,14 @@ class FinanceGoApi(private val store: SessionStore) {
     return request("POST", "/api/android/accounts/delete", body, authenticated = true)
   }
 
+  fun saveBank(payload: JSONObject): JSONObject =
+    request("POST", "/api/android/banks/save", payload, authenticated = true)
+
+  fun deleteBank(id: String): JSONObject {
+    val body = JSONObject().put("id", id)
+    return request("POST", "/api/android/banks/delete", body, authenticated = true)
+  }
+
   fun sendNotification(payload: JSONObject): JSONObject =
     request("POST", "/api/android/notifications/ingest", payload, authenticated = true)
 
