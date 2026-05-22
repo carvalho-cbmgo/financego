@@ -4,6 +4,18 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-22`
+- Entrega principal: refinamento visual e seletor de data no APK.
+- Resultado entregue:
+  - Android nativo:
+    - A primeira linha dos cards de transacao (`data - descricao`) passou a usar leitura robusta de transacao nao consolidada.
+    - O destaque visual das paginas deixou de usar verde e passou a usar selo em tom rosa, aplicado a `Transacoes`, `Contas`, `Graficos`, `Bancos` e demais titulos do cabecalho.
+    - O campo `Data` da janela `Nova Transacao` e `Editar Transacao` passou a abrir seletor nativo de calendario.
+    - A versao Android foi atualizada para `versionCode=13` e `versionName=1.0.12`.
+  - Validacoes:
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug` executado com sucesso.
+    - Durante a primeira tentativa houve bloqueio transitorio do Windows/Gradle na pasta gerada `compileDebugKotlin`; a pasta gerada foi removida com verificacao de caminho dentro do workspace e a build foi recompilada com sucesso.
+
+- Data: `2026-05-22`
 - Entrega principal: telas nativas de Graficos e Bancos no APK.
 - Resultado entregue:
   - Android nativo:

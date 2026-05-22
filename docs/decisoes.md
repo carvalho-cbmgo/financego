@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-22`
+- Decisao: usar seletor nativo de calendario para o campo `Data` no cadastro/edicao de transacoes do APK.
+- Motivo: reduzir erro de digitacao e tornar a escolha de data mais simples no celular.
+- Impacto: o campo continua salvando em `posted_at`, mas agora o usuario escolhe a data pelo calendario Android.
+
+- Data: `2026-05-22`
+- Decisao: trocar o selo de pagina do APK de verde para rosa.
+- Motivo: o verde ja representa marca/saldos positivos e o usuario pediu destaque mais chamativo para identificar a tela atual.
+- Impacto: os badges de `Transacoes`, `Contas`, `Graficos`, `Bancos` e demais titulos do cabecalho ficam visualmente mais evidentes.
+
+- Data: `2026-05-22`
 - Decisao: criar uma tela nativa `Graficos` no APK em vez de abrir a pagina web `/charts`.
 - Motivo: manter o uso principal do app Android sem navegador e permitir filtros rapidos por periodo, mes e contas.
 - Impacto: o APK passa a desenhar grafico pizza nativo com percentuais e toque em fatias para exibir valor em reais.

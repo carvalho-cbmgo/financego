@@ -2,6 +2,7 @@
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Canvas
@@ -202,7 +203,7 @@ class MainActivity : Activity() {
     val totalExpense = slices.sumOf { it.amount }
     val income = rows.filter { it.optString("type") == "credit" }.sumOf { abs(transactionAmount(it)) }
     val futureExpense = rows
-      .filter { it.optString("type") == "debit" && !it.optBoolean("is_consolidated", true) }
+      .filter { it.optString("type") == "debit" && !isConsolidated(it) }
       .sumOf { abs(transactionAmount(it)) }
 
     val summary = surface().apply {
@@ -641,7 +642,7 @@ class MainActivity : Activity() {
   private fun transactionCard(tx: JSONObject): View = surface().apply {
     val data = bootstrap ?: JSONObject()
     val account = accountForTransaction(data, tx.optString("account_id"))
-    val textStyle = if (tx.optBoolean("is_consolidated", true)) Typeface.NORMAL else Typeface.BOLD
+    val textStyle = if (isConsolidated(tx)) Typeface.NORMAL else Typeface.BOLD
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -685,7 +686,7 @@ class MainActivity : Activity() {
   }
 
   private fun openTransactionForEdit(tx: JSONObject) {
-    if (isRepeatedTransaction(tx) && !tx.optBoolean("is_consolidated", true)) {
+    if (isRepeatedTransaction(tx) && !isConsolidated(tx)) {
       showRecurringEditChoice(tx)
       return
     }
@@ -763,9 +764,7 @@ class MainActivity : Activity() {
     val typeValues = listOf("debit", "credit", "transfer")
     val typeLabels = listOf("Despesa", "Receita", "Transferência")
     val typeSpinner = spinner(typeLabels, typeValues.indexOf(tx?.optString("type") ?: "debit").coerceAtLeast(0))
-    val postedAt = input("DD/MM/AAAA", formatDateForInput(tx?.optString("posted_at")?.take(10) ?: defaultPostedAt())).apply {
-      inputType = InputType.TYPE_CLASS_DATETIME
-    }
+    val postedAt = dateSelector(formatDateForInput(tx?.optString("posted_at")?.take(10) ?: defaultPostedAt()))
     val description = input("Descrição", stripRecurrenceSuffix(tx?.optString("description") ?: ""))
     val originSpinner = accountSpinner(accounts, tx?.optString("account_id") ?: preferredAccountId)
     val destinationSpinner = accountSpinner(accounts, null)
@@ -781,7 +780,7 @@ class MainActivity : Activity() {
       text = "Consolidada"
       textSize = 13f
       setTextColor(COLOR_TEXT)
-      isChecked = tx?.optBoolean("is_consolidated", true) ?: true
+      isChecked = tx?.let { isConsolidated(it) } ?: true
     }
     val repeatLabels = listOf("Sem repetição", "Parcelamento (mensal)", "Avançado")
     val repeatValues = listOf("none", "installment", "advanced")
@@ -1229,6 +1228,43 @@ class MainActivity : Activity() {
   private fun categoryNameAt(categories: List<CategoryOption>, index: Int): String =
     categories.getOrNull(index.coerceAtLeast(0))?.name ?: "Outros"
 
+  private fun isConsolidated(tx: JSONObject): Boolean {
+    if (tx.has("is_consolidated") && !tx.isNull("is_consolidated")) return tx.optBoolean("is_consolidated", true)
+    if (tx.has("consolidated") && !tx.isNull("consolidated")) return tx.optBoolean("consolidated", true)
+    val status = tx.optString("status", "").lowercase()
+    if (status == "planned" || status == "pending" || status == "nao_consolidada" || status == "não_consolidada") return false
+    return true
+  }
+
+  private fun dateSelector(value: String): EditText =
+    input("DD/MM/AAAA", value).apply {
+      inputType = InputType.TYPE_NULL
+      isFocusable = false
+      isClickable = true
+      setCompoundDrawablesWithIntrinsicBounds(0, 0, android.R.drawable.ic_menu_my_calendar, 0)
+      compoundDrawablePadding = dp(8)
+      setOnClickListener { showDatePicker(this) }
+    }
+
+  private fun showDatePicker(target: EditText) {
+    val initial = parseDateInput(target.text.toString()).let {
+      try {
+        LocalDate.parse(it)
+      } catch (_: Exception) {
+        LocalDate.now()
+      }
+    }
+    DatePickerDialog(
+      this,
+      { _, year, monthIndex, day ->
+        target.setText(formatDateForInput(LocalDate.of(year, monthIndex + 1, day).toString()))
+      },
+      initial.year,
+      initial.monthValue - 1,
+      initial.dayOfMonth,
+    ).show()
+  }
+
   private fun formatDateForInput(value: String): String {
     return try {
       val date = LocalDate.parse(value.take(10))
@@ -1498,11 +1534,11 @@ class MainActivity : Activity() {
   private fun pageTitleBadge(text: String): TextView = TextView(this).apply {
     this.text = text
     textSize = 14f
-    setTextColor(COLOR_PRIMARY)
+    setTextColor(COLOR_PAGE_BADGE)
     setTypeface(typeface, Typeface.BOLD)
     setSingleLine(false)
     setPadding(dp(10), dp(5), dp(10), dp(5))
-    background = rounded(0xFFEAF4D8.toInt(), dp(1), 0xFFC7DE8D.toInt(), dp(12))
+    background = rounded(COLOR_PAGE_BADGE_BG, dp(1), COLOR_PAGE_BADGE_BORDER, dp(12))
     layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       setMargins(0, dp(6), 0, 0)
     }
@@ -1652,6 +1688,9 @@ class MainActivity : Activity() {
     private val COLOR_GREEN = 0xFF139B5A.toInt()
     private val COLOR_BLUE = 0xFF2563EB.toInt()
     private val COLOR_PURPLE = 0xFF7C3AED.toInt()
+    private val COLOR_PAGE_BADGE = 0xFFE11D48.toInt()
+    private val COLOR_PAGE_BADGE_BG = 0xFFFFE4E6.toInt()
+    private val COLOR_PAGE_BADGE_BORDER = 0xFFFB7185.toInt()
     private val COLOR_DANGER = 0xFFC62828.toInt()
   }
 }

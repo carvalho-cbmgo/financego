@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Reinstalar o APK Android nativo versao `1.0.12` e validar o seletor nativo de data em `Nova Transacao` e `Editar Transacao`.
+- [ ] Validar no APK se o selo rosa destaca corretamente as telas `Transacoes`, `Contas`, `Graficos` e `Bancos`.
 - [ ] Reinstalar o APK Android nativo versao `1.0.11` e confirmar login usando `https://financego-eight.vercel.app`.
 - [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
 - [ ] Validar login nativo no APK com usuário real.

@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: refinar cards de transacao, badges de pagina e entrada de data no APK.
+- Prompt base: "No apk, na tela principal de transacoes, na parte Transacoes do mes, ajustar para que o texto da primeira linha fique em negrito se a transacao estiver como nao consolidada... altere a cor do badge Transacoes... campo de Data se torne um seletor..."
+- Resultado:
+  - Leitura de transacao nao consolidada ficou mais robusta no APK.
+  - Badge de pagina passou para tom rosa chamativo em vez de verde.
+  - `Nova Transacao` e `Editar Transacao` passaram a usar seletor nativo de calendario para o campo `Data`.
+  - Versao Android atualizada para `1.0.12`.
+
 - Objetivo: criar telas nativas de Graficos e Bancos no APK.
 - Prompt base: "Implementar no apk, na pagina de transacoes, criar um botao para uma tela de 'Graficos'... adicionar a opcao 'Bancos' acima da opcao 'Adicionar Conta'..."
 - Resultado:
