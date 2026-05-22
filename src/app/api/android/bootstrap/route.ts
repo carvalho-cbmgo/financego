@@ -67,6 +67,11 @@ export async function GET(req: Request) {
   }
 
   const accountBalances = new Map<string, number>();
+  for (const account of accounts || []) {
+    const accountId = String((account as any).id || "");
+    if (!accountId) continue;
+    accountBalances.set(accountId, Number((account as any).balance || 0));
+  }
   for (const tx of transactions || []) {
     const accountId = String((tx as any).account_id || "");
     if (!accountId) continue;
@@ -151,7 +156,7 @@ export async function GET(req: Request) {
     banks: banks || [],
     accounts: (accounts || []).map((account: any) => ({
       ...account,
-      computed_balance: accountBalances.get(String(account.id)) || Number(account.balance || 0),
+      computed_balance: accountBalances.get(String(account.id)) || 0,
     })),
     transactions: transactions || [],
     categories: categoryPayload,

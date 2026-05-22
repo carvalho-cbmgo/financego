@@ -4,6 +4,28 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-22`
+- Entrega principal: saldo base considerado no APK e leitura visual de transacoes consolidadas.
+- Resultado entregue:
+  - Android nativo:
+    - O campo `Saldo base` da conta passou a compor o `Saldo anterior` da tela principal quando `Incluir saldo anterior` estiver marcado.
+    - Na tela de conta especifica, o `Saldo base` passou a compor o `Saldo inicial` e, por consequencia, o `Saldo final`.
+    - Os cards de contas passaram a considerar `saldo base + transacoes anteriores + transacoes do periodo` quando o saldo anterior estiver incluido.
+    - Transacoes nao consolidadas passaram a ser exibidas com textos em negrito.
+    - Transacoes consolidadas passaram a ser exibidas com textos em peso normal.
+    - A mesma diferenciacao visual foi aplicada na tela principal e na tela de uma conta especifica.
+    - Versao Android atualizada para `versionCode=11` e `versionName=1.0.10`.
+  - API Android:
+    - `GET /api/android/bootstrap` passou a calcular `computed_balance` e resumo geral somando o saldo base das contas antes das transacoes.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `testDebugUnitTest`, `lintDebug` e `assembleDebug` executados com sucesso.
+    - `assembleRelease` executado com sucesso apos limpeza segura do cache gerado `compileReleaseKotlin`.
+    - APK debug confirmado com `versionCode=11` e `versionName=1.0.10`.
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
+- Data: `2026-05-22`
 - Entrega principal: destaque de paginas no APK e atalho rapido para cadastrar conta.
 - Resultado entregue:
   - Android nativo:
@@ -249,7 +271,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.9` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, layout dos cards, menu de 3 pontos, destaque do titulo da pagina, cadastro/edicao/exclusao de contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.10` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, saldo base nas contas, layout dos cards, diferenciacao visual entre transacoes consolidadas/nao consolidadas, menu de 3 pontos, cadastro/edicao/exclusao de contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -274,7 +296,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Implementar menu superior compacto com 3 pontos.
   - [x] Manter botao flutuante de nova transacao na tela de conta.
   - [x] Preselecionar a conta origem ao criar transacao pela tela da conta.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.9`.
+  - [x] Considerar saldo base nos saldos da tela principal e da tela de conta.
+  - [x] Diferenciar visualmente transacoes consolidadas e nao consolidadas no APK.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.10`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -282,7 +306,9 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.9` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.10` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar se o saldo base editado em uma conta entra no saldo anterior/inicial/final.
+  - [ ] Testar se transacoes nao consolidadas aparecem em negrito e consolidadas aparecem em peso normal.
   - [ ] Testar se `Transacoes` fica destacado na tela principal.
   - [ ] Testar se `Banco - Nome da conta` fica destacado na tela de conta.
   - [ ] Testar `Adicionar Conta` no menu de 3 pontos da tela principal.

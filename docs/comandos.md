@@ -160,7 +160,7 @@ $response.ok
 $response.user.email
 ```
 
-## Fluxo de teste do APK nativo `1.0.9`
+## Fluxo de teste do APK nativo `1.0.10`
 ```txt
 1) Instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
 2) Abrir Finance GO.
@@ -184,12 +184,16 @@ $response.user.email
 20) Abrir uma conta e conferir menu de 3 pontos com `Edicao de Conta`, `Atualizar` e `Perfil`.
 21) Tocar em `Edicao de Conta` e testar a janela de conta.
 22) Editar banco, nome, tipo e saldo base da conta; salvar e conferir atualizacao.
-23) Testar o botao vermelho `Excluir` usando uma conta de teste.
-24) Na tela da conta, tocar no `+` e confirmar que `Conta Origem` ja vem selecionada com aquela conta.
-25) Abrir Perfil e testar atualizacao de nome completo.
-26) Conferir icone de sair e nova transacao.
-27) Conferir se categorias aparecem com recuo no seletor.
-28) Conferir se saldos por conta batem com as transacoes normalizadas.
+23) Conferir se o saldo base editado entra no `Saldo anterior` da tela principal.
+24) Conferir se o saldo base editado entra no `Saldo inicial` e `Saldo final` da tela da conta.
+25) Conferir se transacoes nao consolidadas ficam em negrito.
+26) Conferir se transacoes consolidadas ficam com texto normal.
+27) Testar o botao vermelho `Excluir` usando uma conta de teste.
+28) Na tela da conta, tocar no `+` e confirmar que `Conta Origem` ja vem selecionada com aquela conta.
+29) Abrir Perfil e testar atualizacao de nome completo.
+30) Conferir icone de sair e nova transacao.
+31) Conferir se categorias aparecem com recuo no seletor.
+32) Conferir se saldos por conta batem com saldo base + transacoes normalizadas.
 ```
 
 ## Git

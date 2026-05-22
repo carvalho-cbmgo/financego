@@ -358,6 +358,7 @@ class MainActivity : Activity() {
   private fun transactionCard(tx: JSONObject): View = surface().apply {
     val data = bootstrap ?: JSONObject()
     val account = accountForTransaction(data, tx.optString("account_id"))
+    val textStyle = if (tx.optBoolean("is_consolidated", true)) Typeface.NORMAL else Typeface.BOLD
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -369,7 +370,7 @@ class MainActivity : Activity() {
       text = "$date - ${stripRecurrenceSuffix(tx.optString("description", "Transação"))}"
       textSize = 13f
       setTextColor(COLOR_TEXT)
-      setTypeface(typeface, Typeface.BOLD)
+      setTypeface(typeface, textStyle)
     })
 
     val tagRow = LinearLayout(this@MainActivity).apply {
@@ -377,16 +378,16 @@ class MainActivity : Activity() {
       gravity = Gravity.CENTER_VERTICAL
       setPadding(0, dp(5), 0, dp(5))
     }
-    tagRow.addView(outlineBadge(tx.optString("app_category", "Outros"), COLOR_GREEN))
-    recurrenceBadgeText(tx)?.let { tagRow.addView(outlineBadge(it, COLOR_BLUE)) }
+    tagRow.addView(outlineBadge(tx.optString("app_category", "Outros"), COLOR_GREEN, textStyle))
+    recurrenceBadgeText(tx)?.let { tagRow.addView(outlineBadge(it, COLOR_BLUE, textStyle)) }
     info.addView(tagRow)
 
     val accountRow = LinearLayout(this@MainActivity).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
     }
-    accountRow.addView(bankBadge(account?.optString("institution_name") ?: "Banco"))
-    accountRow.addView(typeBadge(account?.optString("type") ?: "", topMargin = 0))
+    accountRow.addView(bankBadge(account?.optString("institution_name") ?: "Banco", textStyle))
+    accountRow.addView(typeBadge(account?.optString("type") ?: "", topMargin = 0, textStyle = textStyle))
     info.addView(accountRow)
 
     addView(info, weightWrap(1f))
@@ -394,7 +395,7 @@ class MainActivity : Activity() {
       val displayAmount = transactionAmount(tx)
       text = money(displayAmount)
       textSize = 13f
-      setTypeface(typeface, Typeface.BOLD)
+      setTypeface(typeface, textStyle)
       setTextColor(if (displayAmount < 0) COLOR_DANGER else COLOR_GREEN)
       gravity = Gravity.END
     })
@@ -827,7 +828,7 @@ class MainActivity : Activity() {
     val accountId = account.optString("id")
     val range = periodRange()
     val previous = if (includePreviousBalance) {
-      allTransactions(data).filter { tx ->
+      accountBaseBalance(data, accountId) + allTransactions(data).filter { tx ->
         val date = txDate(tx) ?: return@filter false
         tx.optString("account_id") == accountId && date.isBefore(range.start)
       }.sumOf { transactionAmount(it) }
@@ -873,12 +874,17 @@ class MainActivity : Activity() {
 
   private fun previousBalance(data: JSONObject, accountId: String?): Double {
     val start = periodRange().start
-    return allTransactions(data).filter { tx ->
+    return accountBaseBalance(data, accountId) + allTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       val matchesAccount = accountId.isNullOrBlank() || tx.optString("account_id") == accountId
       matchesAccount && date.isBefore(start)
     }.sumOf { transactionAmount(it) }
   }
+
+  private fun accountBaseBalance(data: JSONObject, accountId: String?): Double =
+    accountsList(data).filter { account ->
+      accountId.isNullOrBlank() || account.optString("id") == accountId
+    }.sumOf { it.optDouble("balance", 0.0) }
 
   private fun txDate(tx: JSONObject): LocalDate? = try {
     LocalDate.parse(tx.optString("posted_at", "").take(10))
@@ -994,14 +1000,14 @@ class MainActivity : Activity() {
   private fun accountTypeValue(type: String): String =
     if (type.lowercase().contains("credit") || type.lowercase().contains("cart")) "CREDIT_CARD" else "CHECKING_ACCOUNT"
 
-  private fun bankBadge(text: String): TextView = outlineBadge(text.ifBlank { "Banco" }, COLOR_PURPLE)
+  private fun bankBadge(text: String, textStyle: Int = Typeface.BOLD): TextView = outlineBadge(text.ifBlank { "Banco" }, COLOR_PURPLE, textStyle)
 
-  private fun outlineBadge(text: String, color: Int): TextView =
+  private fun outlineBadge(text: String, color: Int, textStyle: Int = Typeface.BOLD): TextView =
     TextView(this).apply {
       this.text = text.ifBlank { "Sem categoria" }
       textSize = 10f
       setTextColor(color)
-      setTypeface(typeface, Typeface.BOLD)
+      setTypeface(typeface, textStyle)
       setSingleLine(true)
       setPadding(dp(8), dp(2), dp(8), dp(2))
       background = rounded(0x00FFFFFF, dp(1), color, dp(9))
@@ -1010,13 +1016,13 @@ class MainActivity : Activity() {
       }
     }
 
-  private fun typeBadge(type: String, topMargin: Int = 4): TextView {
+  private fun typeBadge(type: String, topMargin: Int = 4, textStyle: Int = Typeface.BOLD): TextView {
     val isCredit = type.lowercase().contains("credit") || type.lowercase().contains("cart")
     return TextView(this).apply {
       text = if (isCredit) "CRÉDITO" else "CORRENTE"
       textSize = 10f
       setTextColor(if (isCredit) COLOR_DANGER else COLOR_GREEN)
-      setTypeface(typeface, Typeface.BOLD)
+      setTypeface(typeface, textStyle)
       setPadding(dp(8), dp(2), dp(8), dp(2))
       background = rounded(0x00FFFFFF, dp(1), if (isCredit) COLOR_DANGER else COLOR_GREEN, dp(9))
       layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {

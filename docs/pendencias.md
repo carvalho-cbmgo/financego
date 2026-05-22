@@ -3,7 +3,7 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
-- [ ] Reinstalar o APK Android nativo versao `1.0.9` e confirmar login usando `https://financego-eight.vercel.app`.
+- [ ] Reinstalar o APK Android nativo versao `1.0.10` e confirmar login usando `https://financego-eight.vercel.app`.
 - [ ] Instalar o novo APK `android-financego/app/build/outputs/apk/debug/app-debug.apk` em aparelho Android real.
 - [ ] Validar login nativo no APK com usuário real.
 - [ ] Validar no APK os filtros de periodo `ate hoje`, `amanha ate o final do mes` e `mes completo`.
@@ -16,6 +16,8 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - [ ] Validar no APK se o titulo `Banco - Nome da conta` aparece destacado na tela de conta especifica.
 - [ ] Validar no APK se `Adicionar Conta` aparece acima de `Atualizar` no menu de 3 pontos da tela principal.
 - [ ] Validar no APK a criacao de conta pelo menu de 3 pontos da tela principal.
+- [ ] Validar no APK se o saldo base editado na conta entra no `Saldo anterior`, `Saldo inicial`, `Saldo final` e nos cards de contas.
+- [ ] Validar no APK se transacoes nao consolidadas aparecem em negrito e consolidadas aparecem sem negrito.
 - [ ] Validar no APK que nova transacao criada pela tela de conta ja seleciona a conta origem correta.
 - [ ] Habilitar acesso às notificações para o app Finance GO Android e testar captura em segundo plano.
 - [ ] Validar classificação real de notificações: PIX recebido, PIX realizado e transferência entre contas próprias.
@@ -148,7 +150,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-012`
-- Descricao: validar em aparelho real o APK nativo `1.0.9` apos remodelagem de login, dashboard mensal, detalhe de conta, filtro de periodo, perfil e transacoes recorrentes.
+- Descricao: validar em aparelho real o APK nativo `1.0.10` apos remodelagem de login, dashboard mensal, detalhe de conta, filtro de periodo, perfil e transacoes recorrentes.
 - Severidade: alta
 - Como reproduzir: instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`, entrar com usuario de teste, trocar meses, abrir uma conta, criar transacao e testar recorrencias.
 - Status: pendente de teste fisico
@@ -178,7 +180,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - ID: `AND-016`
 - Descricao: validar no celular se os icones de atualizar, perfil, sair e nova transacao estao intuitivos e nao cortam em telas menores.
 - Severidade: media
-- Como reproduzir: instalar APK `1.0.9`, abrir a tela de transacoes e testar em diferentes escalas/fontes do Android.
+- Como reproduzir: instalar APK `1.0.10`, abrir a tela de transacoes e testar em diferentes escalas/fontes do Android.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
 
@@ -199,7 +201,7 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - ID: `AND-019`
 - Descricao: validar no celular se o seletor de periodo do APK recalcula corretamente resumo e saldos de contas.
 - Severidade: alta
-- Como reproduzir: instalar APK `1.0.9`, alternar entre `Inicio do mes ate hoje`, `Amanha ate o final do mes` e `Mes completo`, e conferir `Entradas`, `Saidas`, `Saldo atual` e saldos de contas.
+- Como reproduzir: instalar APK `1.0.10`, alternar entre `Inicio do mes ate hoje`, `Amanha ate o final do mes` e `Mes completo`, e conferir `Entradas`, `Saidas`, `Saldo atual` e saldos de contas.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
 
@@ -213,20 +215,20 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - ID: `AND-021`
 - Descricao: validar no celular se os cards de transacao do APK exibem as tres linhas solicitadas e se o botao `Excluir` funciona no modal de edicao.
 - Severidade: alta
-- Como reproduzir: instalar APK `1.0.9`, abrir transacoes, conferir data/descricao, selos, conta/tipo, valor a direita e excluir uma transacao de teste.
+- Como reproduzir: instalar APK `1.0.10`, abrir transacoes, conferir data/descricao, selos, conta/tipo, valor a direita e excluir uma transacao de teste.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-022`
 - Descricao: validar no celular se a edicao/exclusao de contas no APK funciona e atualiza o painel principal apos salvar.
 - Severidade: alta
-- Como reproduzir: instalar APK `1.0.9`, abrir uma conta, usar menu de 3 pontos, editar banco/nome/tipo/saldo, salvar e testar exclusao com uma conta de teste.
+- Como reproduzir: instalar APK `1.0.10`, abrir uma conta, usar menu de 3 pontos, editar banco/nome/tipo/saldo, salvar e testar exclusao com uma conta de teste.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
 
 - ID: `AND-023`
 - Descricao: validar no celular se o FAB de nova transacao na tela de conta preseleciona corretamente a conta origem.
 - Severidade: alta
-- Como reproduzir: instalar APK `1.0.9`, abrir uma conta, tocar no `+`, conferir `Conta Origem`, salvar uma transacao de teste e verificar se aparece na conta correta.
+- Como reproduzir: instalar APK `1.0.10`, abrir uma conta, tocar no `+`, conferir `Conta Origem`, salvar uma transacao de teste e verificar se aparece na conta correta.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento

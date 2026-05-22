@@ -3,6 +3,17 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir saldos do APK usando saldo base e diferenciar visualmente transacoes por consolidacao.
+- Prompt base: "Editei uma conta pelo aplicativo apk e defini um saldo base para ela, mas ao ser exibida pelo sistema, o saldo base dessa conta não considerado nos saldos apresentado na tela de transações e nem na tela das transações daquela conta em específico..."
+- Resultado:
+  - Saldo base da conta passou a entrar no `Saldo anterior` da tela principal.
+  - Saldo base da conta passou a entrar no `Saldo inicial` e `Saldo final` da tela de conta.
+  - Cards de contas passaram a considerar saldo base somado as transacoes.
+  - `GET /api/android/bootstrap` passou a somar saldo base no `computed_balance`.
+  - Transacoes nao consolidadas aparecem em negrito.
+  - Transacoes consolidadas aparecem com texto normal.
+  - Versao Android atualizada para `1.0.10`.
+
 - Objetivo: destacar a pagina atual no APK e adicionar cadastro rapido de conta pelo menu principal.
 - Prompt base: "Na pagina de transacoes, destacar o texto 'Transacoes'... Na pagina de transacoes, adicionar a opcao 'Adicionar Conta' acima da opcao 'Atualizar' no icone com e pontos verticais..."
 - Resultado:

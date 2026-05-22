@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-22`
+- Decisao: tratar `accounts.balance` no APK como saldo base da conta.
+- Motivo: ao editar uma conta pelo APK, o usuario espera que o saldo base seja considerado no saldo anterior/inicial e no saldo final, nao apenas exibido no cadastro.
+- Impacto: saldos da tela principal, tela de conta e `computed_balance` do bootstrap Android passam a somar `saldo base + transacoes`.
+
+- Data: `2026-05-22`
+- Decisao: diferenciar transacoes consolidadas e nao consolidadas pelo peso do texto.
+- Motivo: permitir que o usuario identifique rapidamente transacoes futuras/previstas sem adicionar poluicao visual ao card.
+- Impacto: transacoes nao consolidadas aparecem em negrito; transacoes consolidadas aparecem com peso normal nas telas principal e de conta.
+
+- Data: `2026-05-22`
 - Decisao: permitir que `/api/android/accounts/save` crie contas novas quando nao receber `id`.
 - Motivo: o APK passou a ter acao `Adicionar Conta` no menu principal e precisa reutilizar a mesma rota autenticada usada para edicao.
 - Impacto: payload sem `id` faz `insert`; payload com `id` continua fazendo `update` com validacao de `profile_id`.
