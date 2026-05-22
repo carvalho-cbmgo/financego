@@ -661,35 +661,38 @@ class MainActivity : Activity() {
     dialog.show()
   }
 
-  private fun openAccountDialog(account: JSONObject) {
+  private fun openAccountDialog(account: JSONObject?) {
     val data = bootstrap ?: JSONObject()
     val banks = banksList(data)
     if (banks.isEmpty()) {
-      toast("Cadastre um banco antes de editar a conta.")
+      toast("Cadastre um banco antes de criar uma conta.")
       return
     }
 
     val box = verticalRoot().apply { setPadding(dp(10), 0, dp(10), 0) }
-    val deleteButton = secondaryButton("Excluir").apply {
-      textSize = 12f
-      setTextColor(COLOR_DANGER)
-      background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(12))
-    }
+    val isEditing = account != null
+    val deleteButton = if (isEditing) {
+      secondaryButton("Excluir").apply {
+        textSize = 12f
+        setTextColor(COLOR_DANGER)
+        background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(12))
+      }
+    } else null
     box.addView(LinearLayout(this).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
       setPadding(0, dp(4), 0, dp(12))
-      addView(title("Edição de Conta", 18f), weightWrap(1f))
-      addView(deleteButton, fixed(dp(96), dp(40)))
+      addView(title(if (isEditing) "Edição de Conta" else "Adicionar Conta", 18f), weightWrap(1f))
+      deleteButton?.let { addView(it, fixed(dp(96), dp(40))) }
     })
 
-    val bankSpinner = bankSpinner(banks, account.optString("bank_id"), account.optString("institution_name"))
-    val name = input("Nome da conta", account.optString("name", ""))
+    val bankSpinner = bankSpinner(banks, account?.optString("bank_id"), account?.optString("institution_name"))
+    val name = input("Nome da conta", account?.optString("name", "") ?: "")
     val typeValues = listOf("CHECKING_ACCOUNT", "CREDIT_CARD")
     val typeLabels = listOf("CONTA CORRENTE", "CARTÃO DE CRÉDITO")
-    val typeIndex = typeValues.indexOf(accountTypeValue(account.optString("type"))).coerceAtLeast(0)
+    val typeIndex = typeValues.indexOf(accountTypeValue(account?.optString("type") ?: "CHECKING_ACCOUNT")).coerceAtLeast(0)
     val typeSpinner = spinner(typeLabels, typeIndex)
-    val balance = input("0,00", account.optDouble("balance", 0.0).toString()).apply {
+    val balance = input("0,00", account?.optDouble("balance", 0.0)?.toString() ?: "0,00").apply {
       inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL or InputType.TYPE_NUMBER_FLAG_SIGNED
     }
 
@@ -716,11 +719,11 @@ class MainActivity : Activity() {
     cancelButton.setOnClickListener { dialog.dismiss() }
     saveButton.setOnClickListener {
       val payload = JSONObject()
-        .put("id", account.optString("id"))
         .put("bank_id", bankIdAt(banks, bankSpinner.selectedItemPosition))
         .put("account_name", name.text.toString())
         .put("account_type", typeValues[typeSpinner.selectedItemPosition])
         .put("balance", parseAmountInput(balance.text.toString()))
+      account?.optString("id")?.takeIf { it.isNotBlank() }?.let { payload.put("id", it) }
       dialog.dismiss()
       showLoading("Carregando...")
       runAsync(
@@ -728,11 +731,13 @@ class MainActivity : Activity() {
         done = { loadHome() },
         fail = {
           toast(it)
-          bootstrap?.let { showAccountPage(account) } ?: showLogin()
+          if (account != null) bootstrap?.let { showAccountPage(account) } ?: showLogin()
+          else bootstrap?.let { showDashboard(it) } ?: showLogin()
         },
       )
     }
-    deleteButton.setOnClickListener {
+    deleteButton?.setOnClickListener {
+      val editingAccount = account ?: return@setOnClickListener
       AlertDialog.Builder(this)
         .setTitle("Excluir conta")
         .setMessage("Deseja realmente excluir esta conta e seus dados vinculados?")
@@ -741,11 +746,11 @@ class MainActivity : Activity() {
           dialog.dismiss()
           showLoading("Carregando...")
           runAsync(
-            work = { api.deleteAccount(account.optString("id")) },
+            work = { api.deleteAccount(editingAccount.optString("id")) },
             done = { loadHome() },
             fail = {
               toast(it)
-              bootstrap?.let { showAccountPage(account) } ?: showLogin()
+              bootstrap?.let { showAccountPage(editingAccount) } ?: showLogin()
             },
           )
         }
@@ -1028,7 +1033,7 @@ class MainActivity : Activity() {
     addView(LinearLayout(this@MainActivity).apply {
       orientation = LinearLayout.VERTICAL
       addView(brandLogo())
-      addView(muted(text))
+      addView(pageTitleBadge(text))
     }, weightWrap(1f))
     if (showProfile) {
       addView(iconImageButton(R.drawable.ic_more_vert, "Mais opções").apply { setOnClickListener { showHeaderMenu(editAccount) } }, fixed(dp(42), dp(42)))
@@ -1040,12 +1045,13 @@ class MainActivity : Activity() {
     val labels = if (editAccount != null) {
       arrayOf("Edição de Conta", "Atualizar", "Perfil")
     } else {
-      arrayOf("Atualizar", "Perfil")
+      arrayOf("Adicionar Conta", "Atualizar", "Perfil")
     }
     AlertDialog.Builder(this)
       .setItems(labels) { dialog, which ->
         dialog.dismiss()
         when (labels[which]) {
+          "Adicionar Conta" -> openAccountDialog(null)
           "Edição de Conta" -> editAccount?.let { openAccountDialog(it) }
           "Atualizar" -> loadHome()
           "Perfil" -> showProfilePage()
@@ -1121,6 +1127,18 @@ class MainActivity : Activity() {
   private fun title(text: String, size: Float): TextView = TextView(this).apply { this.text = text; textSize = size; setTextColor(COLOR_TEXT); setTypeface(typeface, Typeface.BOLD) }
   private fun section(text: String): TextView = title(text, 17f).apply { setPadding(0, dp(16), 0, dp(6)) }
   private fun muted(text: String): TextView = TextView(this).apply { this.text = text; textSize = 12f; setTextColor(COLOR_MUTED); setPadding(0, dp(3), 0, dp(6)) }
+  private fun pageTitleBadge(text: String): TextView = TextView(this).apply {
+    this.text = text
+    textSize = 14f
+    setTextColor(COLOR_PRIMARY)
+    setTypeface(typeface, Typeface.BOLD)
+    setSingleLine(false)
+    setPadding(dp(10), dp(5), dp(10), dp(5))
+    background = rounded(0xFFEAF4D8.toInt(), dp(1), 0xFFC7DE8D.toInt(), dp(12))
+    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+      setMargins(0, dp(6), 0, 0)
+    }
+  }
   private fun label(text: String): TextView = TextView(this).apply { this.text = text; textSize = 12f; setTextColor(COLOR_MUTED); setPadding(0, dp(8), 0, dp(3)) }
   private fun input(hint: String, value: String): EditText = EditText(this).apply { this.hint = hint; setText(value); textSize = 14f; setSingleLine(true); setPadding(dp(12), dp(8), dp(12), dp(8)) }
 

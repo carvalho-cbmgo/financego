@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const accountType = parseAccountType(String(body.account_type || body.type || ""));
   const balance = Number(body.balance || 0);
 
-  if (!id || !bankId || !accountName) {
+  if (!bankId || !accountName) {
     return NextResponse.json({ error: "Dados inválidos para a conta." }, { status: 400 });
   }
 
@@ -38,13 +38,21 @@ export async function POST(req: Request) {
     balance: Number.isFinite(balance) ? balance : 0,
   };
 
-  const { data, error } = await supabaseAdmin
-    .from("accounts")
-    .update(payload)
-    .eq("id", id)
-    .eq("profile_id", user.id)
-    .select("id")
-    .single();
+  const query = id
+    ? supabaseAdmin
+        .from("accounts")
+        .update(payload)
+        .eq("id", id)
+        .eq("profile_id", user.id)
+        .select("id")
+        .single()
+    : supabaseAdmin
+        .from("accounts")
+        .insert({ ...payload, profile_id: user.id })
+        .select("id")
+        .single();
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return NextResponse.json({ ok: true, id: data?.id });

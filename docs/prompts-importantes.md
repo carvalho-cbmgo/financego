@@ -3,6 +3,17 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: destacar a pagina atual no APK e adicionar cadastro rapido de conta pelo menu principal.
+- Prompt base: "Na pagina de transacoes, destacar o texto 'Transacoes'... Na pagina de transacoes, adicionar a opcao 'Adicionar Conta' acima da opcao 'Atualizar' no icone com e pontos verticais..."
+- Resultado:
+  - Titulo da tela passou a aparecer em selo visual destacado abaixo da marca `Finance GO`.
+  - Tela principal destaca `Transacoes`.
+  - Tela de conta destaca `Banco - Nome da conta`.
+  - Menu de 3 pontos da tela principal passou a incluir `Adicionar Conta` acima de `Atualizar`.
+  - Janela de conta do APK passou a aceitar criacao e edicao.
+  - Rota `/api/android/accounts/save` passou a inserir nova conta quando nao recebe `id`.
+  - Versao Android atualizada para `1.0.9`.
+
 - Objetivo: corrigir erro de login no APK Android causado por URL de producao incorreta.
 - Prompt base: "instalei o app-debug.apk e executei o aplicativo no celular, mas na tela inicial de login, tudo está preenchido, mas ao clicar em 'ENTRAR' aparece um erro. Será que o https utilizado está incorreto? O link utilizado para acessar o FinanceGO pelo vercel no sistema web é https://financego-eight.vercel.app/"
 - Resultado:

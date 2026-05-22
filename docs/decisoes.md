@@ -3,6 +3,21 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-22`
+- Decisao: permitir que `/api/android/accounts/save` crie contas novas quando nao receber `id`.
+- Motivo: o APK passou a ter acao `Adicionar Conta` no menu principal e precisa reutilizar a mesma rota autenticada usada para edicao.
+- Impacto: payload sem `id` faz `insert`; payload com `id` continua fazendo `update` com validacao de `profile_id`.
+
+- Data: `2026-05-22`
+- Decisao: o menu de 3 pontos da tela principal do APK deve ter `Adicionar Conta` antes de `Atualizar`.
+- Motivo: criar conta e uma acao frequente durante a organizacao inicial das financas, e o usuario pediu acesso rapido sem entrar em outra tela.
+- Impacto: o cadastro de conta fica disponivel diretamente na tela de transacoes, usando uma janela compacta.
+
+- Data: `2026-05-22`
+- Decisao: o titulo da pagina no APK deve ser exibido como selo destacado abaixo da marca `Finance GO`.
+- Motivo: melhorar orientacao visual do usuario na tela principal e na tela de conta especifica sem aumentar a complexidade do topo.
+- Impacto: `Transacoes`, `Perfil`, `Configuracao` e titulos de conta ficam mais identificaveis no cabecalho nativo.
+
 - Data: `2026-05-21`
 - Decisao: criar rotas Android dedicadas para salvar e excluir contas.
 - Motivo: o APK precisa editar/excluir contas usando JSON e Bearer token, enquanto as rotas web existentes usam `FormData` e redirecionamento.

@@ -3,6 +3,28 @@
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
+- Data: `2026-05-22`
+- Entrega principal: destaque de paginas no APK e atalho rapido para cadastrar conta.
+- Resultado entregue:
+  - Android nativo:
+    - O titulo da tela passou a ser exibido em um selo visual destacado abaixo da marca `Finance GO`.
+    - A tela principal destaca `Transacoes`, facilitando a identificacao da pagina atual.
+    - A tela de uma conta especifica destaca o texto `Banco - Nome da conta`, facilitando a identificacao da conta aberta.
+    - O menu de 3 pontos da tela principal passou a exibir `Adicionar Conta` acima de `Atualizar`.
+    - `Adicionar Conta` abre uma janela simples com banco, nome, tipo e saldo base.
+    - A mesma janela continua sendo usada para edicao de conta quando aberta pela tela de uma conta especifica.
+    - Versao Android atualizada para `versionCode=10` e `versionName=1.0.9`.
+  - API Android:
+    - `POST /api/android/accounts/save` passou a criar nova conta quando o payload nao possui `id`.
+    - A rota continua atualizando a conta existente quando recebe `id`, preservando validacao por usuario autenticado.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode validate` executado com sucesso (`testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease`).
+    - APK debug confirmado com `versionCode=10` e `versionName=1.0.9`.
+  - Artefatos gerados:
+    - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+    - `android-financego/app/build/outputs/apk/release/app-release-unsigned.apk`
+
 - Data: `2026-05-21`
 - Entrega principal: menu superior compacto e nova transacao vinculada a conta no APK.
 - Resultado entregue:
@@ -227,7 +249,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `npm run build` executado com sucesso.
 
 ## Etapa atual
-- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.8` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, layout dos cards, menu de 3 pontos, edicao/exclusao de contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
+- Objetivo: reinstalar o APK nativo `android-financego` versao `1.0.9` em aparelho Android real e validar abertura, login, sincronizacao, filtro de periodo, layout dos cards, menu de 3 pontos, destaque do titulo da pagina, cadastro/edicao/exclusao de contas, exclusao de transacoes, recorrencias/parcelamentos e captura de notificacoes bancarias.
 - Em andamento:
   - [x] Corrigir crash imediato ao abrir o APK Android nativo.
   - [x] Corrigir URL de producao usada pelo APK Android.
@@ -252,7 +274,7 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
   - [x] Implementar menu superior compacto com 3 pontos.
   - [x] Manter botao flutuante de nova transacao na tela de conta.
   - [x] Preselecionar a conta origem ao criar transacao pela tela da conta.
-  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.8`.
+  - [ ] Reinstalar APK `debug` atualizado no celular e validar a versao `1.0.9`.
   - [ ] Fazer login no aplicativo Android nativo.
   - [ ] Habilitar permissão de notificações e confirmar captura automática em segundo plano.
   - [ ] Receber notificações reais de banco/PIX/cartão e validar classificação automática.
@@ -260,7 +282,10 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 ## Proximas etapas
 - Curto prazo:
   - [x] Gerar APK debug/release da nova versão nativa.
-  - [ ] Confirmar em aparelho real que o APK `1.0.8` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Confirmar em aparelho real que o APK `1.0.9` abre, faz login e sincroniza com `https://financego-eight.vercel.app`.
+  - [ ] Testar se `Transacoes` fica destacado na tela principal.
+  - [ ] Testar se `Banco - Nome da conta` fica destacado na tela de conta.
+  - [ ] Testar `Adicionar Conta` no menu de 3 pontos da tela principal.
   - [ ] Testar menu de 3 pontos na tela principal e na tela de conta.
   - [ ] Testar criacao de transacao pela tela de conta confirmando origem ja selecionada.
   - [ ] Testar edicao de conta pelo icone de lapis na tela de detalhe da conta.
