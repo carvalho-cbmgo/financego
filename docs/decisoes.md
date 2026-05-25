@@ -1,8 +1,23 @@
-﻿# Decisoes do Projeto
+# Decisoes do Projeto
 
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-25`
+- Decisao: recorrencias avancadas com `Repetir infinitamente` nao devem usar nem exigir `installment_total`.
+- Motivo: recorrencia infinita nao tem quantidade total de parcelas; manter o campo gera confusao e labels como `1/1`.
+- Impacto: web e APK ocultam `Total de Parcelas` nessa condicao; dados salvos usam `installment_total=null` quando aplicavel.
+
+- Data: `2026-05-25`
+- Decisao: a consolidacao individual de transacoes na web deve ser feita por checkbox direto na lista.
+- Motivo: reduzir friccao e permitir alternar entre consolidada/nao consolidada sem abrir edicao.
+- Impacto: a coluna `C` de `transactions` chama `/api/transactions/batch` com `consolidate` ou `unconsolidate` e atualiza a tela em seguida.
+
+- Data: `2026-05-25`
+- Decisao: o build Android local deve usar truststore do Windows para resolver dependencias quando houver erro PKIX.
+- Motivo: a JVM local falhou ao confiar nos certificados dos repositorios Maven/Google.
+- Impacto: comando manual de build usa `JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT`, `ANDROID_HOME`, Gradle `8.14.3` e `--gradle-user-home`.
+
 - Data: `2026-05-25`
 - Decisao: adicionar tela nativa `Categorias` no APK reutilizando a rota `/api/categories/manage`.
 - Motivo: permitir gestao de categorias diretamente no celular sem depender da tela web de transacoes.

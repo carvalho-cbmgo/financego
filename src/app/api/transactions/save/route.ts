@@ -92,6 +92,7 @@ function stripRecurrenceSuffix(description: string) {
   const base = String(description || "").trim();
   return base
     .replace(/\s*-\s*\d+\s+de\s+\d+\s*$/i, "")
+    .replace(/\s*-\s*recorrente\s+\d+(?:\/\d+)?\s*-\s*(semanal|mensal|anual)\s*$/i, "")
     .replace(/\s*-\s*recorr\w*\s*#\d+\s*$/i, "")
     .trim();
 }

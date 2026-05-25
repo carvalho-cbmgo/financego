@@ -3,6 +3,10 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Reinstalar o APK Android nativo versao `1.0.15` e validar que `Total parcelas` fica oculto quando `Repetir infinitamente` estiver marcado.
+- [ ] Validar no web que recorrencia infinita aparece como `Recorrente 1 - Mensal`, sem `1/1`.
+- [ ] Validar no web `dashboard` e `transactions` se o painel de contas mostra banco + tipo, nome da conta e saldo alinhado a direita.
+- [ ] Validar no web `transactions` se o checkbox da coluna `C` consolida/desconsolida a transacao imediatamente.
 - [ ] Reinstalar o APK Android nativo versao `1.0.14` e validar a nova tela `Categorias`.
 - [ ] Validar no APK criacao, edicao, criacao de subcategoria, exclusao, expandir/recolher e atualizacao imediata da arvore de categorias.
 - [ ] Reinstalar o APK Android nativo versao `1.0.13` e validar o checkbox `Somente Transacoes Consolidadas` na tela principal, tela de conta e tela de graficos.

@@ -107,6 +107,7 @@ export function AccountsFilterPanel(input: {
           const isCreditCard = typeLabel === "CARTAO_DE_CREDITO";
           const accountName = String(account.name || "").trim() || "Sem nome";
           const displayName = `${account.bankName} - ${accountName}`;
+          const bankName = String(account.bankName || "").trim() || "Sem banco";
 
           return (
             <label key={account.id} className={`fg-account-item ${checked ? "is-checked" : ""}`}>
@@ -117,11 +118,16 @@ export function AccountsFilterPanel(input: {
                 disabled={isPending}
               />
               <span className="fg-account-item-main">
-                <span className="fg-account-item-text" title={displayName}>
-                  {displayName}
+                <span className="fg-account-item-bankline">
+                  <span className="fg-account-item-bank" title={bankName}>
+                    {bankName}
+                  </span>
+                  <span className={`fg-account-item-kind ${isCreditCard ? "is-credit" : "is-checking"}`}>
+                    {isCreditCard ? "CRÉDITO" : "CORRENTE"}
+                  </span>
                 </span>
-                <span className={`fg-account-item-kind ${isCreditCard ? "is-credit" : "is-checking"}`}>
-                  {isCreditCard ? "Crédito" : "Corrente"}
+                <span className="fg-account-item-name" title={displayName}>
+                  {accountName}
                 </span>
               </span>
               <span className="fg-account-item-balance">{brl(account.balance || 0)}</span>

@@ -1094,13 +1094,13 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 
 .fg-account-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 6px;
-  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
   border: 1px solid #d9e2c3;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #ffffff;
-  padding: 4px 6px;
+  padding: 6px 7px;
   font-size: 10px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1125,18 +1125,35 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-account-item-main {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  display: grid;
+  gap: 2px;
   min-width: 0;
 }
 
-.fg-account-item-text {
-  flex: 1 1 auto;
+.fg-account-item-bankline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.fg-account-item-bank,
+.fg-account-item-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.fg-account-item-bank {
+  font-weight: 800;
+  color: #253d15;
+  letter-spacing: 0.01em;
+}
+
+.fg-account-item-name {
+  color: #64705c;
+  font-size: 9px;
 }
 
 .fg-account-item-kind {
@@ -1168,7 +1185,8 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-account-item-balance {
   font-weight: 700;
   white-space: nowrap;
-  padding-top: 1px;
+  align-self: center;
+  color: #26351f;
 }
 
 .fg-category-tree-wrap {
@@ -1817,6 +1835,19 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 .fg-legacy-col-status {
   width: 44px;
   text-align: center;
+}
+
+.fg-legacy-status-check {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #7ca326;
+  cursor: pointer;
+}
+
+.fg-legacy-status-check:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .fg-legacy-tx-row.is-active td {

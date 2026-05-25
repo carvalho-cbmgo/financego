@@ -44,7 +44,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -
 
 ## Instalar Gradle local novamente
 ```powershell
-# Use quando a pasta .tools/gradle-8.7 nao existir no computador atual
+# Use quando a pasta .tools/gradle-8.14.3 nao existir no computador atual
 powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug -InstallGradleIfMissing
 ```
 
@@ -60,9 +60,22 @@ $env:GRADLE_USER_HOME=(Join-Path (Get-Location) '.tools\gradle-user-home')
 $env:GRADLE_OPTS="-Djavax.net.ssl.trustStore=$(Join-Path (Get-Location) '.tools\financego-android-cacerts') -Djavax.net.ssl.trustStorePassword=changeit -Dcom.sun.net.ssl.checkRevocation=false"
 
 cd android-financego
-..\.tools\gradle-8.7\bin\gradle.bat --no-daemon --console=plain :app:assembleDebug
-..\.tools\gradle-8.7\bin\gradle.bat --no-daemon --console=plain :app:assembleRelease
+..\.tools\gradle-8.14.3\bin\gradle.bat --no-daemon --console=plain :app:assembleDebug
+..\.tools\gradle-8.14.3\bin\gradle.bat --no-daemon --console=plain :app:assembleRelease
 ```
+
+## Build Android manual usado em `2026-05-25`
+```powershell
+$env:JAVA_TOOL_OPTIONS='-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT'
+$env:ANDROID_HOME='C:\Users\mayko\AppData\Local\Android\Sdk'
+$env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
+
+cd android-financego
+& 'C:\Users\mayko\.gradle\wrapper\dists\gradle-8.14.3-all\10utluxaxniiv4wxiphsi49nj\gradle-8.14.3\bin\gradle.bat' `
+  --gradle-user-home 'C:\Users\mayko\.gradle' assembleDebug
+```
+
+Observacao: esse comando foi necessario porque o ambiente local nao possui `gradle` no `PATH` nem `gradlew.bat` dentro de `android-financego`.
 
 ## Artefatos Android atuais
 ```txt

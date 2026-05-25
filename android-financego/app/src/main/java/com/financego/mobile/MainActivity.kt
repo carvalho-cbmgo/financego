@@ -1007,6 +1007,9 @@ class MainActivity : Activity() {
     val repeatLabels = listOf("Sem repetição", "Parcelamento (mensal)", "Avançado")
     val repeatValues = listOf("none", "installment", "advanced")
     val initialRepeatMode = repeatModeForTransaction(tx)
+    val rawRecurrence = tx?.optJSONObject("raw")?.optJSONObject("recurrence")
+    val initialRepeatForever = rawRecurrence?.optBoolean("repeatForever", false) == true ||
+      (initialRepeatMode == "advanced" && tx != null && tx.isNull("installment_total") && tx.optString("installment_group_key").isNotBlank())
     val repeatSpinner = spinner(repeatLabels, repeatValues.indexOf(initialRepeatMode).coerceAtLeast(0))
     val repeatBox = verticalRoot()
     val note = EditText(this).apply {
@@ -1030,11 +1033,14 @@ class MainActivity : Activity() {
       text = "Repetir infinitamente"
       textSize = 13f
       setTextColor(COLOR_TEXT)
+      isChecked = initialRepeatForever
     }
 
     fun rebuildRepeatBox() {
       repeatBox.removeAllViews()
-      when (repeatValues[repeatSpinner.selectedItemPosition]) {
+      val selectedRepeatMode = repeatValues[repeatSpinner.selectedItemPosition]
+      val isInfiniteAdvanced = selectedRepeatMode == "advanced" && forever.isChecked
+      when (selectedRepeatMode) {
         "installment" -> {
           repeatBox.addView(fieldRow("Nº parcela atual", current))
           repeatBox.addView(fieldRow("Total parcelas", total))
@@ -1044,15 +1050,19 @@ class MainActivity : Activity() {
           repeatBox.addView(fieldRow("Repetir a cada", repeatEvery))
           repeatBox.addView(fieldRow("Repetir infinitamente", forever))
           repeatBox.addView(fieldRow("Nº parcela atual", current))
-          repeatBox.addView(fieldRow("Total parcelas", total))
-          repeatBox.addView(fieldRow("R$ Total", totalAmount))
+          if (!isInfiniteAdvanced) {
+            repeatBox.addView(fieldRow("Total parcelas", total))
+            repeatBox.addView(fieldRow("R$ Total", totalAmount))
+          }
         }
       }
     }
 
     fun updateTotalAmount() {
       val amountValue = parseAmountInput(amount.text.toString())
-      val totalParcels = total.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1
+      val selectedRepeatMode = repeatValues[repeatSpinner.selectedItemPosition]
+      val isInfiniteAdvanced = selectedRepeatMode == "advanced" && forever.isChecked
+      val totalParcels = if (isInfiniteAdvanced) 1 else (total.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1)
       totalAmount.setText(money(abs(amountValue) * totalParcels))
     }
 
@@ -1070,6 +1080,7 @@ class MainActivity : Activity() {
     destinationRow = fieldRow("Conta Destino", destinationSpinner)
     typeSpinner.onItemSelectedListener = simpleSelected { updateTypeVisibility() }
     repeatSpinner.onItemSelectedListener = simpleSelected { rebuildRepeatBox(); updateTotalAmount() }
+    forever.setOnCheckedChangeListener { _, _ -> rebuildRepeatBox(); updateTotalAmount() }
     watchText(amount) { updateTotalAmount() }
     watchText(total) { updateTotalAmount() }
 
@@ -1127,6 +1138,8 @@ class MainActivity : Activity() {
     saveButton.setOnClickListener {
       val selectedType = typeValues[typeSpinner.selectedItemPosition]
       val repeatMode = repeatValues[repeatSpinner.selectedItemPosition]
+      val repeatForeverValue = repeatMode == "advanced" && forever.isChecked
+      val totalParcels = if (repeatForeverValue) 1 else (total.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1)
       val repeatEveryValue = when (repeatEvery.selectedItemPosition) {
         0 -> "week"
         2 -> "year"
@@ -1146,10 +1159,10 @@ class MainActivity : Activity() {
         .put("repeat_scope", repeatScope)
         .put("repeat_mode", repeatMode)
         .put("repeat_every", repeatEveryValue)
-        .put("repeat_forever", forever.isChecked)
+        .put("repeat_forever", repeatForeverValue)
         .put("installment_current", current.text.toString().toIntOrNull() ?: 1)
-        .put("installment_total", total.text.toString().toIntOrNull() ?: 1)
-        .put("installment_total_amount", abs(parseAmountInput(amount.text.toString())) * (total.text.toString().toIntOrNull()?.coerceAtLeast(1) ?: 1))
+        .put("installment_total", totalParcels)
+        .put("installment_total_amount", abs(parseAmountInput(amount.text.toString())) * totalParcels)
         .put("note", note.text.toString())
       dialog.dismiss()
       showLoading("Carregando...")
@@ -1287,6 +1300,7 @@ class MainActivity : Activity() {
   private fun stripRecurrenceSuffix(value: String): String =
     value
       .replace(Regex("""\s*-\s*\d+\s+de\s+\d+\s*$""", RegexOption.IGNORE_CASE), "")
+      .replace(Regex("""\s*-\s*recorrente\s+\d+(?:/\d+)?\s*-\s*(semanal|mensal|anual)\s*$""", RegexOption.IGNORE_CASE), "")
       .replace(Regex("""\s*-\s*recorrente\s*#\d+\s*$""", RegexOption.IGNORE_CASE), "")
       .trim()
 

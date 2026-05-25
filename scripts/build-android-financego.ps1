@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $AndroidDir = Join-Path $RepoRoot "android-financego"
 $ToolsDir = Join-Path $RepoRoot ".tools"
-$GradleVersion = "8.7"
+$GradleVersion = "8.14.3"
 $GradleDir = Join-Path $ToolsDir "gradle-$GradleVersion"
 $GradleBat = Join-Path $GradleDir "bin\gradle.bat"
 
@@ -63,6 +63,8 @@ $env:GRADLE_USER_HOME = Join-Path $ToolsDir "gradle-user-home"
 $TrustStore = Join-Path $ToolsDir "financego-android-cacerts"
 if (Test-Path $TrustStore) {
   $env:GRADLE_OPTS = "-Djavax.net.ssl.trustStore=$TrustStore -Djavax.net.ssl.trustStorePassword=changeit -Dcom.sun.net.ssl.checkRevocation=false"
+} elseif (-not $env:JAVA_TOOL_OPTIONS) {
+  $env:JAVA_TOOL_OPTIONS = "-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"
 }
 
 function Clear-ReadOnlyAttributes {

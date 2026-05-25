@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir recorrencia infinita, painel de contas web e consolidacao direta por checkbox.
+- Prompt base: "Corrigir no site quando uma transacao for recorrente (repetir infinitamente), nao e necessario existir o campo Total de Parcelas... No Apk... No site na pagina dashboard e transactions... substituir o simbolo que indica se a conta esta consolidada..."
+- Resultado:
+  - Web oculta `Quantidade total de parcelas` para recorrencia infinita.
+  - Badge de recorrencia infinita passa a exibir `Recorrente 1 - Mensal`.
+  - Painel de contas em `dashboard` e `transactions` passou a usar layout em duas linhas com saldo alinhado a direita.
+  - Coluna `C` de `transactions` passou a ser checkbox interativo para consolidar/desconsolidar.
+  - APK oculta `Total parcelas` em recorrencia infinita e foi atualizado para `1.0.15`.
+
 - Objetivo: criar tela nativa de Categorias no APK com arvore editavel.
 - Prompt base: "No apk, na pagina de transacoes, adicionar a opcao 'Categorias' acima da opcao 'Bancos' no icone com e pontos verticais..."
 - Resultado:

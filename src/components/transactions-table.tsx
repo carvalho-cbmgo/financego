@@ -53,6 +53,7 @@ export function TransactionsTable(input: {
   const [bulkCategoryValue, setBulkCategoryValue] = useState("");
   const [pendingReclassifyCategory, setPendingReclassifyCategory] = useState("");
   const [showReclassifyDialog, setShowReclassifyDialog] = useState(false);
+  const [consolidationOverrides, setConsolidationOverrides] = useState<Record<string, boolean>>({});
   const [typeFilters, setTypeFilters] = useState<TxTypeFilters>({
     all: true,
     expense: false,
@@ -185,6 +186,54 @@ export function TransactionsTable(input: {
       router.refresh();
     } catch {
       setMessage("Erro inesperado ao processar transações em lote.");
+    } finally {
+      setIsWorking(false);
+      notifyGlobalLoading(false);
+    }
+  }
+
+  async function toggleConsolidation(txId: string, checked: boolean) {
+    if (!txId || isWorking) return;
+
+    const tx = (input.txs || []).find((item: any) => String(item.id) === txId);
+    const previous = consolidationOverrides[txId] ?? (tx?.is_consolidated !== false);
+
+    setConsolidationOverrides((current) => ({
+      ...current,
+      [txId]: checked,
+    }));
+    setIsWorking(true);
+    setMessage("");
+    notifyGlobalLoading(true);
+
+    try {
+      const response = await fetch("/api/transactions/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: checked ? "consolidate" : "unconsolidate",
+          tx_ids: [txId],
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setConsolidationOverrides((current) => ({
+          ...current,
+          [txId]: previous,
+        }));
+        setMessage(String(data?.error || "Não foi possível alterar a consolidação da transação."));
+        return;
+      }
+
+      setMessage(checked ? "Transação consolidada." : "Transação marcada como não consolidada.");
+      router.refresh();
+    } catch {
+      setConsolidationOverrides((current) => ({
+        ...current,
+        [txId]: previous,
+      }));
+      setMessage("Erro inesperado ao alterar a consolidação da transação.");
     } finally {
       setIsWorking(false);
       notifyGlobalLoading(false);
@@ -445,7 +494,8 @@ export function TransactionsTable(input: {
                   const editUrl = buildEditUrl(input.returnUrl, txId);
                   const isEditing = input.selectedEditTxId === txId;
                   const checked = selectedTxIds.includes(txId);
-                  const isUnconsolidated = tx.is_consolidated === false;
+                  const isConsolidated = consolidationOverrides[txId] ?? (tx.is_consolidated !== false);
+                  const isUnconsolidated = !isConsolidated;
                   const recurrenceInfo = getRecurrenceInfo(tx);
 
                   return (
@@ -483,9 +533,14 @@ export function TransactionsTable(input: {
                           </Link>
                         </td>
                         <td className="fg-legacy-col-status">
-                          <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-center">
-                            {tx.is_consolidated !== false ? "✓" : "○"}
-                          </Link>
+                          <input
+                            type="checkbox"
+                            className="fg-legacy-status-check"
+                            checked={isConsolidated}
+                            disabled={isWorking}
+                            aria-label={`Marcar transação ${tx.description || txId} como consolidada`}
+                            onChange={(event) => toggleConsolidation(txId, event.target.checked)}
+                          />
                         </td>
                       </tr>
 
@@ -1157,18 +1212,19 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
             />
           </label>
 
-          <label className="fg-field-label">
-            Quantidade total de parcelas
-            <input
-              type="number"
-              name="installment_total"
-              min={installmentCurrent}
-              className="fg-input"
-              disabled={repeatForever}
-              value={installmentTotal}
-              onChange={(event) => updateTotal(event.target.value)}
-            />
-          </label>
+          {!repeatForever ? (
+            <label className="fg-field-label">
+              Quantidade total de parcelas
+              <input
+                type="number"
+                name="installment_total"
+                min={installmentCurrent}
+                className="fg-input"
+                value={installmentTotal}
+                onChange={(event) => updateTotal(event.target.value)}
+              />
+            </label>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -1309,18 +1365,19 @@ function RecurringControls({ tx }: { tx: any }) {
             />
           </label>
 
-          <label className="fg-field-label">
-            Quantidade total de parcelas
-            <input
-              type="number"
-              name="installment_total"
-              min={installmentCurrent}
-              className="fg-input"
-              disabled={repeatForever}
-              value={installmentTotal}
-              onChange={(event) => updateTotal(event.target.value)}
-            />
-          </label>
+          {!repeatForever ? (
+            <label className="fg-field-label">
+              Quantidade total de parcelas
+              <input
+                type="number"
+                name="installment_total"
+                min={installmentCurrent}
+                className="fg-input"
+                value={installmentTotal}
+                onChange={(event) => updateTotal(event.target.value)}
+              />
+            </label>
+          ) : null}
 
           <div className="fg-field-note">
             As recorrentes serão vinculadas e exibidas com indicador visual na lista.
@@ -1485,8 +1542,8 @@ function getRecurrenceInfo(tx: any): RecurrenceInfo {
   if (defaultMode === "installment") {
     badgeLabel = `Parcela ${installmentCurrent} de ${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)}`;
   } else if (defaultMode === "advanced") {
-    if (repeatForever) badgeLabel = `Recorrente • ${formatRepeatEveryLabel(repeatEvery)}`;
-    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} • ${formatRepeatEveryLabel(repeatEvery)}`;
+    if (repeatForever) badgeLabel = `Recorrente ${installmentCurrent} - ${formatRepeatEveryLabel(repeatEvery)}`;
+    else badgeLabel = `Recorrente ${installmentCurrent}/${Math.max(installmentCurrent, rawInstallmentTotal || inferredTotal)} - ${formatRepeatEveryLabel(repeatEvery)}`;
   }
 
   const amountAbs = Math.abs(Number(tx?.amount || 0));

@@ -87,6 +87,7 @@ function splitAmount(total: number, count: number) {
 function stripRecurrenceSuffix(description: string) {
   return String(description || "")
     .replace(/\s*-\s*\d+\s+de\s+\d+\s*$/i, "")
+    .replace(/\s*-\s*recorrente\s+\d+(?:\/\d+)?\s*-\s*(semanal|mensal|anual)\s*$/i, "")
     .replace(/\s*-\s*recorr\w*\s*#\d+\s*$/i, "")
     .trim();
 }
@@ -149,7 +150,7 @@ function buildOccurrences(input: {
     const installment = current + index;
     items.push({
       postedAtDate: toIsoDate(addByRepeat(firstDate, input.repeatEvery, index)),
-      description: input.repeatForever ? `${normalizedDescription} - recorrente #${installment}` : `${normalizedDescription} - ${installment} de ${total}`,
+      description: input.repeatForever ? normalizedDescription : `${normalizedDescription} - ${installment} de ${total}`,
       amount: input.baseAmount,
       installmentCurrent: installment,
       installmentTotal: input.repeatForever ? null : total,
@@ -339,7 +340,10 @@ export async function POST(req: Request) {
   if (id && repeatScope === "single") {
     const currentForSingle = installmentCurrent || parsePositiveInt((existingTx as any)?.installment_current, 1);
     const totalForSingle = installmentTotal > 1 ? installmentTotal : parsePositiveInt((existingTx as any)?.installment_total, 1);
-    const singleDescription = repeatMode !== "none" && totalForSingle > 1
+    const isInfiniteAdvancedSingle = repeatMode === "advanced" && repeatForever;
+    const singleDescription = isInfiniteAdvancedSingle
+      ? stripRecurrenceSuffix(description)
+      : repeatMode !== "none" && totalForSingle > 1
       ? `${stripRecurrenceSuffix(description)} - ${currentForSingle} de ${totalForSingle}`
       : description;
     const singleRow = {
@@ -356,7 +360,7 @@ export async function POST(req: Request) {
       is_transfer: false,
       is_consolidated: isConsolidated,
       installment_current: repeatMode === "none" ? null : currentForSingle,
-      installment_total: repeatMode === "none" ? null : totalForSingle,
+      installment_total: repeatMode === "none" || isInfiniteAdvancedSingle ? null : totalForSingle,
       installment_group_key: repeatMode === "none" ? null : (existingGroupKey || recurrence.groupKey),
       raw: { source: "android_app", recurrence: { mode: repeatMode, repeatEvery, repeatForever }, note: note || null },
     };

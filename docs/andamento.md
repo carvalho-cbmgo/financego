@@ -1,8 +1,30 @@
-﻿# Andamento do Projeto
+# Andamento do Projeto
 
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
+- Data: `2026-05-25`
+- Entrega principal: recorrencia infinita sem total de parcelas, painel de contas refinado e consolidacao direta na web.
+- Resultado entregue:
+  - Web:
+    - Formularios de criacao/edicao de transacao nao exibem `Quantidade total de parcelas` quando `Repetir infinitamente` estiver marcado na modalidade `Avancado`.
+    - Badge de recorrencia infinita passou a usar formato `Recorrente 1 - Mensal`, sem `1/1`.
+    - Painel lateral de contas em `dashboard` e `transactions` passou a exibir banco + tipo na primeira linha, nome da conta na segunda linha e saldo alinhado a direita.
+    - Coluna de consolidacao em `transactions` passou a usar checkbox real, marcado para consolidada e desmarcado para nao consolidada.
+    - Clique direto no checkbox altera imediatamente o estado da transacao via `/api/transactions/batch`, com feedback otimista e overlay `Carregando...`.
+  - Android nativo:
+    - Modal de nova/edicao de transacao nao exibe `Total parcelas` quando `Repetir infinitamente` esta marcado.
+    - Descricoes de recorrencia infinita deixaram de receber sufixo redundante de recorrencia.
+    - Versao Android atualizada para `versionCode=16` e `versionName=1.0.15`.
+  - Build Android:
+    - Projeto Android ajustado para `com.android.application 8.13.0` e `org.jetbrains.kotlin.android 2.2.10`.
+    - `settings.gradle.kts` passou a mapear plugins diretamente para os modulos Gradle/Kotlin.
+    - Build local validado usando `JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT`, `ANDROID_HOME` e Gradle `8.14.3`.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `assembleDebug` executado com sucesso.
+    - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+
 - Data: `2026-05-25`
 - Entrega principal: tela nativa de Categorias no APK.
 - Resultado entregue:
