@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: exclusao de transacao recorrente na web deve solicitar escopo diretamente no modal de edicao.
+- Motivo: o editor modal anterior nao enviava `delete_scope`, entao recorrencias podiam nao ser encerradas da forma esperada pelo usuario.
+- Impacto: recorrencias passam a oferecer `Somente esta transacao`, `Esta e proximas vinculadas`, `Esta e anteriores vinculadas` e `Toda a recorrencia`; o padrao e `Esta e proximas vinculadas`.
+
+- Data: `2026-05-25`
 - Decisao: recorrencias avancadas com `Repetir infinitamente` nao devem usar nem exigir `installment_total`.
 - Motivo: recorrencia infinita nao tem quantidade total de parcelas; manter o campo gera confusao e labels como `1/1`.
 - Impacto: web e APK ocultam `Total de Parcelas` nessa condicao; dados salvos usam `installment_total=null` quando aplicavel.

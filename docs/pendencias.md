@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Validar no website se a transacao recorrente `Salario` e removida ao escolher `Esta e proximas vinculadas` e clicar em `Excluir`.
+- [ ] Validar no website se a opcao `Toda a recorrencia` remove todos os lancamentos vinculados de uma transacao recorrente de teste.
 - [ ] Reinstalar o APK Android nativo versao `1.0.15` e validar que `Total parcelas` fica oculto quando `Repetir infinitamente` estiver marcado.
 - [ ] Validar no web que recorrencia infinita aparece como `Recorrente 1 - Mensal`, sem `1/1`.
 - [ ] Validar no web `dashboard` e `transactions` se o painel de contas mostra banco + tipo, nome da conta e saldo alinhado a direita.

@@ -5,6 +5,7 @@ import { bankKeyFromBankName } from "@/lib/accounts";
 
 type RepeatMode = "none" | "installment" | "advanced";
 type RepeatEvery = "week" | "month" | "year";
+type DeleteScope = "single" | "up_to_current" | "from_current" | "all";
 
 function typeFromAction(action: string) {
   const normalized = action.trim().toLowerCase();
@@ -38,6 +39,14 @@ function parseRepeatEvery(input: string): RepeatEvery {
   if (value === "semana" || value === "week" || value === "weekly") return "week";
   if (value === "ano" || value === "year" || value === "yearly") return "year";
   return "month";
+}
+
+function parseDeleteScope(input: string): DeleteScope {
+  const value = String(input || "").trim().toLowerCase();
+  if (value === "up_to_current") return "up_to_current";
+  if (value === "from_current") return "from_current";
+  if (value === "all" || value === "series" || value === "toda") return "all";
+  return "single";
 }
 
 function parsePositiveInt(input: any, fallback: number) {
@@ -223,7 +232,7 @@ export async function POST(req: Request) {
   const inputAmount = Number(form.get("amount") || 0);
   const returnUrl = safeReturnUrl(String(form.get("return_url") || ""));
   const intent = String(form.get("intent") || "save").trim().toLowerCase();
-  const deleteScope = String(form.get("delete_scope") || "single").trim().toLowerCase();
+  const deleteScope = parseDeleteScope(String(form.get("delete_scope") || "single"));
   const isConsolidated = form.has("is_consolidated");
   const txType = typeFromAction(action);
   const baseAmount = computeAmountByAction(txType, inputAmount);
@@ -256,46 +265,65 @@ export async function POST(req: Request) {
 
   if (intent === "delete") {
     if (String(existingTx.installment_group_key || "").startsWith("manual-transfer-")) {
-      await supabaseAdmin
+      const { error: transferDeleteError } = await supabaseAdmin
         .from("transactions")
         .delete()
         .eq("profile_id", user.id)
         .eq("installment_group_key", existingTx.installment_group_key);
 
+      if (transferDeleteError) {
+        return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
+      }
+
       return NextResponse.redirect(new URL(returnUrl, req.url));
     }
 
     if (!existingTx.installment_group_key || deleteScope === "single") {
-      await supabaseAdmin
+      const { error: singleDeleteError } = await supabaseAdmin
         .from("transactions")
         .delete()
         .eq("id", id)
         .eq("profile_id", user.id);
 
+      if (singleDeleteError) {
+        return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
+      }
+
       return NextResponse.redirect(new URL(returnUrl, req.url));
     }
 
-    const { data: siblings } = await supabaseAdmin
+    const { data: siblings, error: siblingsError } = await supabaseAdmin
       .from("transactions")
       .select("id, posted_at")
       .eq("profile_id", user.id)
       .eq("installment_group_key", existingTx.installment_group_key);
 
+    if (siblingsError) {
+      return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
+    }
+
     const currentPostedAt = String(existingTx.posted_at || "");
     const targets = (siblings || []).filter((row: any) => {
       const postedAt = String(row.posted_at || "");
+      if (deleteScope === "all") return true;
       if (deleteScope === "up_to_current") return postedAt <= currentPostedAt;
       if (deleteScope === "from_current") return postedAt >= currentPostedAt;
       return String(row.id) === String(existingTx.id);
     });
 
-    const targetIds = Array.from(new Set(targets.map((row: any) => String(row.id))));
+    const targetIds = Array.from(new Set(targets.map((row: any) => String(row.id)).filter(Boolean)));
+    if (!targetIds.length) targetIds.push(String(existingTx.id));
+
     if (targetIds.length) {
-      await supabaseAdmin
+      const { error: deleteError } = await supabaseAdmin
         .from("transactions")
         .delete()
         .eq("profile_id", user.id)
         .in("id", targetIds);
+
+      if (deleteError) {
+        return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
+      }
     }
 
     return NextResponse.redirect(new URL(returnUrl, req.url));

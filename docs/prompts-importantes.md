@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir exclusao de transacao recorrente no website.
+- Prompt base: "Na página transactions do website, estou tentando excluir a transação recorrente 'Salário', mas mesmo clicando em excluir, a transação permanece registrada da mesma forma. Corrigir essa situação."
+- Resultado:
+  - Modal de edicao passou a exibir seletor de escopo ao excluir recorrencias.
+  - Escopo padrao de recorrencias definido como `Esta e proximas vinculadas`.
+  - Botao `Excluir` passou a ignorar validacao de campos obrigatorios do formulario.
+  - API `/api/categories/update` passou a tratar `delete_scope=all`, checar erros de exclusao e aplicar fallback para remover a transacao selecionada.
+
 - Objetivo: corrigir recorrencia infinita, painel de contas web e consolidacao direta por checkbox.
 - Prompt base: "Corrigir no site quando uma transacao for recorrente (repetir infinitamente), nao e necessario existir o campo Total de Parcelas... No Apk... No site na pagina dashboard e transactions... substituir o simbolo que indica se a conta esta consolidada..."
 - Resultado:

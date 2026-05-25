@@ -4,6 +4,20 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: correcao da exclusao de transacoes recorrentes no website.
+- Resultado entregue:
+  - Web:
+    - Modal de edicao de transacao recorrente passou a exibir `Escopo ao excluir`.
+    - O escopo padrao para recorrencias ficou como `Esta e proximas vinculadas`, permitindo parar uma recorrencia como `Salario` a partir do mes selecionado.
+    - Botao `Excluir` passou a usar `formNoValidate`, evitando que campos obrigatorios do formulario bloqueiem a exclusao.
+  - Backend/API:
+    - Rota `/api/categories/update` passou a aceitar `delete_scope=all`.
+    - Exclusao recorrente passou a verificar erros do Supabase em vez de redirecionar como se tivesse dado certo.
+    - Quando a busca de transacoes vinculadas nao encontra alvos, a rota tenta remover ao menos a transacao selecionada.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+
+- Data: `2026-05-25`
 - Entrega principal: recorrencia infinita sem total de parcelas, painel de contas refinado e consolidacao direta na web.
 - Resultado entregue:
   - Web:
