@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: exclusao de transacao na web deve usar API JSON dedicada em vez de depender do submit do formulario de edicao.
+- Motivo: a exclusao de parcelamentos/recorrencias precisa retornar quantidade/ids excluidos e falhar de forma visivel quando o banco nao remover linhas.
+- Impacto: criada `/api/transactions/delete`; o botao `Excluir` passa a usar `fetch`, respeita `delete_scope` e atualiza a tela apos resposta positiva.
+
+- Data: `2026-05-25`
 - Decisao: o formulario web de edicao de transacao deve enviar `intent` por campo oculto estavel, nao pelo botao submit.
 - Motivo: ao desabilitar botoes no `onSubmit`, o navegador pode deixar de incluir o botao clicado no `FormData`, fazendo uma exclusao ser interpretada como salvamento.
 - Impacto: `Excluir` define `intent=delete` antes da submissao; `Salvar` define `intent=save`; a rota recebe a acao correta mesmo com overlay/loading.

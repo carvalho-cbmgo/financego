@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: tornar efetiva a exclusao de transacoes recorrentes/parceladas na web usando API direta.
+- Prompt base: "No site Finance GO, tentei novamente excluir transações com repetição do tipo parcelamento e avançado, mas mesmo clicando em Excluir selecionando Esta e próximas vinculadas..."
+- Resultado:
+  - Criada rota `POST /api/transactions/delete`.
+  - O botao `Excluir` passou a chamar a rota por `fetch`, com `id` e `delete_scope`.
+  - A rota calcula transacoes vinculadas por `installment_group_key`, escopo e data da transacao selecionada.
+  - A rota retorna erro se a transacao selecionada nao for removida, evitando falsa sensacao de sucesso.
+  - A tela `transactions` atualiza a lista apenas apos a resposta positiva da API.
+
 - Objetivo: corrigir exclusao nao efetiva de transacao em `Parcelamento (mensal)` com vinculadas.
 - Prompt base: "Estou tentando excluir uma transação de Parcelamento (mensal) juntamente com as demais transações vinculadas, mas a exclusão não está ocorrendo de forma efetiva..."
 - Resultado:

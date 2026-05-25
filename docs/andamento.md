@@ -4,6 +4,20 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: exclusao direta e verificavel de transacoes recorrentes na web.
+- Resultado entregue:
+  - Web:
+    - O botao `Excluir` do modal de transacao deixou de usar submit HTML para exclusao.
+    - A exclusao agora chama diretamente `/api/transactions/delete` via `fetch`, enviando `id` e `delete_scope`.
+    - A tela exibe mensagem se a API nao conseguir excluir e atualiza a lista somente apos resposta positiva.
+  - Backend/API:
+    - Criada rota `POST /api/transactions/delete` para exclusao autenticada por JSON.
+    - A rota calcula os alvos por `installment_group_key` e escopo (`single`, `from_current`, `up_to_current`, `all`).
+    - A rota confirma que a transacao selecionada foi de fato removida e retorna quantidade/ids excluidos.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+
+- Data: `2026-05-25`
 - Entrega principal: hotfix de exclusao efetiva de parcelamento mensal na web.
 - Resultado entregue:
   - Web:

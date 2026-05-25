@@ -17,6 +17,7 @@ type CategorySelectOption = {
 type RepeatMode = "none" | "installment" | "advanced";
 type RepeatEvery = "week" | "month" | "year";
 type RepeatScope = "single" | "from_current" | "from_first";
+type DeleteScope = "single" | "up_to_current" | "from_current" | "all";
 
 type RecurrenceInfo = {
   isRecurring: boolean;
@@ -997,7 +998,10 @@ function EditTransactionFocus(input: {
   returnUrl: string;
   repeatScope: RepeatScope;
 }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState("");
+  const [deleteScope, setDeleteScope] = useState<DeleteScope>("from_current");
   const intentRef = useRef<HTMLInputElement>(null);
   const initialAction = actionFromType(input.tx?.type);
   const recurrenceInfo = useMemo(() => getRecurrenceInfo(input.tx), [input.tx]);
@@ -1032,6 +1036,45 @@ function EditTransactionFocus(input: {
     safeCategoryOptions = [{ value: currentCategory, label: currentCategory, depth: 0 }, ...safeCategoryOptions];
   }
 
+  async function deleteTransaction() {
+    if (isSubmitting) return;
+
+    const message = recurrenceInfo.isRecurring
+      ? "Deseja excluir a transação recorrente conforme o escopo selecionado?"
+      : "Deseja excluir esta transação?";
+    if (!window.confirm(message)) return;
+
+    setIsSubmitting(true);
+    setFormMessage("");
+    notifyGlobalLoading(true);
+
+    try {
+      const response = await fetch("/api/transactions/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: String(input.tx?.id || ""),
+          delete_scope: recurrenceInfo.isRecurring ? deleteScope : "single",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setFormMessage(String(data?.error || "Não foi possível excluir a transação."));
+        return;
+      }
+
+      setFormMessage(`${Number(data?.deleted || 1)} transação(ões) excluída(s).`);
+      router.replace(input.returnUrl, { scroll: false });
+      router.refresh();
+    } catch {
+      setFormMessage("Erro inesperado ao excluir a transação.");
+    } finally {
+      setIsSubmitting(false);
+      notifyGlobalLoading(false);
+    }
+  }
+
   return (
     <form
       action="/api/categories/update"
@@ -1049,6 +1092,7 @@ function EditTransactionFocus(input: {
       <input type="hidden" name="repeat_scope" value={input.repeatScope || "single"} />
       {action === "Transferencia" ? <input type="hidden" name="category" value="Transferências" /> : null}
       {!recurrenceInfo.isRecurring ? <input type="hidden" name="delete_scope" value="single" /> : null}
+      {formMessage ? <div className="fg-field-note">{formMessage}</div> : null}
 
       <div className="fg-legacy-create-action-row">
         <label className="fg-legacy-create-action-pill">
@@ -1174,7 +1218,12 @@ function EditTransactionFocus(input: {
       {recurrenceInfo.isRecurring ? (
         <label className="fg-field-label fg-legacy-create-delete-scope">
           Escopo ao excluir
-          <select name="delete_scope" defaultValue="from_current" className="fg-select">
+          <select
+            name="delete_scope"
+            value={deleteScope}
+            onChange={(event) => setDeleteScope(parseDeleteScope(event.target.value))}
+            className="fg-select"
+          >
             <option value="single">Somente esta transação</option>
             <option value="from_current">Esta e próximas vinculadas</option>
             <option value="up_to_current">Esta e anteriores vinculadas</option>
@@ -1185,21 +1234,11 @@ function EditTransactionFocus(input: {
 
       <div className="fg-legacy-create-actions">
         <button
-          type="submit"
+          type="button"
           className="fg-btn-danger"
           formNoValidate
           disabled={isSubmitting}
-          onClick={(event) => {
-            const message = recurrenceInfo.isRecurring
-              ? "Deseja excluir a transação recorrente conforme o escopo selecionado?"
-              : "Deseja excluir esta transação?";
-            if (!window.confirm(message)) {
-              event.preventDefault();
-              if (intentRef.current) intentRef.current.value = "save";
-              return;
-            }
-            if (intentRef.current) intentRef.current.value = "delete";
-          }}
+          onClick={deleteTransaction}
         >
           Excluir
         </button>
@@ -1640,6 +1679,14 @@ function parseRepeatEvery(input: string): RepeatEvery {
   if (value === "week" || value === "semana") return "week";
   if (value === "year" || value === "ano") return "year";
   return "month";
+}
+
+function parseDeleteScope(input: string): DeleteScope {
+  const value = String(input || "").trim().toLowerCase();
+  if (value === "up_to_current") return "up_to_current";
+  if (value === "all") return "all";
+  if (value === "from_current") return "from_current";
+  return "single";
 }
 
 function parsePositiveDecimal(input: string) {

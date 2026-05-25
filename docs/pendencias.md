@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Validar em producao a nova rota `/api/transactions/delete` excluindo parcelamento mensal com `Esta e proximas vinculadas`.
+- [ ] Validar em producao a nova rota `/api/transactions/delete` excluindo recorrencia avancada com `Esta e proximas vinculadas`.
 - [ ] Validar em producao que excluir `Parcelamento (mensal)` com `Esta e proximas vinculadas` remove efetivamente a parcela selecionada e as seguintes.
 - [ ] Validar em producao que excluir `Parcelamento (mensal)` com `Toda a recorrencia` remove todas as parcelas vinculadas.
 - [ ] Validar em producao que clicar em transacao recorrente nao consolidada abre a janela de escopo sem sobrepor `Carregando...`.
