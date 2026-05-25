@@ -3,6 +3,21 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-25`
+- Decisao: criar filtro `Somente Transacoes Consolidadas` no APK usando estado global da tela.
+- Motivo: permitir ao usuario alternar rapidamente entre visao completa e visao apenas realizada/consolidada.
+- Impacto: listas de transacoes, saldos, entradas, saidas, saldo final/atual, saldos de contas e graficos passam a respeitar o filtro quando marcado.
+
+- Data: `2026-05-25`
+- Decisao: notificacoes bancarias devem ser classificadas por regras explicitas de produto financeiro.
+- Motivo: evitar que notificacoes de cartao de credito ou PIX sejam registradas com tipo incorreto.
+- Impacto: cartao de credito vira despesa salvo estorno/reembolso; PIX/transferencia recebida vira receita; PIX/transferencia enviada vira despesa; fallback permanece despesa.
+
+- Data: `2026-05-25`
+- Decisao: reforcar visualmente transacoes nao consolidadas no APK usando fonte bold real e `fakeBoldText` na primeira linha.
+- Motivo: a configuracao anterior nao estava ficando evidente em aparelho real.
+- Impacto: a linha `data - descricao` passa a chamar mais atencao para lancamentos futuros/previstos.
+
 - Data: `2026-05-22`
 - Decisao: usar seletor nativo de calendario para o campo `Data` no cadastro/edicao de transacoes do APK.
 - Motivo: reduzir erro de digitacao e tornar a escolha de data mais simples no celular.

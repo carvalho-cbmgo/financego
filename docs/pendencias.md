@@ -3,6 +3,9 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Reinstalar o APK Android nativo versao `1.0.13` e validar o checkbox `Somente Transacoes Consolidadas` na tela principal, tela de conta e tela de graficos.
+- [ ] Validar em aparelho real se a primeira linha de transacoes nao consolidadas aparece em negrito.
+- [ ] Testar notificacoes reais de cartao de credito, estorno, PIX recebido, PIX enviado, transferencia recebida e transferencia enviada.
 - [ ] Reinstalar o APK Android nativo versao `1.0.12` e validar o seletor nativo de data em `Nova Transacao` e `Editar Transacao`.
 - [ ] Validar no APK se o selo rosa destaca corretamente as telas `Transacoes`, `Contas`, `Graficos` e `Bancos`.
 - [ ] Reinstalar o APK Android nativo versao `1.0.11` e confirmar login usando `https://financego-eight.vercel.app`.

@@ -95,14 +95,21 @@ function buildShortNotificationDescription(input: {
   counterparty: string;
 }) {
   const suffix = input.counterparty ? ` - ${input.counterparty}` : "";
+  const isTransferText = /transferencia|\bted\b|\bdoc\b/.test(input.normalizedText);
+  const isPixText = /\bpix\b/.test(input.normalizedText);
 
   if (/estorno|reembolso/.test(input.normalizedText)) return `Estorno${suffix}`;
-  if (input.type === "transfer") return `Transferência${suffix}`;
-  if (input.type === "credit") return `PIX Recebido${suffix}`;
-  if (/pix|transferencia|transfer[eê]ncia/.test(input.normalizedText)) return `PIX realizado${suffix}`;
+  if (input.type === "transfer") return `Transferencia${suffix}`;
+  if (input.type === "credit") {
+    if (isTransferText) return `Transferencia recebida${suffix}`;
+    if (isPixText) return `PIX Recebido${suffix}`;
+    return `Receita recebida${suffix}`;
+  }
+  if (isTransferText) return `Transferencia enviada${suffix}`;
+  if (isPixText) return `PIX Enviado${suffix}`;
   if (/compra.*credito|credito.*aprovad|cartao.*credito/.test(input.normalizedText)) {
     const merchantFromText = input.rawText.match(/\bem\s+([^|.,;]+)/i)?.[1]?.replace(/\s+/g, " ").trim();
-    return merchantFromText ? `Compra - ${merchantFromText.slice(0, 60)}` : "Compra no crédito";
+    return merchantFromText ? `Compra - ${merchantFromText.slice(0, 60)}` : "Compra no credito";
   }
 
   const merchant = extractMerchant(input.rawText);
@@ -280,28 +287,39 @@ export function parseNotificationByBank(input: {
   const s = normalize(full);
   let signedAmount = money;
   const counterparty = extractPixCounterparty(full);
-  const isOwnCounterparty = looksSamePerson(counterparty, input.profileFullName);
   let forcedType: ParsedBankTransaction["type"] | undefined;
-  const looksRefund = /estorno|reembolso|devolucao|devolução/.test(s);
-  const looksApprovedCreditPurchase = /compra.*credito|compra.*crédito|credito.*aprovad|crédito.*aprovad|cartao de credito|cartão de crédito|no credito|no crédito/.test(s);
+  const looksRefund = /estorno|reembolso|devolucao|chargeback|cancelamento/.test(s);
+  const isPixOrTransfer = /\bpix\b|transferencia|\bted\b|\bdoc\b/.test(s);
+  const looksCreditCardText = /cartao.*credito|credito.*cartao|compra.*credito|credito.*aprovad|compra no credito|no credito|fatura do cartao/.test(s);
+  const looksCardTransaction = looksCreditCardText || (/cartao|credito/.test(s) && /compra|aprovad|parcela|fatura/.test(s));
+  const looksReceived = /pix recebido|transferencia recebida|recebido|recebida|recebeu|voce recebeu|deposito|depositado|entrada|creditado|credito em conta|caiu na sua conta/.test(s);
+  const looksSent = /pix enviado|pix realizado|transferencia enviada|transferencia realizada|enviado|enviada|enviou|voce enviou|pagamento realizado|pagamento aprovado|pagou|pago|saida|debitado|debito em conta/.test(s);
+  const looksPurchaseOrPayment = /compra|pagamento|debito|cartao|parcela|boleto|saque|tarifa/.test(s);
 
   if (looksRefund) {
     forcedType = "credit";
     signedAmount = Math.abs(money);
-  } else if (looksApprovedCreditPurchase || /compra|pagamento aprovado|debito|débito|cartao|cartão|parcela/.test(s)) {
+  } else if (looksCardTransaction) {
+    // Regra de negocio do APK: lancamento em cartao de credito e sempre despesa, exceto estorno/reembolso.
     forcedType = "debit";
     signedAmount = -Math.abs(money);
-  } else if (isOwnCounterparty && /pix|transferencia|transfer[eê]ncia|ted|doc/.test(s)) {
-    forcedType = "transfer";
-    signedAmount = /recebido|credito|deposito|entrada/.test(s) ? Math.abs(money) : -Math.abs(money);
-  } else if (/pix recebido|recebido|deposito|depósito|entrada|salario|salário/.test(s)) {
+  } else if (isPixOrTransfer && looksReceived) {
     forcedType = "credit";
     signedAmount = Math.abs(money);
+  } else if (isPixOrTransfer && looksSent) {
+    forcedType = "debit";
+    signedAmount = -Math.abs(money);
+  } else if (looksReceived && !looksSent) {
+    forcedType = "credit";
+    signedAmount = Math.abs(money);
+  } else if (looksSent || looksPurchaseOrPayment) {
+    forcedType = "debit";
+    signedAmount = -Math.abs(money);
   } else {
-    forcedType = /pix|transferencia|transfer[eê]ncia|ted|doc/.test(s) ? "transfer" : "debit";
+    // Na duvida, mantemos a classificacao conservadora solicitada: despesa.
+    forcedType = "debit";
     signedAmount = -Math.abs(money);
   }
-
   const parsed = baseBuild({
     bankKey,
     raw: full,

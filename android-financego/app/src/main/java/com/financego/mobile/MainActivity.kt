@@ -64,6 +64,7 @@ class MainActivity : Activity() {
   private var bootstrap: JSONObject? = null
   private var selectedMonth: YearMonth = YearMonth.now()
   private var includePreviousBalance = true
+  private var onlyConsolidatedTransactions = false
   private var selectedPeriodMode = PeriodMode.FULL_MONTH
   private var chartAllAccounts = true
   private val chartSelectedAccountIds = linkedSetOf<String>()
@@ -337,6 +338,13 @@ class MainActivity : Activity() {
       isChecked = includePreviousBalance
       setOnCheckedChangeListener { _, checked -> includePreviousBalance = checked; onChange() }
     })
+    addView(CheckBox(this@MainActivity).apply {
+      text = "Somente Transações Consolidadas"
+      textSize = 12f
+      setTextColor(COLOR_TEXT)
+      isChecked = onlyConsolidatedTransactions
+      setOnCheckedChangeListener { _, checked -> onlyConsolidatedTransactions = checked; onChange() }
+    })
   }
 
   private fun monthButton(): Button = secondaryButton(monthLabel(selectedMonth)).apply {
@@ -400,7 +408,7 @@ class MainActivity : Activity() {
       chartSelectedAccountIds.toSet()
     }
     val range = periodRange()
-    return allTransactions(data).filter { tx ->
+    return filteredTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       accountIds.contains(tx.optString("account_id")) && !date.isBefore(range.start) && !date.isAfter(range.end)
     }
@@ -642,7 +650,8 @@ class MainActivity : Activity() {
   private fun transactionCard(tx: JSONObject): View = surface().apply {
     val data = bootstrap ?: JSONObject()
     val account = accountForTransaction(data, tx.optString("account_id"))
-    val textStyle = if (isConsolidated(tx)) Typeface.NORMAL else Typeface.BOLD
+    val consolidated = isConsolidated(tx)
+    val textStyle = if (consolidated) Typeface.NORMAL else Typeface.BOLD
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -654,7 +663,8 @@ class MainActivity : Activity() {
       text = "$date - ${stripRecurrenceSuffix(tx.optString("description", "Transação"))}"
       textSize = 13f
       setTextColor(COLOR_TEXT)
-      setTypeface(typeface, textStyle)
+      setTypeface(if (consolidated) Typeface.DEFAULT else Typeface.DEFAULT_BOLD, textStyle)
+      paint.isFakeBoldText = !consolidated
     })
 
     val tagRow = LinearLayout(this@MainActivity).apply {
@@ -1110,14 +1120,14 @@ class MainActivity : Activity() {
     val accountId = account.optString("id")
     val range = periodRange()
     val previous = if (includePreviousBalance) {
-      accountBaseBalance(data, accountId) + allTransactions(data).filter { tx ->
+      accountBaseBalance(data, accountId) + filteredTransactions(data).filter { tx ->
         val date = txDate(tx) ?: return@filter false
         tx.optString("account_id") == accountId && date.isBefore(range.start)
       }.sumOf { transactionAmount(it) }
     } else {
       0.0
     }
-    val periodNet = allTransactions(data).filter { tx ->
+    val periodNet = filteredTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       tx.optString("account_id") == accountId && !date.isBefore(range.start) && !date.isAfter(range.end)
     }.sumOf { transactionAmount(it) }
@@ -1145,9 +1155,12 @@ class MainActivity : Activity() {
     return items
   }
 
+  private fun filteredTransactions(data: JSONObject): List<JSONObject> =
+    allTransactions(data).filter { !onlyConsolidatedTransactions || isConsolidated(it) }
+
   private fun monthTransactions(data: JSONObject, accountId: String?): List<JSONObject> {
     val range = periodRange()
-    return allTransactions(data).filter { tx ->
+    return filteredTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       val matchesAccount = accountId.isNullOrBlank() || tx.optString("account_id") == accountId
       matchesAccount && !date.isBefore(range.start) && !date.isAfter(range.end)
@@ -1156,7 +1169,7 @@ class MainActivity : Activity() {
 
   private fun previousBalance(data: JSONObject, accountId: String?): Double {
     val start = periodRange().start
-    return accountBaseBalance(data, accountId) + allTransactions(data).filter { tx ->
+    return accountBaseBalance(data, accountId) + filteredTransactions(data).filter { tx ->
       val date = txDate(tx) ?: return@filter false
       val matchesAccount = accountId.isNullOrBlank() || tx.optString("account_id") == accountId
       matchesAccount && date.isBefore(start)
@@ -1229,11 +1242,26 @@ class MainActivity : Activity() {
     categories.getOrNull(index.coerceAtLeast(0))?.name ?: "Outros"
 
   private fun isConsolidated(tx: JSONObject): Boolean {
-    if (tx.has("is_consolidated") && !tx.isNull("is_consolidated")) return tx.optBoolean("is_consolidated", true)
-    if (tx.has("consolidated") && !tx.isNull("consolidated")) return tx.optBoolean("consolidated", true)
+    val explicit = jsonBoolean(tx, "is_consolidated") ?: jsonBoolean(tx, "consolidated")
+    if (explicit == false) return false
     val status = tx.optString("status", "").lowercase()
     if (status == "planned" || status == "pending" || status == "nao_consolidada" || status == "não_consolidada") return false
-    return true
+    return explicit ?: true
+  }
+
+  private fun jsonBoolean(obj: JSONObject, key: String): Boolean? {
+    if (!obj.has(key) || obj.isNull(key)) return null
+    val raw = obj.opt(key)
+    return when (raw) {
+      is Boolean -> raw
+      is Number -> raw.toInt() != 0
+      is String -> when (raw.trim().lowercase()) {
+        "true", "1", "yes", "sim", "consolidada", "posted" -> true
+        "false", "0", "no", "nao", "não", "nao_consolidada", "não_consolidada", "planned", "pending" -> false
+        else -> null
+      }
+      else -> null
+    }
   }
 
   private fun dateSelector(value: String): EditText =

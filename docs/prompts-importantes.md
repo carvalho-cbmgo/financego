@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: adicionar filtro de transacoes consolidadas no APK e corrigir classificacao de notificacoes bancarias.
+- Prompt base: "No apk, na tela de transacao, nas tela de contas especificas e na tela de graficos, acrescentar... Somente Transacoes Consolidadas... corrigir a identificacao e registro automatico das transacoes por meio das notificacoes..."
+- Resultado:
+  - Checkbox `Somente Transacoes Consolidadas` adicionado abaixo de `Incluir saldo anterior`.
+  - Filtro aplicado em transacoes exibidas, saldos, entradas, saidas, saldo atual/final, saldos de contas e graficos.
+  - Primeira linha do card de transacao nao consolidada passou a forcar negrito.
+  - Parser de notificacoes passou a classificar cartao de credito como despesa, estorno como receita, PIX/transferencia recebida como receita e PIX/transferencia enviada como despesa.
+  - Versao Android atualizada para `1.0.13`.
+
 - Objetivo: refinar cards de transacao, badges de pagina e entrada de data no APK.
 - Prompt base: "No apk, na tela principal de transacoes, na parte Transacoes do mes, ajustar para que o texto da primeira linha fique em negrito se a transacao estiver como nao consolidada... altere a cor do badge Transacoes... campo de Data se torne um seletor..."
 - Resultado:

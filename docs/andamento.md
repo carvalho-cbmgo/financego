@@ -3,6 +3,28 @@
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
+- Data: `2026-05-25`
+- Entrega principal: filtro de transacoes consolidadas e classificacao melhorada de notificacoes no APK.
+- Resultado entregue:
+  - Android nativo:
+    - Adicionado checkbox `Somente Transacoes Consolidadas` abaixo de `Incluir saldo anterior`.
+    - O filtro fica desmarcado por padrao e foi aplicado na tela principal de transacoes, telas de contas especificas e tela de graficos.
+    - Quando marcado, somente transacoes consolidadas entram na lista exibida, `Saldo inicial`, `Entradas`, `Saidas`, `Saldo final`, `Saldo atual`, saldos das contas e graficos.
+    - A leitura de consolidacao ficou mais robusta, aceitando `is_consolidated`, `consolidated`, status `planned/pending` e valores booleanos/string/numericos.
+    - A primeira linha do card de transacao (`data - descricao`) passou a forcar fonte em negrito para transacoes nao consolidadas.
+    - Versao Android atualizada para `versionCode=14` e `versionName=1.0.13`.
+  - Backend/API:
+    - Parser de notificacoes passou a classificar cartao de credito como despesa por padrao.
+    - Estornos/reembolsos continuam sendo classificados como receita.
+    - PIX/transferencia recebida passam a ser receita.
+    - PIX/transferencia enviada passam a ser despesa.
+    - Descricoes curtas de notificacao foram refinadas para `PIX Recebido`, `PIX Enviado`, `Transferencia recebida` e `Transferencia enviada`.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `assembleDebug`, `testDebugUnitTest`, `lintDebug` e `assembleRelease` executados com sucesso.
+    - APK debug confirmado com `versionCode=14` e `versionName=1.0.13`.
+    - Houve bloqueios transitorios do Windows/Gradle em pastas geradas; as pastas geradas foram removidas com verificacao de caminho dentro do workspace e as builds foram recompiladas com sucesso.
+
 - Data: `2026-05-22`
 - Entrega principal: refinamento visual e seletor de data no APK.
 - Resultado entregue:
