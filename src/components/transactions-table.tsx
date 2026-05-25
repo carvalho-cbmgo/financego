@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import { PreviousBalanceToggle } from "@/components/previous-balance-toggle";
@@ -16,6 +16,7 @@ type CategorySelectOption = {
 
 type RepeatMode = "none" | "installment" | "advanced";
 type RepeatEvery = "week" | "month" | "year";
+type RepeatScope = "single" | "from_current" | "from_first";
 
 type RecurrenceInfo = {
   isRecurring: boolean;
@@ -44,6 +45,7 @@ export function TransactionsTable(input: {
   categoryOptions: CategorySelectOption[];
   returnUrl: string;
   selectedEditTxId: string;
+  selectedRepeatScope: RepeatScope;
 }) {
   const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -53,6 +55,8 @@ export function TransactionsTable(input: {
   const [bulkCategoryValue, setBulkCategoryValue] = useState("");
   const [pendingReclassifyCategory, setPendingReclassifyCategory] = useState("");
   const [showReclassifyDialog, setShowReclassifyDialog] = useState(false);
+  const [pendingRepeatEditTx, setPendingRepeatEditTx] = useState<any | null>(null);
+  const [repeatScopeChoice, setRepeatScopeChoice] = useState<RepeatScope>("single");
   const [consolidationOverrides, setConsolidationOverrides] = useState<Record<string, boolean>>({});
   const [typeFilters, setTypeFilters] = useState<TxTypeFilters>({
     all: true,
@@ -283,6 +287,28 @@ export function TransactionsTable(input: {
     router.push(input.returnUrl);
   }
 
+  function handleEditLinkClick(event: MouseEvent<HTMLAnchorElement>, tx: any, recurrenceInfo: RecurrenceInfo) {
+    const isRepeatedAndOpen = recurrenceInfo.isRecurring && tx?.is_consolidated === false;
+    if (!isRepeatedAndOpen) return;
+
+    event.preventDefault();
+    setPendingRepeatEditTx(tx);
+    setRepeatScopeChoice("single");
+  }
+
+  function confirmRepeatEditScope() {
+    const txId = String(pendingRepeatEditTx?.id || "");
+    if (!txId) return;
+
+    setPendingRepeatEditTx(null);
+    router.push(buildEditUrl(input.returnUrl, txId, repeatScopeChoice));
+  }
+
+  function cancelRepeatEditScope() {
+    setPendingRepeatEditTx(null);
+    setRepeatScopeChoice("single");
+  }
+
   if (!input.txs.length) {
     return (
       <Card title="Transações">
@@ -380,6 +406,14 @@ export function TransactionsTable(input: {
           </div>
         </div>
       ) : null}
+      {pendingRepeatEditTx ? (
+        <RepeatEditScopeDialog
+          selectedScope={repeatScopeChoice}
+          onSelectScope={setRepeatScopeChoice}
+          onConfirm={confirmRepeatEditScope}
+          onCancel={cancelRepeatEditScope}
+        />
+      ) : null}
       {showCreateForm ? (
         <TransactionFocusModal title="Adicionar transação" onClose={() => setShowCreateForm(false)}>
           <CreateTransactionInline
@@ -399,6 +433,7 @@ export function TransactionsTable(input: {
             bankById={bankById}
             categoryOptions={categoryOptions}
             returnUrl={input.returnUrl}
+            repeatScope={input.selectedRepeatScope}
           />
         </TransactionFocusModal>
       ) : null}
@@ -500,7 +535,7 @@ export function TransactionsTable(input: {
 
                   return (
                     <Fragment key={txId}>
-                      <tr className={`fg-legacy-tx-row ${isEditing ? "is-active" : ""} ${isUnconsolidated ? "is-unconsolidated" : ""}`}>
+                      <tr className={`fg-legacy-tx-row ${isEditing ? "is-active" : ""} ${isUnconsolidated ? "is-unconsolidated" : ""} ${recurrenceInfo.isRecurring ? "is-recurring" : ""}`}>
                         <td className="fg-legacy-col-select">
                           <input
                             type="checkbox"
@@ -510,7 +545,7 @@ export function TransactionsTable(input: {
                           />
                         </td>
                         <td className="fg-legacy-col-desc">
-                          <Link href={editUrl} className="fg-legacy-desc-link">
+                          <Link href={editUrl} className="fg-legacy-desc-link" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
                             <span className="fg-legacy-desc-main">{tx.description || "Sem descrição"}</span>
                             {recurrenceInfo.isRecurring ? (
                               <span className="fg-chip fg-chip-recurring">{recurrenceInfo.badgeLabel}</span>
@@ -518,17 +553,17 @@ export function TransactionsTable(input: {
                           </Link>
                         </td>
                         <td className="fg-legacy-col-category">
-                          <Link href={editUrl} className="fg-legacy-cell-link">
+                          <Link href={editUrl} className="fg-legacy-cell-link" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
                             {tx.app_category || "Outros"}
                           </Link>
                         </td>
                         <td className="fg-legacy-col-account">
-                          <Link href={editUrl} className="fg-legacy-cell-link">
+                          <Link href={editUrl} className="fg-legacy-cell-link" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
                             {bankName} {account?.name ? `- ${account.name}` : ""}
                           </Link>
                         </td>
                         <td className={`fg-legacy-col-value ${Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}`}>
-                          <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-right">
+                          <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-right" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
                             {amountOnly(tx.amount)}
                           </Link>
                         </td>
@@ -625,7 +660,7 @@ export function TransactionsTable(input: {
                                     <option value="3d">3 dias antes</option>
                                     <option value="7d">7 dias antes</option>
                                   </select>
-                                  <RecurringControls tx={tx} />
+                                  <RecurringControls tx={tx} amountInput={amountInputDefault} />
                                   <div className="fg-legacy-inline-label">Escopo ao excluir</div>
                                   <select
                                     name="delete_scope"
@@ -672,6 +707,47 @@ export function TransactionsTable(input: {
         </table>
       </div>
     </Card>
+  );
+}
+
+function RepeatEditScopeDialog(input: {
+  selectedScope: RepeatScope;
+  onSelectScope: (scope: RepeatScope) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const options: Array<{ value: RepeatScope; label: string }> = [
+    { value: "single", label: "Alterar apenas esta" },
+    { value: "from_current", label: "Alterar a partir desta" },
+    { value: "from_first", label: "Alterar a partir da primeira" },
+  ];
+
+  return (
+    <div className="fg-legacy-confirm-backdrop" role="dialog" aria-modal="true" onClick={input.onCancel}>
+      <div className="fg-legacy-confirm-modal fg-repeat-scope-modal" onClick={(event) => event.stopPropagation()}>
+        <div className="fg-card-title">A transação possui repetição. Qual ação deseja executar?</div>
+        <div className="fg-repeat-scope-options">
+          {options.map((option) => (
+            <label key={option.value} className="fg-checkbox-row fg-repeat-scope-option">
+              <input
+                type="checkbox"
+                checked={input.selectedScope === option.value}
+                onChange={() => input.onSelectScope(option.value)}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+        <div className="fg-legacy-confirm-actions">
+          <button type="button" className="fg-btn" onClick={input.onConfirm}>
+            Alterar
+          </button>
+          <button type="button" className="fg-btn-secondary" onClick={input.onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -897,6 +973,7 @@ function EditTransactionFocus(input: {
   bankById: Map<string, any>;
   categoryOptions: CategorySelectOption[];
   returnUrl: string;
+  repeatScope: RepeatScope;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initialAction = actionFromType(input.tx?.type);
@@ -945,6 +1022,7 @@ function EditTransactionFocus(input: {
       <input type="hidden" name="id" value={String(input.tx?.id || "")} />
       <input type="hidden" name="return_url" value={input.returnUrl} />
       <input type="hidden" name="bank_id" value={selectedBankId} />
+      <input type="hidden" name="repeat_scope" value={input.repeatScope || "single"} />
       {action === "Transferencia" ? <input type="hidden" name="category" value="Transferências" /> : null}
       {!recurrenceInfo.isRecurring ? <input type="hidden" name="delete_scope" value="single" /> : null}
 
@@ -1055,7 +1133,7 @@ function EditTransactionFocus(input: {
               Consolidada
             </label>
           </div>
-          <RecurringControls tx={input.tx} />
+          <RecurringControls tx={input.tx} amountInput={amountInput} />
         </>
       )}
 
@@ -1114,7 +1192,7 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
   const showAdvanced = mode === "advanced";
   const installmentAmount = parsePositiveDecimal(amountInput);
   const remainingInstallments = Math.max(1, installmentTotal - installmentCurrent + 1);
-  const calculatedTotalAmount = (installmentAmount * remainingInstallments).toFixed(2);
+  const calculatedTotalAmount = (installmentAmount * installmentTotal).toFixed(2);
 
   function updateCurrent(value: string) {
     const nextCurrent = Math.max(1, Math.trunc(Number(value) || 1));
@@ -1195,7 +1273,7 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
           </label>
           <input type="hidden" name="installment_total_amount" value={calculatedTotalAmount} />
           <div className="fg-field-note">
-            Parcelas restantes: {remainingInstallments}. Total calculado automaticamente.
+            Parcelas restantes: {remainingInstallments}. Total da compra calculado automaticamente pela parcela x total.
           </div>
           <input type="hidden" name="repeat_every" value="month" />
         </div>
@@ -1259,17 +1337,19 @@ function RecurringCreateControls({ amountInput }: { amountInput: string }) {
   );
 }
 
-function RecurringControls({ tx }: { tx: any }) {
+function RecurringControls({ tx, amountInput }: { tx: any; amountInput: string }) {
   const recurrenceInfo = useMemo(() => getRecurrenceInfo(tx), [tx]);
   const [mode, setMode] = useState<RepeatMode>(recurrenceInfo.defaultMode);
   const [repeatEvery, setRepeatEvery] = useState<RepeatEvery>(recurrenceInfo.repeatEvery);
   const [repeatForever, setRepeatForever] = useState<boolean>(recurrenceInfo.repeatForever);
   const [installmentCurrent, setInstallmentCurrent] = useState<number>(recurrenceInfo.installmentCurrent);
   const [installmentTotal, setInstallmentTotal] = useState<number>(recurrenceInfo.installmentTotal);
-  const [installmentTotalAmount, setInstallmentTotalAmount] = useState<string>(recurrenceInfo.totalAmountValue);
 
   const showInstallment = mode === "installment";
   const showAdvanced = mode === "advanced";
+  const installmentAmount = parsePositiveDecimal(amountInput);
+  const remainingInstallments = Math.max(1, installmentTotal - installmentCurrent + 1);
+  const calculatedTotalAmount = (installmentAmount * installmentTotal).toFixed(2);
 
   function updateCurrent(value: string) {
     const nextCurrent = Math.max(1, Math.trunc(Number(value) || 1));
@@ -1341,15 +1421,17 @@ function RecurringControls({ tx }: { tx: any }) {
           <label className="fg-field-label">
             R$ Total
             <input
-              type="number"
-              name="installment_total_amount"
-              min="0.01"
-              step="0.01"
+              type="text"
               className="fg-input"
-              value={installmentTotalAmount}
-              onChange={(event) => setInstallmentTotalAmount(event.target.value)}
+              value={brlCompact(calculatedTotalAmount)}
+              readOnly
+              aria-readonly="true"
             />
           </label>
+          <input type="hidden" name="installment_total_amount" value={calculatedTotalAmount} />
+          <div className="fg-field-note">
+            Parcelas restantes: {remainingInstallments}. Total da compra calculado automaticamente.
+          </div>
           <input type="hidden" name="repeat_every" value="month" />
         </div>
       ) : null}
@@ -1482,8 +1564,9 @@ function toInputDate(input?: string | null) {
   return new Date(input).toISOString().slice(0, 10);
 }
 
-function buildEditUrl(baseUrl: string, txId: string) {
-  return appendQueryParam(baseUrl, "edit_tx", txId);
+function buildEditUrl(baseUrl: string, txId: string, repeatScope?: RepeatScope) {
+  const editUrl = appendQueryParam(baseUrl, "edit_tx", txId);
+  return repeatScope ? appendQueryParam(editUrl, "repeat_scope", repeatScope) : editUrl;
 }
 
 function appendQueryParam(baseUrl: string, key: string, value: string) {

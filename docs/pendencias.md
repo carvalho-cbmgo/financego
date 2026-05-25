@@ -3,6 +3,10 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Validar no website a criacao de `Parcelamento (mensal)` com 10 parcelas e confirmar lancamentos mes a mes com chip/borda azul.
+- [ ] Validar no website a edicao de uma parcela nao consolidada usando os escopos `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.
+- [ ] Reinstalar o APK Android nativo versao `1.0.16` e validar se transacoes recorrentes/parceladas aparecem com borda azul.
+- [ ] Validar no APK e no website se `R$ Total` permanece somente leitura e corresponde a `valor da parcela x quantidade total de parcelas`.
 - [ ] Validar no website se a transacao recorrente `Salario` e removida ao escolher `Esta e proximas vinculadas` e clicar em `Excluir`.
 - [ ] Validar no website se a opcao `Toda a recorrencia` remove todos os lancamentos vinculados de uma transacao recorrente de teste.
 - [ ] Reinstalar o APK Android nativo versao `1.0.15` e validar que `Total parcelas` fica oculto quando `Repetir infinitamente` estiver marcado.

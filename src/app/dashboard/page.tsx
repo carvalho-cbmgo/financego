@@ -23,6 +23,7 @@ type DashboardParams = {
   month_ref?: string;
   include_previous_balance?: string;
   edit_tx?: string;
+  repeat_scope?: string;
 };
 
 type CategorySelectOption = {
@@ -58,6 +59,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const selectedMonthRef = normalizeMonthRef(String(params.month_ref || ""), monthRef());
   const includePreviousBalance = String(params.include_previous_balance || "1") !== "0";
   const selectedEditTxId = String(params.edit_tx || "");
+  const selectedRepeatScope = normalizeRepeatScope(params.repeat_scope);
   const currentTab = params.tab === "transactions" ? "transactions" : "overview";
   const applyBankFilterInTransactions = false;
   const monthStart = `${selectedMonthRef}-01T00:00:00.000Z`;
@@ -302,6 +304,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 categoryOptions={categoryOptions}
                 returnUrl={returnUrl}
                 selectedEditTxId={selectedEditTxId}
+                selectedRepeatScope={selectedRepeatScope}
               />
             </>
           ) : (
@@ -531,6 +534,13 @@ function normalizeMonthRef(input: string, fallback: string) {
   const value = String(input || "").trim();
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(value)) return fallback;
   return value;
+}
+
+function normalizeRepeatScope(input?: string | null): "single" | "from_current" | "from_first" {
+  const value = String(input || "").trim().toLowerCase();
+  if (value === "from_current") return "from_current";
+  if (value === "from_first") return "from_first";
+  return "single";
 }
 
 function nextMonthRef(ref: string) {

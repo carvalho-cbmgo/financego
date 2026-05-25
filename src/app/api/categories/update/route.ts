@@ -5,6 +5,7 @@ import { bankKeyFromBankName } from "@/lib/accounts";
 
 type RepeatMode = "none" | "installment" | "advanced";
 type RepeatEvery = "week" | "month" | "year";
+type RepeatScope = "single" | "from_current" | "from_first";
 type DeleteScope = "single" | "up_to_current" | "from_current" | "all";
 
 function typeFromAction(action: string) {
@@ -39,6 +40,13 @@ function parseRepeatEvery(input: string): RepeatEvery {
   if (value === "semana" || value === "week" || value === "weekly") return "week";
   if (value === "ano" || value === "year" || value === "yearly") return "year";
   return "month";
+}
+
+function parseRepeatScope(input: string): RepeatScope {
+  const value = String(input || "").trim().toLowerCase();
+  if (value === "from_current" || value === "future" || value === "a_partir_desta") return "from_current";
+  if (value === "from_first" || value === "all" || value === "a_partir_da_primeira") return "from_first";
+  return "single";
 }
 
 function parseDeleteScope(input: string): DeleteScope {
@@ -115,12 +123,14 @@ function buildRecurringOccurrences(input: {
   installmentTotalAmount: number | null;
   repeatEvery: RepeatEvery;
   repeatForever: boolean;
+  groupKey?: string | null;
 }) {
   const firstDate = new Date(`${input.postedAtDate}T12:00:00.000Z`);
   const normalizedDescription = stripRecurrenceSuffix(input.description) || String(input.description || "").trim();
 
   if (input.mode === "none") {
     return {
+      groupKey: null as string | null,
       forceUnconsolidated: false,
       items: [
         {
@@ -135,14 +145,17 @@ function buildRecurringOccurrences(input: {
     };
   }
 
+  const groupKey = input.groupKey || `manual-rec-${crypto.randomUUID()}`;
+
   if (input.mode === "installment") {
     const current = Math.max(1, input.installmentCurrent);
     const total = Math.max(current, input.installmentTotal);
     const remainingCount = Math.max(1, total - current + 1);
     const fullTotalAbs = Number.isFinite(Number(input.installmentTotalAmount)) && Number(input.installmentTotalAmount) > 0
       ? Number(input.installmentTotalAmount)
-      : Math.abs(input.baseAmount) * remainingCount;
-    const perInstallment = splitAmount(fullTotalAbs, remainingCount);
+      : Math.abs(input.baseAmount) * total;
+    const installmentAbs = fullTotalAbs / total;
+    const perInstallment = splitAmount(installmentAbs * remainingCount, remainingCount);
     const items: Array<{
       postedAtDate: string;
       description: string;
@@ -166,6 +179,7 @@ function buildRecurringOccurrences(input: {
     }
 
     return {
+      groupKey,
       forceUnconsolidated: true,
       items,
       metadata: {
@@ -205,6 +219,7 @@ function buildRecurringOccurrences(input: {
   }
 
   return {
+    groupKey,
     forceUnconsolidated: true,
     items,
     metadata: {
@@ -214,6 +229,22 @@ function buildRecurringOccurrences(input: {
       horizon,
     },
   };
+}
+
+async function getRecurringTargets(profileId: string, groupKey: string, scope: RepeatScope, selectedPostedAt: string) {
+  let query = supabaseAdmin
+    .from("transactions")
+    .select("id, posted_at, installment_current, installment_total, is_consolidated")
+    .eq("profile_id", profileId)
+    .eq("installment_group_key", groupKey)
+    .eq("is_consolidated", false)
+    .order("posted_at", { ascending: true });
+
+  if (scope === "from_current") query = query.gte("posted_at", selectedPostedAt);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
 }
 
 export async function POST(req: Request) {
@@ -232,6 +263,7 @@ export async function POST(req: Request) {
   const inputAmount = Number(form.get("amount") || 0);
   const returnUrl = safeReturnUrl(String(form.get("return_url") || ""));
   const intent = String(form.get("intent") || "save").trim().toLowerCase();
+  const repeatScope = parseRepeatScope(String(form.get("repeat_scope") || "single"));
   const deleteScope = parseDeleteScope(String(form.get("delete_scope") || "single"));
   const isConsolidated = form.has("is_consolidated");
   const txType = typeFromAction(action);
@@ -254,7 +286,7 @@ export async function POST(req: Request) {
 
   const { data: existingTx } = await supabaseAdmin
     .from("transactions")
-    .select("id, profile_id, installment_group_key, posted_at")
+    .select("id, profile_id, installment_group_key, posted_at, installment_current, installment_total, is_consolidated")
     .eq("id", id)
     .eq("profile_id", user.id)
     .maybeSingle();
@@ -450,17 +482,40 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL(returnUrl, req.url));
   }
 
+  const existingGroupKey = String(existingTx.installment_group_key || "");
+  let recurringTargets: any[] = [];
+  if (existingGroupKey && repeatScope !== "single") {
+    try {
+      recurringTargets = await getRecurringTargets(user.id, existingGroupKey, repeatScope, String(existingTx.posted_at || ""));
+    } catch {
+      return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=recurrence_scope_failed", req.url));
+    }
+  }
+
+  const firstTarget: any = recurringTargets[0] || existingTx;
+  const occurrencePostedAtDate = repeatScope !== "single" && firstTarget?.posted_at
+    ? String(firstTarget.posted_at).slice(0, 10)
+    : postedAtDate;
+  const occurrenceInstallmentCurrent = repeatScope !== "single" && firstTarget?.installment_current
+    ? parsePositiveInt(firstTarget.installment_current, installmentCurrent)
+    : installmentCurrent;
+  const occurrenceInstallmentTotal = installmentTotal > 1
+    ? installmentTotal
+    : parsePositiveInt((existingTx as any)?.installment_total, installmentTotal);
+  const recurrenceGroupKey = existingGroupKey || `manual-rec-${crypto.randomUUID()}`;
+
   const recurrence = buildRecurringOccurrences({
     mode: repeatMode,
     description,
-    postedAtDate,
+    postedAtDate: occurrencePostedAtDate,
     type: txType,
     baseAmount,
-    installmentCurrent,
-    installmentTotal,
+    installmentCurrent: occurrenceInstallmentCurrent,
+    installmentTotal: occurrenceInstallmentTotal,
     installmentTotalAmount,
     repeatEvery,
     repeatForever,
+    groupKey: recurrenceGroupKey,
   });
 
   if (repeatMode === "none") {
@@ -493,43 +548,53 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL(returnUrl, req.url));
   }
 
-  const groupKey = String(existingTx.installment_group_key || `manual-rec-${crypto.randomUUID()}`);
+  if (repeatScope === "single" && existingGroupKey) {
+    const first = recurrence.items[0];
+    await supabaseAdmin
+      .from("transactions")
+      .update({
+        description: first.description,
+        posted_at: `${postedAtDate}T12:00:00.000Z`,
+        bank_key: bankKey,
+        amount: computeAmountByAction(txType, inputAmount),
+        app_category: category,
+        app_subcategory: null,
+        type: txType,
+        is_transfer: false,
+        account_id: accountId,
+        is_consolidated: isConsolidated,
+        status: isConsolidated ? "posted" : "planned",
+        installment_current: first.installmentCurrent,
+        installment_total: first.installmentTotal,
+        installment_group_key: recurrence.groupKey,
+        raw: {
+          source: "manual_edit",
+          recurrence: recurrence.metadata,
+          note: note || null,
+        },
+      })
+      .eq("id", id)
+      .eq("profile_id", user.id);
 
-  await supabaseAdmin
+    return NextResponse.redirect(new URL(returnUrl, req.url));
+  }
+
+  const targetIds = Array.from(
+    new Set((recurringTargets || []).map((row: any) => String(row.id || "")).filter(Boolean)),
+  );
+  if (!targetIds.length) targetIds.push(id);
+
+  const { error: scopedDeleteError } = await supabaseAdmin
     .from("transactions")
     .delete()
     .eq("profile_id", user.id)
-    .eq("installment_group_key", groupKey)
-    .neq("id", id);
+    .in("id", targetIds);
 
-  const first = recurrence.items[0];
-  await supabaseAdmin
-    .from("transactions")
-    .update({
-      description: first.description,
-      posted_at: `${first.postedAtDate}T12:00:00.000Z`,
-      bank_key: bankKey,
-      amount: first.amount,
-      app_category: category,
-      app_subcategory: null,
-      type: txType,
-      is_transfer: false,
-      account_id: accountId,
-      is_consolidated: false,
-      status: "planned",
-      installment_current: first.installmentCurrent,
-      installment_total: first.installmentTotal,
-      installment_group_key: groupKey,
-      raw: {
-        source: "manual_edit",
-        recurrence: recurrence.metadata,
-        note: note || null,
-      },
-    })
-    .eq("id", id)
-    .eq("profile_id", user.id);
+  if (scopedDeleteError) {
+    return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=recurrence_update_failed", req.url));
+  }
 
-  const remaining = recurrence.items.slice(1).map((item) => ({
+  const rows = recurrence.items.map((item) => ({
     profile_id: user.id,
     account_id: accountId,
     bank_key: bankKey,
@@ -546,7 +611,7 @@ export async function POST(req: Request) {
     is_consolidated: false,
     installment_current: item.installmentCurrent,
     installment_total: item.installmentTotal,
-    installment_group_key: groupKey,
+    installment_group_key: recurrence.groupKey,
     raw: {
       source: "manual_edit",
       recurrence: recurrence.metadata,
@@ -554,8 +619,11 @@ export async function POST(req: Request) {
     },
   }));
 
-  if (remaining.length) {
-    await supabaseAdmin.from("transactions").insert(remaining);
+  if (rows.length) {
+    const { error: insertError } = await supabaseAdmin.from("transactions").insert(rows);
+    if (insertError) {
+      return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=recurrence_update_failed", req.url));
+    }
   }
 
   return NextResponse.redirect(new URL(returnUrl, req.url));

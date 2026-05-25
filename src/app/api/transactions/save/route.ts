@@ -138,8 +138,9 @@ function buildRecurringOccurrences(input: {
     const remainingCount = Math.max(1, total - current + 1);
     const fullTotalAbs = Number.isFinite(Number(input.installmentTotalAmount)) && Number(input.installmentTotalAmount) > 0
       ? Number(input.installmentTotalAmount)
-      : Math.abs(input.baseAmount) * remainingCount;
-    const perInstallment = splitAmount(fullTotalAbs, remainingCount);
+      : Math.abs(input.baseAmount) * total;
+    const installmentAbs = fullTotalAbs / total;
+    const perInstallment = splitAmount(installmentAbs * remainingCount, remainingCount);
     const items: Array<{
       postedAtDate: string;
       description: string;

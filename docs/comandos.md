@@ -77,6 +77,16 @@ cd android-financego
 
 Observacao: esse comando foi necessario porque o ambiente local nao possui `gradle` no `PATH` nem `gradlew.bat` dentro de `android-financego`.
 
+Se ocorrer `java.nio.file.AccessDeniedException` em `android-financego/app/build/generated`, limpar somente os artefatos de build Android antes de recompilar:
+
+```powershell
+$target = Resolve-Path -LiteralPath 'android-financego\app\build' -ErrorAction SilentlyContinue
+$workspace = (Resolve-Path -LiteralPath '.').Path
+if ($target -and $target.Path.StartsWith($workspace, [System.StringComparison]::OrdinalIgnoreCase)) {
+  Remove-Item -LiteralPath $target.Path -Recurse -Force
+}
+```
+
 ## Artefatos Android atuais
 ```txt
 android-financego/app/build/outputs/apk/debug/app-debug.apk

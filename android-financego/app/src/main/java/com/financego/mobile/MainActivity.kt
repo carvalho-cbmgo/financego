@@ -863,10 +863,12 @@ class MainActivity : Activity() {
     val data = bootstrap ?: JSONObject()
     val account = accountForTransaction(data, tx.optString("account_id"))
     val consolidated = isConsolidated(tx)
+    val repeated = isRepeatedTransaction(tx)
     val textStyle = if (consolidated) Typeface.NORMAL else Typeface.BOLD
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(10), dp(12), dp(10))
+    background = rounded(0xFFFFFFFF.toInt(), dp(if (repeated) 2 else 1), if (repeated) COLOR_BLUE else 0xFFE6EBDD.toInt(), dp(18))
     setOnClickListener { openTransactionForEdit(tx) }
 
     val info = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL }

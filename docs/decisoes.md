@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: edicao de transacoes recorrentes/parceladas nao consolidadas deve exigir escolha previa de escopo tambem na web.
+- Motivo: evitar alteracao acidental de apenas uma parcela ou de toda a serie sem o usuario perceber o impacto.
+- Impacto: `transactions` abre uma janela com `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`; a rota `/api/categories/update` recebe `repeat_scope` e recria somente transacoes nao consolidadas do escopo.
+
+- Data: `2026-05-25`
+- Decisao: `R$ Total` em parcelamento mensal deve ser derivado de `valor da parcela x quantidade total de parcelas`.
+- Motivo: o total da compra representa o compromisso completo, mesmo quando a edicao/criacao comeca em uma parcela diferente da primeira.
+- Impacto: o campo fica somente leitura na web e no APK; a API calcula parcelas restantes a partir do total completo sem superdimensionar os valores.
+
+- Data: `2026-05-25`
 - Decisao: exclusao de transacao recorrente na web deve solicitar escopo diretamente no modal de edicao.
 - Motivo: o editor modal anterior nao enviava `delete_scope`, entao recorrencias podiam nao ser encerradas da forma esperada pelo usuario.
 - Impacto: recorrencias passam a oferecer `Somente esta transacao`, `Esta e proximas vinculadas`, `Esta e anteriores vinculadas` e `Toda a recorrencia`; o padrao e `Esta e proximas vinculadas`.

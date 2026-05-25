@@ -4,6 +4,27 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: recorrencias parceladas/avancadas alinhadas entre web e APK.
+- Resultado entregue:
+  - Web:
+    - Ao clicar em transacao recorrente ou parcelada nao consolidada, a pagina `transactions` abre uma janela previa com as opcoes `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.
+    - O escopo escolhido passa para `/api/categories/update` por `repeat_scope`.
+    - Transacoes recorrentes/parceladas passaram a receber destaque visual azul na tabela e chip azul com `Parcela X de Y` ou recorrencia.
+    - `R$ Total` no parcelamento mensal ficou somente leitura e calculado automaticamente por `valor da parcela x quantidade total de parcelas`.
+    - Criacao e edicao de parcelamento mensal passaram a calcular corretamente o valor por parcela mesmo quando a parcela atual nao e a primeira.
+  - Backend/API:
+    - `/api/categories/update` passou a aplicar edicoes recorrentes por escopo, preservando transacoes consolidadas e recriando apenas o conjunto elegivel nao consolidado.
+    - `/api/transactions/save` corrigiu o calculo de `installment_total_amount` para considerar o total completo de parcelas, nao apenas parcelas restantes.
+  - Android nativo:
+    - Cards de transacoes recorrentes/parceladas passaram a usar borda azul alem do selo azul ja existente.
+    - Versao Android atualizada para `versionCode=17` e `versionName=1.0.16`.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `npx tsc --noEmit` executado com sucesso.
+    - `assembleDebug` executado com sucesso apos limpeza segura de `android-financego/app/build`.
+    - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+
+- Data: `2026-05-25`
 - Entrega principal: correcao da exclusao de transacoes recorrentes no website.
 - Resultado entregue:
   - Web:

@@ -3,6 +3,16 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: alinhar parcelamento mensal e edicao de recorrencias entre web e APK.
+- Prompt base: "Tanto no apk quanto na página web do FinanceGO, ajustar para que sempre que o usuário adicionar uma transação na modalidade Parcelamento (mensal), criar as transações mês a mês vinculadas entre si..."
+- Resultado:
+  - Web passou a abrir uma janela previa de escopo para editar transacoes recorrentes/parceladas nao consolidadas.
+  - `/api/categories/update` passou a receber `repeat_scope` e aplicar edicoes em apenas uma transacao, a partir da atual ou a partir da primeira.
+  - Web passou a destacar recorrencias/parcelamentos com borda azul e chip azul.
+  - `R$ Total` do parcelamento mensal passou a ser somente leitura e calculado pelo valor da parcela vezes a quantidade total de parcelas.
+  - API de criacao web corrigiu o calculo de parcelamento para nao dividir o total completo apenas pelas parcelas restantes.
+  - APK passou a destacar cards recorrentes/parcelados com borda azul e foi atualizado para `1.0.16`.
+
 - Objetivo: corrigir exclusao de transacao recorrente no website.
 - Prompt base: "Na página transactions do website, estou tentando excluir a transação recorrente 'Salário', mas mesmo clicando em excluir, a transação permanece registrada da mesma forma. Corrigir essa situação."
 - Resultado:
