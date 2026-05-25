@@ -201,6 +201,7 @@ async function getRecurringTargets(profileId: string, groupKey: string, scope: R
     .order("posted_at", { ascending: true });
 
   if (scope === "from_current") query = query.gte("posted_at", selectedPostedAt);
+  if (scope === "from_first") query = query.lte("posted_at", selectedPostedAt);
   const { data, error } = await query;
   if (error) throw error;
   return data || [];
@@ -369,7 +370,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, id: data?.id });
   }
 
-  const rows = recurrence.items.map((item) => ({
+  const targetIds = recurringTargets.map((row: any) => row.id).filter(Boolean);
+  const scopedItems = repeatScope === "from_first" && targetIds.length
+    ? recurrence.items.slice(0, targetIds.length)
+    : recurrence.items;
+  const rows = scopedItems.map((item) => ({
     profile_id: user.id,
     account_id: accountId,
     bank_key: bankKey,
@@ -390,7 +395,6 @@ export async function POST(req: Request) {
   }));
 
   if (id && repeatScope !== "single" && existingGroupKey && recurringTargets.length) {
-    const targetIds = recurringTargets.map((row: any) => row.id).filter(Boolean);
     if (targetIds.length) {
       const { error: deleteError } = await supabaseAdmin.from("transactions").delete().eq("profile_id", user.id).in("id", targetIds);
       if (deleteError) throw deleteError;

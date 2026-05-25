@@ -241,6 +241,7 @@ async function getRecurringTargets(profileId: string, groupKey: string, scope: R
     .order("posted_at", { ascending: true });
 
   if (scope === "from_current") query = query.gte("posted_at", selectedPostedAt);
+  if (scope === "from_first") query = query.lte("posted_at", selectedPostedAt);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -594,7 +595,10 @@ export async function POST(req: Request) {
     return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=recurrence_update_failed", req.url));
   }
 
-  const rows = recurrence.items.map((item) => ({
+  const scopedItems = repeatScope === "from_first"
+    ? recurrence.items.slice(0, targetIds.length)
+    : recurrence.items;
+  const rows = scopedItems.map((item) => ({
     profile_id: user.id,
     account_id: accountId,
     bank_key: bankKey,
