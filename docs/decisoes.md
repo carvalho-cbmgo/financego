@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: links que abrem apenas a escolha de escopo de recorrencia nao devem acionar o overlay global de carregamento.
+- Motivo: o overlay era iniciado pelo listener global de cliques antes do `preventDefault`, ficando sobreposto a janela de recorrencia e travando a interface ate o timeout.
+- Impacto: links com `data-no-global-loading=true` sao ignorados pelo overlay global, e a janela de recorrencia aparece sem o `Carregando...` preso.
+
+- Data: `2026-05-25`
 - Decisao: edicao de transacoes recorrentes/parceladas nao consolidadas deve exigir escolha previa de escopo tambem na web.
 - Motivo: evitar alteracao acidental de apenas uma parcela ou de toda a serie sem o usuario perceber o impacto.
 - Impacto: `transactions` abre uma janela com `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`; a rota `/api/categories/update` recebe `repeat_scope` e recria somente transacoes nao consolidadas do escopo.

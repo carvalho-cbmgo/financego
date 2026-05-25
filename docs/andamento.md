@@ -4,6 +4,19 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: hotfix do fluxo de edicao/exclusao de transacoes recorrentes na web.
+- Resultado entregue:
+  - Web:
+    - Clique em transacao recorrente nao consolidada nao aciona mais o overlay global `Carregando...` quando a acao e apenas abrir a janela de escolha de escopo.
+    - A janela de escolha de escopo passa a aparecer sozinha, sem ficar sobreposta ao carregamento global.
+    - O botao `Excluir` do modal de edicao recebeu `type=submit` explicito.
+  - Backend/API:
+    - A exclusao por escopo em `/api/categories/update` passou a incluir sempre a transacao selecionada no conjunto de exclusao.
+    - Isso evita que uma transacao recorrente permaneca na tela caso alguma comparacao de data do grupo vinculado nao inclua o item atual.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+
+- Data: `2026-05-25`
 - Entrega principal: recorrencias parceladas/avancadas alinhadas entre web e APK.
 - Resultado entregue:
   - Web:

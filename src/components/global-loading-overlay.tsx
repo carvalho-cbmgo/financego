@@ -49,6 +49,7 @@ function shouldTrackAnchorNavigation(anchor: HTMLAnchorElement) {
   const hrefAttr = anchor.getAttribute("href") || "";
   const target = (anchor.getAttribute("target") || "").toLowerCase();
 
+  if (anchor.dataset.noGlobalLoading === "true") return false;
   if (!hrefAttr || hrefAttr.startsWith("#") || hrefAttr.startsWith("javascript:")) return false;
   if (target && target !== "_self") return false;
   if (anchor.hasAttribute("download")) return false;

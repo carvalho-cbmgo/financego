@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir sobreposicao do `Carregando...` com a janela de recorrencia e reforcar exclusao vinculada.
+- Prompt base: "Na página transactions, do site finance go, ao clicar numa transação com repetição para então exclui-la, apareceu a mensagem ... juntamente com o Carregando..., o que travou a tela por vários segundos..."
+- Resultado:
+  - Links que apenas abrem a escolha de escopo de recorrencia passaram a usar `data-no-global-loading`.
+  - Overlay global passou a ignorar esses links.
+  - Handler de clique encerra qualquer overlay pendente antes de abrir a janela de escopo.
+  - Botao `Excluir` recebeu `type=submit` explicito.
+  - Exclusao por escopo em `/api/categories/update` passou a incluir sempre a transacao selecionada no conjunto de remocao.
+
 - Objetivo: alinhar parcelamento mensal e edicao de recorrencias entre web e APK.
 - Prompt base: "Tanto no apk quanto na página web do FinanceGO, ajustar para que sempre que o usuário adicionar uma transação na modalidade Parcelamento (mensal), criar as transações mês a mês vinculadas entre si..."
 - Resultado:

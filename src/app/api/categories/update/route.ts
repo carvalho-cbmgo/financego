@@ -344,7 +344,12 @@ export async function POST(req: Request) {
       return String(row.id) === String(existingTx.id);
     });
 
-    const targetIds = Array.from(new Set(targets.map((row: any) => String(row.id)).filter(Boolean)));
+    const targetIds = Array.from(
+      new Set([
+        ...targets.map((row: any) => String(row.id)).filter(Boolean),
+        String(existingTx.id),
+      ]),
+    );
     if (!targetIds.length) targetIds.push(String(existingTx.id));
 
     if (targetIds.length) {

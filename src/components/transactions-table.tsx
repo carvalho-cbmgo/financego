@@ -292,6 +292,7 @@ export function TransactionsTable(input: {
     if (!isRepeatedAndOpen) return;
 
     event.preventDefault();
+    notifyGlobalLoading(false);
     setPendingRepeatEditTx(tx);
     setRepeatScopeChoice("single");
   }
@@ -532,6 +533,7 @@ export function TransactionsTable(input: {
                   const isConsolidated = consolidationOverrides[txId] ?? (tx.is_consolidated !== false);
                   const isUnconsolidated = !isConsolidated;
                   const recurrenceInfo = getRecurrenceInfo(tx);
+                  const shouldPromptRepeatScope = recurrenceInfo.isRecurring && isUnconsolidated;
 
                   return (
                     <Fragment key={txId}>
@@ -545,7 +547,12 @@ export function TransactionsTable(input: {
                           />
                         </td>
                         <td className="fg-legacy-col-desc">
-                          <Link href={editUrl} className="fg-legacy-desc-link" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
+                          <Link
+                            href={editUrl}
+                            className="fg-legacy-desc-link"
+                            data-no-global-loading={shouldPromptRepeatScope ? "true" : undefined}
+                            onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}
+                          >
                             <span className="fg-legacy-desc-main">{tx.description || "Sem descrição"}</span>
                             {recurrenceInfo.isRecurring ? (
                               <span className="fg-chip fg-chip-recurring">{recurrenceInfo.badgeLabel}</span>
@@ -553,17 +560,32 @@ export function TransactionsTable(input: {
                           </Link>
                         </td>
                         <td className="fg-legacy-col-category">
-                          <Link href={editUrl} className="fg-legacy-cell-link" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
+                          <Link
+                            href={editUrl}
+                            className="fg-legacy-cell-link"
+                            data-no-global-loading={shouldPromptRepeatScope ? "true" : undefined}
+                            onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}
+                          >
                             {tx.app_category || "Outros"}
                           </Link>
                         </td>
                         <td className="fg-legacy-col-account">
-                          <Link href={editUrl} className="fg-legacy-cell-link" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
+                          <Link
+                            href={editUrl}
+                            className="fg-legacy-cell-link"
+                            data-no-global-loading={shouldPromptRepeatScope ? "true" : undefined}
+                            onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}
+                          >
                             {bankName} {account?.name ? `- ${account.name}` : ""}
                           </Link>
                         </td>
                         <td className={`fg-legacy-col-value ${Number(tx.amount) < 0 ? "fg-legacy-value-neg" : "fg-legacy-value-pos"}`}>
-                          <Link href={editUrl} className="fg-legacy-cell-link fg-legacy-cell-link-right" onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}>
+                          <Link
+                            href={editUrl}
+                            className="fg-legacy-cell-link fg-legacy-cell-link-right"
+                            data-no-global-loading={shouldPromptRepeatScope ? "true" : undefined}
+                            onClick={(event) => handleEditLinkClick(event, tx, recurrenceInfo)}
+                          >
                             {amountOnly(tx.amount)}
                           </Link>
                         </td>
@@ -1161,6 +1183,7 @@ function EditTransactionFocus(input: {
 
       <div className="fg-legacy-create-actions">
         <button
+          type="submit"
           className="fg-btn-danger"
           name="intent"
           value="delete"

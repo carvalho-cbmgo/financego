@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Validar em producao que clicar em transacao recorrente nao consolidada abre a janela de escopo sem sobrepor `Carregando...`.
+- [ ] Validar em producao que `Excluir` com `Esta e proximas vinculadas` remove a transacao selecionada e as demais recorrentes esperadas.
 - [ ] Validar no website a criacao de `Parcelamento (mensal)` com 10 parcelas e confirmar lancamentos mes a mes com chip/borda azul.
 - [ ] Validar no website a edicao de uma parcela nao consolidada usando os escopos `Alterar apenas esta`, `Alterar a partir desta` e `Alterar a partir da primeira`.
 - [ ] Reinstalar o APK Android nativo versao `1.0.16` e validar se transacoes recorrentes/parceladas aparecem com borda azul.
