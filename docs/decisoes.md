@@ -4,6 +4,16 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: adicionar tela nativa `Categorias` no APK reutilizando a rota `/api/categories/manage`.
+- Motivo: permitir gestao de categorias diretamente no celular sem depender da tela web de transacoes.
+- Impacto: o APK passa a exibir arvore de categorias, criar categorias/subcategorias, editar nome/pai e excluir categorias com atualizacao imediata do bootstrap.
+
+- Data: `2026-05-25`
+- Decisao: manter a regra de exclusao existente para categorias no APK.
+- Motivo: preservar consistencia com a web e evitar perda de historico financeiro.
+- Impacto: ao excluir uma categoria, transacoes associadas sao movidas para `Outros` e subcategorias ficam vinculadas a `Raiz`.
+
+- Data: `2026-05-25`
 - Decisao: criar filtro `Somente Transacoes Consolidadas` no APK usando estado global da tela.
 - Motivo: permitir ao usuario alternar rapidamente entre visao completa e visao apenas realizada/consolidada.
 - Impacto: listas de transacoes, saldos, entradas, saidas, saldo final/atual, saldos de contas e graficos passam a respeitar o filtro quando marcado.

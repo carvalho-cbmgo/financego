@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Reinstalar o APK Android nativo versao `1.0.14` e validar a nova tela `Categorias`.
+- [ ] Validar no APK criacao, edicao, criacao de subcategoria, exclusao, expandir/recolher e atualizacao imediata da arvore de categorias.
 - [ ] Reinstalar o APK Android nativo versao `1.0.13` e validar o checkbox `Somente Transacoes Consolidadas` na tela principal, tela de conta e tela de graficos.
 - [ ] Validar em aparelho real se a primeira linha de transacoes nao consolidadas aparece em negrito.
 - [ ] Testar notificacoes reais de cartao de credito, estorno, PIX recebido, PIX enviado, transferencia recebida e transferencia enviada.

@@ -4,6 +4,21 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: tela nativa de Categorias no APK.
+- Resultado entregue:
+  - Android nativo:
+    - Menu de 3 pontos da tela principal passou a exibir `Categorias` acima de `Bancos`.
+    - Nova tela `Categorias` criada no APK com visual em arvore, raiz `Raiz`, indentacao por nivel e contagem de transacoes por categoria.
+    - A tela permite expandir/recolher a arvore, criar categoria, criar subcategoria, editar nome/categoria pai e excluir categoria.
+    - Categorias excluidas usam a regra existente da API: transacoes sao movidas para `Outros` e subcategorias sao movidas para `Raiz`.
+    - APK passou a consumir a rota autenticada `/api/categories/manage` para persistir criacao, edicao e exclusao.
+    - Versao Android atualizada para `versionCode=15` e `versionName=1.0.14`.
+  - Validacoes:
+    - `assembleDebug`, `testDebugUnitTest`, `lintDebug` e `assembleRelease` executados com sucesso.
+    - APK debug confirmado com `versionCode=15` e `versionName=1.0.14`.
+    - Houve bloqueio transitorio do Windows/Gradle na pasta gerada `compileReleaseKotlin`; a pasta gerada foi removida com verificacao de caminho dentro do workspace e a build release foi recompilada com sucesso.
+
+- Data: `2026-05-25`
 - Entrega principal: filtro de transacoes consolidadas e classificacao melhorada de notificacoes no APK.
 - Resultado entregue:
   - Android nativo:

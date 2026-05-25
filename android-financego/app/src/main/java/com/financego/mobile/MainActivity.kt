@@ -53,6 +53,7 @@ import kotlin.math.sqrt
 
 class MainActivity : Activity() {
   private data class CategoryOption(val name: String, val label: String)
+  private data class CategoryTreeItem(val name: String, val parentName: String, val depth: Int, val txCount: Int)
   private data class PeriodRange(val start: LocalDate, val end: LocalDate)
   private data class ExpenseSlice(val category: String, val amount: Double, val color: Int)
   private enum class PeriodMode { TO_DATE, FUTURE, FULL_MONTH }
@@ -68,6 +69,7 @@ class MainActivity : Activity() {
   private var selectedPeriodMode = PeriodMode.FULL_MONTH
   private var chartAllAccounts = true
   private val chartSelectedAccountIds = linkedSetOf<String>()
+  private val collapsedCategoryNames = linkedSetOf<String>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -253,6 +255,56 @@ class MainActivity : Activity() {
     } else {
       for (bank in banks) root.addView(bankCard(data, bank))
     }
+
+    setContentView(scroll(root))
+  }
+
+  private fun showCategoriesPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    bootstrap = data
+    val root = screenRoot()
+    root.addView(appHeader("Categorias", showBack = true))
+
+    val toolbar = surface().apply {
+      addView(title("Árvore de categorias", 17f))
+      addView(muted("Organize suas categorias em uma hierarquia simples. Use Sub para criar uma categoria filha."))
+      val actions = LinearLayout(this@MainActivity).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+      }
+      actions.addView(primaryButton("Nova").apply { setOnClickListener { openCategoryDialog("create") } }, fixed(dp(88), dp(42)))
+      actions.addView(secondaryButton("Expandir").apply {
+        textSize = 11f
+        setOnClickListener {
+          collapsedCategoryNames.clear()
+          showCategoriesPage(data)
+        }
+      }, fixed(dp(92), dp(42)))
+      actions.addView(secondaryButton("Recolher").apply {
+        textSize = 11f
+        setOnClickListener {
+          collapsedCategoryNames.clear()
+          categoryTreeItems(data).forEach { collapsedCategoryNames.add(it.name) }
+          showCategoriesPage(data)
+        }
+      }, fixed(dp(92), dp(42)))
+      addView(actions)
+    }
+    root.addView(toolbar)
+
+    val treeBox = surface().apply {
+      setPadding(dp(8), dp(10), dp(8), dp(10))
+    }
+    val items = categoryTreeItems(data)
+    if (items.isEmpty()) {
+      treeBox.addView(emptyState("Nenhuma categoria cadastrada. Crie a primeira categoria para iniciar sua árvore."))
+    } else {
+      treeBox.addView(rootCategoryRow())
+      val children = categoryChildrenMap(items)
+      for (child in children[ROOT_CATEGORY_NAME].orEmpty()) {
+        addCategoryNode(treeBox, data, child, children, 0)
+      }
+    }
+    root.addView(treeBox)
 
     setContentView(scroll(root))
   }
@@ -443,6 +495,166 @@ class MainActivity : Activity() {
 
   private fun percent(value: Double, total: Double): String =
     if (total <= 0.0) "0%" else String.format(Locale("pt", "BR"), "%.1f%%", value / total * 100.0)
+
+  private fun rootCategoryRow(): View {
+    val box = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(dp(8), dp(8), dp(6), dp(8))
+      background = rounded(0xFFF8FAF4.toInt(), dp(1), 0xFFDDE8CF.toInt(), dp(12))
+    }
+    box.addView(TextView(this).apply {
+      text = ROOT_CATEGORY_NAME
+      textSize = 14f
+      setTextColor(COLOR_TEXT)
+      setTypeface(typeface, Typeface.BOLD)
+    }, weightWrap(1f))
+    box.addView(compactActionButton("Nova", true).apply {
+      setOnClickListener { openCategoryDialog("create", parentName = ROOT_CATEGORY_NAME) }
+    }, fixed(dp(68), dp(36)))
+    return box
+  }
+
+  private fun addCategoryNode(container: LinearLayout, data: JSONObject, item: CategoryTreeItem, children: Map<String, List<CategoryTreeItem>>, depth: Int) {
+    container.addView(categoryNodeRow(data, item, children[item.name].orEmpty().isNotEmpty(), depth))
+    if (!collapsedCategoryNames.contains(item.name)) {
+      for (child in children[item.name].orEmpty()) {
+        addCategoryNode(container, data, child, children, depth + 1)
+      }
+    }
+  }
+
+  private fun categoryNodeRow(data: JSONObject, item: CategoryTreeItem, hasChildren: Boolean, depth: Int): View {
+    val isCollapsed = collapsedCategoryNames.contains(item.name)
+    val row = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(dp(4 + depth * 14), dp(5), dp(4), dp(5))
+      background = rounded(if (depth % 2 == 0) 0xFFFFFFFF.toInt() else 0xFFFAFCF7.toInt(), dp(1), 0xFFE8EEDD.toInt(), dp(10))
+      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        setMargins(0, dp(3), 0, dp(3))
+      }
+    }
+    row.addView(iconButton(if (!hasChildren) "·" else if (isCollapsed) "+" else "-").apply {
+      textSize = 17f
+      isEnabled = hasChildren
+      setOnClickListener {
+        if (isCollapsed) collapsedCategoryNames.remove(item.name) else collapsedCategoryNames.add(item.name)
+        showCategoriesPage(data)
+      }
+    }, fixed(dp(34), dp(34)))
+    row.addView(LinearLayout(this).apply {
+      orientation = LinearLayout.VERTICAL
+      addView(TextView(this@MainActivity).apply {
+        text = item.name
+        textSize = 13f
+        setTextColor(COLOR_TEXT)
+        setTypeface(typeface, Typeface.BOLD)
+        setSingleLine(false)
+      })
+      addView(muted("${item.txCount} transação(ões) • Pai: ${item.parentName}"))
+    }, weightWrap(1f))
+    row.addView(compactActionButton("Sub", false).apply {
+      setOnClickListener { openCategoryDialog("add_subcategory", item, item.name) }
+    }, fixed(dp(48), dp(34)))
+    row.addView(compactActionButton("Editar", false).apply {
+      setOnClickListener { openCategoryDialog("edit", item, item.parentName) }
+    }, fixed(dp(62), dp(34)))
+    if (item.name != "Outros") {
+      row.addView(compactActionButton("DEL", false).apply {
+        setTextColor(COLOR_DANGER)
+        background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(10))
+        setOnClickListener { confirmDeleteCategory(item) }
+      }, fixed(dp(46), dp(34)))
+    }
+    return row
+  }
+
+  private fun openCategoryDialog(mode: String, item: CategoryTreeItem? = null, parentName: String = ROOT_CATEGORY_NAME) {
+    val data = bootstrap ?: JSONObject()
+    val isEdit = mode == "edit"
+    val isSubcategory = mode == "add_subcategory"
+    val box = verticalRoot().apply { setPadding(dp(10), 0, dp(10), 0) }
+    box.addView(title(when {
+      isEdit -> "Editar categoria"
+      isSubcategory -> "Adicionar subcategoria"
+      else -> "Nova categoria"
+    }, 18f))
+    box.addView(spacer(8))
+
+    val name = input("Nome", if (isEdit) item?.name.orEmpty() else "")
+    val parentOptions = categoryParentOptions(data, if (isEdit) item?.name else null)
+    val selectedParent = if (isSubcategory) item?.name.orEmpty() else parentName
+    val parentIndex = parentOptions.indexOfFirst { it.name == selectedParent }.takeIf { it >= 0 } ?: 0
+    val parent = spinner(parentOptions.map { it.label }, parentIndex)
+    box.addView(fieldRow("Nome", name))
+    box.addView(fieldRow("Categoria Pai", parent))
+
+    val actions = LinearLayout(this).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER
+      setPadding(0, dp(12), 0, 0)
+    }
+    val cancel = secondaryButton("Cancelar")
+    val save = primaryButton("Salvar")
+    actions.addView(cancel, fixed(dp(112), dp(44)))
+    actions.addView(save, fixed(dp(112), dp(44)))
+    box.addView(actions)
+
+    val dialog = AlertDialog.Builder(this)
+      .setView(scroll(box))
+      .create()
+    cancel.setOnClickListener { dialog.dismiss() }
+    save.setOnClickListener {
+      val cleanName = name.text.toString().trim()
+      val selectedParentName = parentOptions.getOrNull(parent.selectedItemPosition)?.name ?: ROOT_CATEGORY_NAME
+      if (cleanName.isBlank()) {
+        toast("Informe o nome da categoria.")
+        return@setOnClickListener
+      }
+      dialog.dismiss()
+      showLoading("Carregando...")
+      runAsync(
+        work = {
+          val payload = JSONObject()
+            .put("action", if (isEdit) "edit" else "add_subcategory")
+            .put("category_name", if (isEdit) item?.name.orEmpty() else selectedParentName)
+            .put("new_name", cleanName)
+            .put("parent_name", selectedParentName)
+          api.manageCategory(payload)
+          api.bootstrap()
+        },
+        done = { showCategoriesPage(it) },
+        fail = {
+          toast(it)
+          bootstrap?.let { current -> showCategoriesPage(current) } ?: showLogin()
+        },
+      )
+    }
+    dialog.show()
+  }
+
+  private fun confirmDeleteCategory(item: CategoryTreeItem) {
+    AlertDialog.Builder(this)
+      .setTitle("Excluir categoria")
+      .setMessage("Deseja excluir ${item.name}? As transações desta categoria serão movidas para Outros e as subcategorias serão movidas para Raiz.")
+      .setNegativeButton("Cancelar", null)
+      .setPositiveButton("Excluir") { _, _ ->
+        showLoading("Carregando...")
+        runAsync(
+          work = {
+            api.manageCategory(JSONObject().put("action", "delete").put("category_name", item.name))
+            api.bootstrap()
+          },
+          done = { showCategoriesPage(it) },
+          fail = {
+            toast(it)
+            bootstrap?.let { current -> showCategoriesPage(current) } ?: showLogin()
+          },
+        )
+      }
+      .show()
+  }
 
   private fun bankCard(data: JSONObject, bank: JSONObject): View = surface().apply {
     val linkedAccounts = accountsForBank(data, bank)
@@ -1216,6 +1428,73 @@ class MainActivity : Activity() {
     )
   }
 
+  private fun categoryTreeItems(data: JSONObject): List<CategoryTreeItem> {
+    val counts = linkedMapOf<String, Int>()
+    for (tx in allTransactions(data)) {
+      val category = tx.optString("app_category", "Outros").trim().ifBlank { "Outros" }
+      counts[category] = (counts[category] ?: 0) + 1
+    }
+
+    val items = mutableListOf<CategoryTreeItem>()
+    val seen = linkedSetOf<String>()
+    val arr = data.optJSONArray("categories") ?: JSONArray()
+    for (i in 0 until arr.length()) {
+      val item = arr.optJSONObject(i) ?: continue
+      val name = item.optString("name").trim()
+      if (name.isBlank() || name == ROOT_CATEGORY_NAME || !seen.add(name)) continue
+      val parentName = item.optString("parent_name", ROOT_CATEGORY_NAME).trim().ifBlank { ROOT_CATEGORY_NAME }
+      items.add(CategoryTreeItem(name, parentName, item.optInt("depth", 0).coerceAtLeast(0), counts[name] ?: 0))
+    }
+    for ((name, count) in counts) {
+      if (name != ROOT_CATEGORY_NAME && seen.add(name)) {
+        items.add(CategoryTreeItem(name, ROOT_CATEGORY_NAME, 0, count))
+      }
+    }
+    return items.sortedWith(compareBy<CategoryTreeItem>({ it.depth }, { it.name.lowercase(Locale("pt", "BR")) }))
+  }
+
+  private fun categoryChildrenMap(items: List<CategoryTreeItem>): Map<String, List<CategoryTreeItem>> {
+    val names = items.map { it.name }.toSet() + ROOT_CATEGORY_NAME
+    val map = linkedMapOf<String, MutableList<CategoryTreeItem>>()
+    for (item in items) {
+      val parent = item.parentName.takeIf { names.contains(it) && it != item.name } ?: ROOT_CATEGORY_NAME
+      map.getOrPut(parent) { mutableListOf() }.add(item)
+    }
+    return map.mapValues { entry ->
+      entry.value.sortedWith(compareBy<CategoryTreeItem>({ it.name.lowercase(Locale("pt", "BR")) }))
+    }
+  }
+
+  private fun categoryParentOptions(data: JSONObject, excludedName: String? = null): List<CategoryOption> {
+    val items = categoryTreeItems(data)
+    val excluded = linkedSetOf<String>()
+    val cleanExcluded = excludedName?.trim().orEmpty()
+    if (cleanExcluded.isNotBlank()) {
+      excluded.add(cleanExcluded)
+      excluded.addAll(categoryDescendants(items, cleanExcluded))
+    }
+
+    val options = mutableListOf(CategoryOption(ROOT_CATEGORY_NAME, ROOT_CATEGORY_NAME))
+    for (item in items) {
+      if (excluded.contains(item.name)) continue
+      val prefix = "    ".repeat(item.depth.coerceAtLeast(0))
+      options.add(CategoryOption(item.name, "$prefix${item.name}"))
+    }
+    return options
+  }
+
+  private fun categoryDescendants(items: List<CategoryTreeItem>, categoryName: String): Set<String> {
+    val children = categoryChildrenMap(items)
+    val result = linkedSetOf<String>()
+    fun walk(parent: String) {
+      for (child in children[parent].orEmpty()) {
+        if (result.add(child.name)) walk(child.name)
+      }
+    }
+    walk(categoryName)
+    return result
+  }
+
   private fun categoryOptions(data: JSONObject): List<CategoryOption> {
     val options = mutableListOf<CategoryOption>()
     val seen = linkedSetOf<String>()
@@ -1409,12 +1688,13 @@ class MainActivity : Activity() {
     val labels = if (editAccount != null) {
       arrayOf("Edição de Conta", "Atualizar", "Perfil")
     } else {
-      arrayOf("Bancos", "Adicionar Conta", "Atualizar", "Perfil")
+      arrayOf("Categorias", "Bancos", "Adicionar Conta", "Atualizar", "Perfil")
     }
     AlertDialog.Builder(this)
       .setItems(labels) { dialog, which ->
         dialog.dismiss()
         when (labels[which]) {
+          "Categorias" -> showCategoriesPage()
           "Bancos" -> showBanksPage()
           "Adicionar Conta" -> openAccountDialog(null)
           "Edição de Conta" -> editAccount?.let { openAccountDialog(it) }
@@ -1709,6 +1989,7 @@ class MainActivity : Activity() {
   private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_LONG).show()
 
   companion object {
+    private const val ROOT_CATEGORY_NAME = "Raiz"
     private val COLOR_BG = 0xFFF4F7EF.toInt()
     private val COLOR_TEXT = 0xFF172033.toInt()
     private val COLOR_MUTED = 0xFF667085.toInt()

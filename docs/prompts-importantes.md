@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: criar tela nativa de Categorias no APK com arvore editavel.
+- Prompt base: "No apk, na pagina de transacoes, adicionar a opcao 'Categorias' acima da opcao 'Bancos' no icone com e pontos verticais..."
+- Resultado:
+  - Menu de 3 pontos passou a exibir `Categorias` antes de `Bancos`.
+  - Tela `Categorias` criada no APK com arvore hierarquica, raiz `Raiz`, indentacao por nivel e contagem de transacoes.
+  - Acoes nativas adicionadas para criar categoria, criar subcategoria, editar categoria/pai e excluir categoria.
+  - APK passou a usar `/api/categories/manage` para persistir as alteracoes e atualizar o bootstrap imediatamente.
+  - Versao Android atualizada para `1.0.14`.
+
 - Objetivo: adicionar filtro de transacoes consolidadas no APK e corrigir classificacao de notificacoes bancarias.
 - Prompt base: "No apk, na tela de transacao, nas tela de contas especificas e na tela de graficos, acrescentar... Somente Transacoes Consolidadas... corrigir a identificacao e registro automatico das transacoes por meio das notificacoes..."
 - Resultado:
