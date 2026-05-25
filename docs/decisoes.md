@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: o formulario web de edicao de transacao deve enviar `intent` por campo oculto estavel, nao pelo botao submit.
+- Motivo: ao desabilitar botoes no `onSubmit`, o navegador pode deixar de incluir o botao clicado no `FormData`, fazendo uma exclusao ser interpretada como salvamento.
+- Impacto: `Excluir` define `intent=delete` antes da submissao; `Salvar` define `intent=save`; a rota recebe a acao correta mesmo com overlay/loading.
+
+- Data: `2026-05-25`
 - Decisao: links que abrem apenas a escolha de escopo de recorrencia nao devem acionar o overlay global de carregamento.
 - Motivo: o overlay era iniciado pelo listener global de cliques antes do `preventDefault`, ficando sobreposto a janela de recorrencia e travando a interface ate o timeout.
 - Impacto: links com `data-no-global-loading=true` sao ignorados pelo overlay global, e a janela de recorrencia aparece sem o `Carregando...` preso.

@@ -4,6 +4,18 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: hotfix de exclusao efetiva de parcelamento mensal na web.
+- Resultado entregue:
+  - Web:
+    - O formulario de edicao passou a usar um campo oculto `intent` controlado por referencia para diferenciar `save` e `delete`.
+    - A exclusao nao depende mais do `name/value` do botao `Excluir`, evitando perda do `intent=delete` quando o botao fica desabilitado durante o submit.
+  - Backend/API:
+    - `/api/categories/update` passou a solicitar retorno das linhas removidas em `delete().select("id")`.
+    - Se nenhuma linha for removida, a rota redireciona com erro em vez de aparentar sucesso.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+
+- Data: `2026-05-25`
 - Entrega principal: hotfix do fluxo de edicao/exclusao de transacoes recorrentes na web.
 - Resultado entregue:
   - Web:

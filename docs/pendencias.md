@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Validar em producao que excluir `Parcelamento (mensal)` com `Esta e proximas vinculadas` remove efetivamente a parcela selecionada e as seguintes.
+- [ ] Validar em producao que excluir `Parcelamento (mensal)` com `Toda a recorrencia` remove todas as parcelas vinculadas.
 - [ ] Validar em producao que clicar em transacao recorrente nao consolidada abre a janela de escopo sem sobrepor `Carregando...`.
 - [ ] Validar em producao que `Excluir` com `Esta e proximas vinculadas` remove a transacao selecionada e as demais recorrentes esperadas.
 - [ ] Validar no website a criacao de `Parcelamento (mensal)` com 10 parcelas e confirmar lancamentos mes a mes com chip/borda azul.

@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: corrigir exclusao nao efetiva de transacao em `Parcelamento (mensal)` com vinculadas.
+- Prompt base: "Estou tentando excluir uma transação de Parcelamento (mensal) juntamente com as demais transações vinculadas, mas a exclusão não está ocorrendo de forma efetiva..."
+- Resultado:
+  - O formulario de edicao passou a usar campo oculto `intent` com `useRef`, definido antes do submit.
+  - O botao `Excluir` nao depende mais de `name=value` para comunicar a intencao ao backend.
+  - A API `/api/categories/update` passou a verificar se o Supabase retornou linhas removidas depois do `delete`.
+  - Se nenhuma linha for removida, o fluxo retorna erro em vez de parecer concluido.
+
 - Objetivo: corrigir sobreposicao do `Carregando...` com a janela de recorrencia e reforcar exclusao vinculada.
 - Prompt base: "Na página transactions, do site finance go, ao clicar numa transação com repetição para então exclui-la, apareceu a mensagem ... juntamente com o Carregando..., o que travou a tela por vários segundos..."
 - Resultado:

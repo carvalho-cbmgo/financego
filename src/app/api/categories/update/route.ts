@@ -298,13 +298,14 @@ export async function POST(req: Request) {
 
   if (intent === "delete") {
     if (String(existingTx.installment_group_key || "").startsWith("manual-transfer-")) {
-      const { error: transferDeleteError } = await supabaseAdmin
+      const { data: transferDeletedRows, error: transferDeleteError } = await supabaseAdmin
         .from("transactions")
         .delete()
         .eq("profile_id", user.id)
-        .eq("installment_group_key", existingTx.installment_group_key);
+        .eq("installment_group_key", existingTx.installment_group_key)
+        .select("id");
 
-      if (transferDeleteError) {
+      if (transferDeleteError || !transferDeletedRows?.length) {
         return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
       }
 
@@ -312,13 +313,14 @@ export async function POST(req: Request) {
     }
 
     if (!existingTx.installment_group_key || deleteScope === "single") {
-      const { error: singleDeleteError } = await supabaseAdmin
+      const { data: singleDeletedRows, error: singleDeleteError } = await supabaseAdmin
         .from("transactions")
         .delete()
         .eq("id", id)
-        .eq("profile_id", user.id);
+        .eq("profile_id", user.id)
+        .select("id");
 
-      if (singleDeleteError) {
+      if (singleDeleteError || !singleDeletedRows?.length) {
         return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
       }
 
@@ -353,13 +355,14 @@ export async function POST(req: Request) {
     if (!targetIds.length) targetIds.push(String(existingTx.id));
 
     if (targetIds.length) {
-      const { error: deleteError } = await supabaseAdmin
+      const { data: deletedRows, error: deleteError } = await supabaseAdmin
         .from("transactions")
         .delete()
         .eq("profile_id", user.id)
-        .in("id", targetIds);
+        .in("id", targetIds)
+        .select("id");
 
-      if (deleteError) {
+      if (deleteError || !deletedRows?.length) {
         return NextResponse.redirect(new URL("/dashboard?tab=transactions&error=delete_failed", req.url));
       }
     }

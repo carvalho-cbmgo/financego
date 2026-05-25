@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { Fragment, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui";
 import { PreviousBalanceToggle } from "@/components/previous-balance-toggle";
@@ -998,6 +998,7 @@ function EditTransactionFocus(input: {
   repeatScope: RepeatScope;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const intentRef = useRef<HTMLInputElement>(null);
   const initialAction = actionFromType(input.tx?.type);
   const recurrenceInfo = useMemo(() => getRecurrenceInfo(input.tx), [input.tx]);
   const [action, setAction] = useState<"Despesa" | "Receita" | "Transferencia">(
@@ -1042,6 +1043,7 @@ function EditTransactionFocus(input: {
       }}
     >
       <input type="hidden" name="id" value={String(input.tx?.id || "")} />
+      <input ref={intentRef} type="hidden" name="intent" value="save" />
       <input type="hidden" name="return_url" value={input.returnUrl} />
       <input type="hidden" name="bank_id" value={selectedBankId} />
       <input type="hidden" name="repeat_scope" value={input.repeatScope || "single"} />
@@ -1185,21 +1187,33 @@ function EditTransactionFocus(input: {
         <button
           type="submit"
           className="fg-btn-danger"
-          name="intent"
-          value="delete"
           formNoValidate
           disabled={isSubmitting}
           onClick={(event) => {
             const message = recurrenceInfo.isRecurring
               ? "Deseja excluir a transação recorrente conforme o escopo selecionado?"
               : "Deseja excluir esta transação?";
-            if (!window.confirm(message)) event.preventDefault();
+            if (!window.confirm(message)) {
+              event.preventDefault();
+              if (intentRef.current) intentRef.current.value = "save";
+              return;
+            }
+            if (intentRef.current) intentRef.current.value = "delete";
           }}
         >
           Excluir
         </button>
         <Link href={input.returnUrl} className="fg-btn-secondary">Cancelar</Link>
-        <button className="fg-btn" name="intent" value="save" disabled={isSubmitting}>Salvar</button>
+        <button
+          type="submit"
+          className="fg-btn"
+          disabled={isSubmitting}
+          onClick={() => {
+            if (intentRef.current) intentRef.current.value = "save";
+          }}
+        >
+          Salvar
+        </button>
       </div>
     </form>
   );
