@@ -3,6 +3,14 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: restaurar o botao `Adicionar Transacao` na pagina web de transacoes.
+- Prompt base: "Na pagina transactions no site retornar com o botao Adicionar Transacao com layout harmonico ao site Finance GO para adicionar uma nova transacao."
+- Resultado:
+  - A pagina `transactions` deixou de retornar somente estado vazio quando nao ha transacoes.
+  - A barra de acoes passou a ser renderizada sempre, mantendo `Adicionar Transacao` disponivel.
+  - O botao recebeu label `Adicionar Transacao`, icone circular de `+` e estilo verde alinhado ao Finance GO.
+  - O estado vazio foi mantido dentro da tabela para orientar o usuario sem bloquear o cadastro.
+
 - Objetivo: tornar efetiva a exclusao de transacoes recorrentes/parceladas na web usando API direta.
 - Prompt base: "No site Finance GO, tentei novamente excluir transações com repetição do tipo parcelamento e avançado, mas mesmo clicando em Excluir selecionando Esta e próximas vinculadas..."
 - Resultado:

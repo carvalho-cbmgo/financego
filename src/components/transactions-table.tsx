@@ -311,19 +311,11 @@ export function TransactionsTable(input: {
     setRepeatScopeChoice("single");
   }
 
-  if (!input.txs.length) {
-    return (
-      <Card title="Transações">
-        <div className="fg-empty">Nenhuma transação neste filtro.</div>
-      </Card>
-    );
-  }
-
   return (
     <Card title="Transações">
       <div className="fg-legacy-transactions-actions">
         <button
-          className="fg-btn fg-legacy-add-btn"
+          className="fg-legacy-add-btn"
           type="button"
           onClick={() => {
             setShowCreateForm(true);
@@ -331,7 +323,8 @@ export function TransactionsTable(input: {
           }}
           title="Adicionar nova transação"
         >
-          + Adicionar transação
+          <span className="fg-legacy-add-btn-icon" aria-hidden="true">+</span>
+          <span>Adicionar Transação</span>
         </button>
         <div className="fg-legacy-transactions-actions-right">
         <button

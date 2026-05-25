@@ -1579,8 +1579,47 @@ h1, h2, h3, h4, h5, p { margin: 0; }
 }
 
 .fg-legacy-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #6f9622;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, #93bd33 0%, #6f9e1d 100%);
+  color: #fff;
+  padding: 0 12px 0 8px;
   white-space: nowrap;
-  min-height: 28px;
+  min-height: 32px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 12px rgba(73, 112, 20, 0.2);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms ease;
+}
+
+.fg-legacy-add-btn:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 6px 16px rgba(73, 112, 20, 0.26);
+  transform: translateY(-1px);
+}
+
+.fg-legacy-add-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 8px rgba(73, 112, 20, 0.18);
+}
+
+.fg-legacy-add-btn-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-size: 16px;
+  line-height: 1;
 }
 
 .fg-legacy-transactions-actions-right {

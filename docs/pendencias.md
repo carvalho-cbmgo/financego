@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Validar em producao que o botao `Adicionar Transacao` aparece na pagina `transactions` mesmo quando o mes/filtro nao possui transacoes.
+- [ ] Validar em producao que clicar em `Adicionar Transacao` abre corretamente a janela de cadastro de nova transacao.
 - [ ] Validar em producao a nova rota `/api/transactions/delete` excluindo parcelamento mensal com `Esta e proximas vinculadas`.
 - [ ] Validar em producao a nova rota `/api/transactions/delete` excluindo recorrencia avancada com `Esta e proximas vinculadas`.
 - [ ] Validar em producao que excluir `Parcelamento (mensal)` com `Esta e proximas vinculadas` remove efetivamente a parcela selecionada e as seguintes.

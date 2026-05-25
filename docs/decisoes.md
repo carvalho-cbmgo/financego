@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-25`
+- Decisao: a barra de acoes da pagina `transactions` deve permanecer visivel mesmo quando nao houver transacoes no filtro atual.
+- Motivo: o usuario precisa conseguir adicionar uma nova transacao justamente quando a lista estiver vazia, sem ficar bloqueado por um estado vazio.
+- Impacto: o estado vazio passa a ser exibido como linha informativa da tabela, enquanto `Adicionar Transacao`, acoes em lote e reclassificacao continuam disponiveis no topo.
+
+- Data: `2026-05-25`
 - Decisao: exclusao de transacao na web deve usar API JSON dedicada em vez de depender do submit do formulario de edicao.
 - Motivo: a exclusao de parcelamentos/recorrencias precisa retornar quantidade/ids excluidos e falhar de forma visivel quando o banco nao remover linhas.
 - Impacto: criada `/api/transactions/delete`; o botao `Excluir` passa a usar `fetch`, respeita `delete_scope` e atualiza a tela apos resposta positiva.

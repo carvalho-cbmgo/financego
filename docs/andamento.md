@@ -4,6 +4,18 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-25`
+- Entrega principal: retorno do botao `Adicionar Transacao` na pagina web `transactions`.
+- Resultado entregue:
+  - Web:
+    - A barra de acoes da tabela de transacoes voltou a ser exibida mesmo quando o mes/filtro selecionado nao possui transacoes.
+    - O botao `Adicionar Transacao` foi restaurado como primeira acao da area de transacoes.
+    - O botao recebeu layout verde harmonico com a identidade visual do Finance GO e icone circular de inclusao.
+    - A mensagem de lista vazia agora aparece dentro da tabela, preservando o acesso ao cadastro de nova transacao.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - `git diff --check` executado com sucesso.
+
+- Data: `2026-05-25`
 - Entrega principal: exclusao direta e verificavel de transacoes recorrentes na web.
 - Resultado entregue:
   - Web:
