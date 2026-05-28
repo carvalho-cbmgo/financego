@@ -4,6 +4,11 @@ Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
 - Data: `2026-05-28`
+- Decisao: armazenar localmente no APK o diagnostico mais recente de notificacoes bancarias.
+- Motivo: permitir verificar no proprio celular se a permissao esta ativa, se o listener capturou algum evento e se o envio ao Finance GO funcionou ou falhou.
+- Impacto: `SessionStore` guarda ultimo evento capturado, ultimo envio, status e erro; `FinanceNotificationListener` atualiza esses dados em tempo real.
+
+- Data: `2026-05-28`
 - Decisao: aplicar a remodelagem visual por componentes-base e camada global de design, sem alterar regras financeiras.
 - Motivo: modernizar site e APK com menor risco de regressao funcional, preservando fluxos de transacoes, contas, categorias, recorrencias e notificacoes.
 - Impacto: web recebeu nova camada visual em `globals.css` e cabecalho `PageShell`; APK recebeu ajuste nos helpers nativos de superficie, fundo, botoes, inputs e headers.
@@ -360,6 +365,12 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Impacto: validação em campo ficou direta e imediata.
 
 ## Decisoes de interface
+- Data: `2026-05-28`
+- Tela: APK Android / Transacoes
+- Decisao: expor a tela de diagnostico pelo item `Configuracoes` no menu de tres pontos da tela principal.
+- Motivo: diagnostico de notificacoes e uma acao operacional de suporte, importante mas nao principal, portanto deve ficar acessivel sem poluir o topo.
+- Impacto: o usuario consegue abrir o diagnostico direto da tela de transacoes, conferir permissao e acessar as configuracoes de notificacao do Android.
+
 - Data: `2026-05-28`
 - Tela: Web e APK
 - Decisao: adotar uma linguagem visual premium baseada em cards modulares, superficies translucidas controladas, gradientes suaves e acentos por significado.

@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Instalar o APK Android nativo `1.0.18` em celular real e validar a tela `Configuracoes` com permissao de notificacoes ativa e inativa.
+- [ ] Receber uma notificacao bancaria real e confirmar se `Ultimo evento capturado`, `Ultimo envio` e `Ultimo erro` sao atualizados corretamente no diagnostico.
 - [ ] Validar em producao o novo layout web em desktop, tablet e celular, especialmente `dashboard`, `transactions`, `accounts` e `login`.
 - [ ] Instalar o APK Android nativo `1.0.17` em celular real e validar login, transacoes, contas, graficos, bancos, categorias e notificacoes.
 - [ ] Validar se os novos estilos do APK mantem legibilidade adequada em telas pequenas e com fonte ampliada no Android.

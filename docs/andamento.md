@@ -4,6 +4,21 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 
 ## Ultima etapa concluida
 - Data: `2026-05-28`
+- Entrega principal: tela de diagnostico de notificacoes no APK.
+- Resultado entregue:
+  - Android nativo:
+    - Menu de tres pontos da tela principal de `Transacoes` passou a exibir a opcao `Configuracoes`.
+    - Nova tela `Configuracoes` criada com diagnostico de notificacoes bancarias.
+    - Tela exibe permissao ativa, usuario logado, nome completo, ultimo evento capturado, ultimo envio e ultimo erro.
+    - Listener de notificacoes passou a gravar localmente o ultimo evento financeiro capturado.
+    - Listener passou a gravar status do ultimo envio para `/api/android/notifications/ingest` e mensagem de erro quando houver falha.
+    - APK atualizado para `versionCode=19` e `versionName=1.0.18`.
+  - Validacoes:
+    - `git diff --check` executado com sucesso.
+    - `assembleDebug` executado com sucesso.
+    - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+
+- Data: `2026-05-28`
 - Entrega principal: remodelagem visual base do site e do APK Finance GO.
 - Resultado entregue:
   - Web:

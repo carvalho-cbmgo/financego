@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: criar diagnostico de notificacoes no APK.
+- Prompt base: "Criar tela de diagnóstico no APK para notificações: permissão ativa, último evento capturado, último envio e último erro. Criar um modo de acessar essa tela de diagnóstico pela tela principal de transações do APK, com a opção Configurações..."
+- Resultado:
+  - Criada tela `Configuracoes` no APK com diagnostico de notificacoes.
+  - Menu de tres pontos da tela principal de `Transacoes` passou a exibir `Configuracoes`.
+  - `SessionStore` passou a guardar ultimo evento capturado, ultimo envio, status e erro.
+  - `FinanceNotificationListener` passou a atualizar o diagnostico ao capturar e enviar notificacoes financeiras.
+  - APK atualizado para `1.0.18`.
+
 - Objetivo: remodelar visualmente o site e o APK Finance GO.
 - Prompt base: "Preciso que voce reestruture o layout do site FinanceGO e do apk para torna-los significativamente mais modernos, intuitivos e sofisticados, seguindo as tendencias atuais. Tambem forneca sugestoes de melhorias na hierarquia visual e jornada do usuario."
 - Resultado:

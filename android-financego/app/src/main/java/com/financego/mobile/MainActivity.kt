@@ -175,6 +175,38 @@ class MainActivity : Activity() {
     setContentView(scroll(root))
   }
 
+  private fun showSettingsPage() {
+    val root = screenRoot()
+    root.addView(appHeader("Configurações", showBack = true))
+    root.addView(metricCard("Diagnóstico de notificações", "Verifique se o Finance GO está autorizado a capturar notificações bancárias e enviar os eventos para o sistema."))
+
+    val permissionActive = isNotificationListenerEnabled()
+    val permissionBox = surface().apply {
+      addView(summaryLine("Permissão ativa", if (permissionActive) "Sim" else "Não", if (permissionActive) COLOR_GREEN else COLOR_DANGER, true))
+      addView(summaryLine("Usuário logado", if (store.isLoggedIn()) "Sim" else "Não"))
+      addView(summaryLine("Nome completo", store.fullName.ifBlank { "Pendente" }, if (store.fullName.isBlank()) COLOR_DANGER else COLOR_TEXT))
+    }
+    root.addView(permissionBox)
+
+    val eventsBox = surface().apply {
+      addView(diagnosticInfo("Último evento capturado", diagnosticValue(store.lastNotificationCapturedAt, store.lastNotificationCapturedSummary, "Nenhum evento financeiro capturado ainda.")))
+      addView(diagnosticInfo("Último envio", diagnosticValue(store.lastNotificationSendAt, store.lastNotificationSendStatus, "Nenhum envio realizado ainda.")))
+      addView(diagnosticInfo("Último erro", store.lastNotificationError.ifBlank { "Nenhum erro registrado." }, store.lastNotificationError.isNotBlank()))
+    }
+    root.addView(eventsBox)
+
+    root.addView(primaryButton("ABRIR PERMISSÕES DE NOTIFICAÇÃO").apply {
+      setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+    }, matchWrap())
+    root.addView(secondaryButton("ATUALIZAR DIAGNÓSTICO").apply {
+      setOnClickListener { showSettingsPage() }
+    }, matchWrap())
+    root.addView(secondaryButton("VOLTAR PARA TRANSAÇÕES").apply {
+      setOnClickListener { bootstrap?.let { showDashboard(it) } ?: loadHome() }
+    }, matchWrap())
+    setContentView(scroll(root))
+  }
+
   private fun showDashboard(data: JSONObject) {
     bootstrap = data
     val root = screenRoot()
@@ -1720,12 +1752,13 @@ class MainActivity : Activity() {
     val labels = if (editAccount != null) {
       arrayOf("Edição de Conta", "Atualizar", "Perfil")
     } else {
-      arrayOf("Categorias", "Bancos", "Adicionar Conta", "Atualizar", "Perfil")
+      arrayOf("Configurações", "Categorias", "Bancos", "Adicionar Conta", "Atualizar", "Perfil")
     }
     AlertDialog.Builder(this)
       .setItems(labels) { dialog, which ->
         dialog.dismiss()
         when (labels[which]) {
+          "Configurações" -> showSettingsPage()
           "Categorias" -> showCategoriesPage()
           "Bancos" -> showBanksPage()
           "Adicionar Conta" -> openAccountDialog(null)
@@ -2012,6 +2045,24 @@ class MainActivity : Activity() {
     setTextColor(COLOR_TEXT)
     setPadding(dp(14), dp(10), dp(14), dp(10))
     background = rounded(0xF8FFFFFF.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(18))
+  }
+
+  private fun diagnosticInfo(label: String, value: String, alert: Boolean = false): TextView = TextView(this).apply {
+    text = "$label\n$value"
+    textSize = 13f
+    setTextColor(if (alert) COLOR_DANGER else COLOR_TEXT)
+    setPadding(dp(14), dp(11), dp(14), dp(11))
+    background = rounded(if (alert) 0xFFFFF1F3.toInt() else 0xF8FFFFFF.toInt(), dp(1), if (alert) 0xFFFDA4AF.toInt() else 0xFFE0EAE3.toInt(), dp(18))
+    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+      setMargins(0, dp(4), 0, dp(5))
+    }
+  }
+
+  private fun diagnosticValue(at: String, detail: String, empty: String): String {
+    val cleanAt = at.ifBlank { "" }
+    val cleanDetail = detail.ifBlank { "" }
+    if (cleanAt.isBlank() && cleanDetail.isBlank()) return empty
+    return listOf(cleanAt, cleanDetail).filter { it.isNotBlank() }.joinToString("\n")
   }
 
   private fun emptyState(text: String): TextView = muted(text).apply {

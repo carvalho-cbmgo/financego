@@ -4,6 +4,7 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import org.json.JSONObject
+import java.time.Instant
 import java.util.concurrent.Executors
 
 class FinanceNotificationListener : NotificationListenerService() {
@@ -21,6 +22,15 @@ class FinanceNotificationListener : NotificationListenerService() {
 
     if (!looksFinancial(joined)) return
 
+    val capturedAt = Instant.now().toString()
+    store.lastNotificationCapturedAt = capturedAt
+    store.lastNotificationCapturedSummary = buildString {
+      append(sbn.packageName)
+      if (title.isNotBlank()) append(" | ").append(title)
+      if (text.isNotBlank()) append(" | ").append(text)
+      if (bigText.isNotBlank() && bigText != text) append(" | ").append(bigText)
+    }.take(320)
+
     val payload = JSONObject()
       .put("packageName", sbn.packageName)
       .put("appName", sbn.packageName)
@@ -32,9 +42,18 @@ class FinanceNotificationListener : NotificationListenerService() {
 
     executor.execute {
       try {
-        FinanceGoApi(store).sendNotification(payload)
-      } catch (_: Exception) {
-        // A próxima notificação ou abertura do app fará nova tentativa operacional.
+        val response = FinanceGoApi(store).sendNotification(payload)
+        store.lastNotificationSendAt = Instant.now().toString()
+        store.lastNotificationSendStatus = if (response.optBoolean("parsed", false)) {
+          "Enviado e transformado em transação: ${response.optString("description", "sem descrição")}"
+        } else {
+          "Enviado, mas não gerou transação automática."
+        }
+        store.lastNotificationError = ""
+      } catch (error: Exception) {
+        store.lastNotificationSendAt = Instant.now().toString()
+        store.lastNotificationSendStatus = "Falha ao enviar para o Finance GO."
+        store.lastNotificationError = error.message ?: "Erro desconhecido no envio da notificação."
       }
     }
   }

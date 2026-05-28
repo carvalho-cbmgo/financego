@@ -21,6 +21,26 @@ class SessionStore(context: Context) {
     get() = prefs.getString("full_name", "") ?: ""
     set(value) = prefs.edit().putString("full_name", value).apply()
 
+  var lastNotificationCapturedAt: String
+    get() = prefs.getString("last_notification_captured_at", "") ?: ""
+    set(value) = prefs.edit().putString("last_notification_captured_at", value).apply()
+
+  var lastNotificationCapturedSummary: String
+    get() = prefs.getString("last_notification_captured_summary", "") ?: ""
+    set(value) = prefs.edit().putString("last_notification_captured_summary", value).apply()
+
+  var lastNotificationSendAt: String
+    get() = prefs.getString("last_notification_send_at", "") ?: ""
+    set(value) = prefs.edit().putString("last_notification_send_at", value).apply()
+
+  var lastNotificationSendStatus: String
+    get() = prefs.getString("last_notification_send_status", "") ?: ""
+    set(value) = prefs.edit().putString("last_notification_send_status", value).apply()
+
+  var lastNotificationError: String
+    get() = prefs.getString("last_notification_error", "") ?: ""
+    set(value) = prefs.edit().putString("last_notification_error", value).apply()
+
   fun isLoggedIn(): Boolean = accessToken.isNotBlank()
 
   fun migrateLegacyBaseUrl() {
