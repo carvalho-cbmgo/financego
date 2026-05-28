@@ -46,3 +46,4 @@ Arquivos principais:
 - [`docs/pendencias.md`](./docs/pendencias.md): pendências críticas/importantes, melhorias e bugs conhecidos.
 - [`docs/comandos.md`](./docs/comandos.md): comandos essenciais de setup, execução, build, Git e Supabase.
 - [`docs/prompts-importantes.md`](./docs/prompts-importantes.md): prompts relevantes usados no desenvolvimento.
+- [`docs/design-direcao.md`](./docs/design-direcao.md): direção visual, hierarquia e jornada recomendada para site e APK.

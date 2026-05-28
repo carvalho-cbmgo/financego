@@ -3,6 +3,11 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-05-28`
+- Decisao: aplicar a remodelagem visual por componentes-base e camada global de design, sem alterar regras financeiras.
+- Motivo: modernizar site e APK com menor risco de regressao funcional, preservando fluxos de transacoes, contas, categorias, recorrencias e notificacoes.
+- Impacto: web recebeu nova camada visual em `globals.css` e cabecalho `PageShell`; APK recebeu ajuste nos helpers nativos de superficie, fundo, botoes, inputs e headers.
+
 - Data: `2026-05-25`
 - Decisao: a barra de acoes da pagina `transactions` deve permanecer visivel mesmo quando nao houver transacoes no filtro atual.
 - Motivo: o usuario precisa conseguir adicionar uma nova transacao justamente quando a lista estiver vazia, sem ficar bloqueado por um estado vazio.
@@ -355,6 +360,12 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Impacto: validação em campo ficou direta e imediata.
 
 ## Decisoes de interface
+- Data: `2026-05-28`
+- Tela: Web e APK
+- Decisao: adotar uma linguagem visual premium baseada em cards modulares, superficies translucidas controladas, gradientes suaves e acentos por significado.
+- Motivo: aumentar percepcao de produto profissional e reduzir carga cognitiva em telas densas de financas.
+- Impacto: navegacao, paineis, listas, transacoes, botoes e modais ficaram mais consistentes entre site e aplicativo Android.
+
 - Data: `2026-05-21`
 - Tela: APK Android / topo
 - Decisao: concentrar acoes secundarias em um menu de 3 pontos e manter `Sair` como icone direto.

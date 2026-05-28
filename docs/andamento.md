@@ -3,6 +3,23 @@
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
+- Data: `2026-05-28`
+- Entrega principal: remodelagem visual base do site e do APK Finance GO.
+- Resultado entregue:
+  - Web:
+    - Cabecalho principal redesenhado com marca mais forte, status online, navegacao em superficie glass e identidade visual premium.
+    - CSS global recebeu nova camada de design 2026 com cards modulares, gradientes suaves, sombras refinadas, bordas amplas e foco visual em botoes/inputs.
+    - Dashboard e transacoes ganharam contexto visual da area atual na barra superior.
+    - Tabelas, paineis laterais, lista de contas, categorias, modal de carregamento e botao `Adicionar Transacao` foram modernizados por estilos globais.
+  - Android nativo:
+    - APK atualizado para `versionCode=18` e `versionName=1.0.17`.
+    - Login, fundo, headers, cards, botoes, inputs, badges, transacoes e botao flutuante receberam visual mais sofisticado e consistente com o site.
+  - Documentacao:
+    - Criado `docs/design-direcao.md` com direcao visual, hierarquia e jornada recomendada para web e APK.
+  - Validacoes:
+    - `npm run build` executado com sucesso.
+    - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+
 - Data: `2026-05-25`
 - Entrega principal: retorno do botao `Adicionar Transacao` na pagina web `transactions`.
 - Resultado entregue:

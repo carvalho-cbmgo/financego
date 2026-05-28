@@ -20,16 +20,25 @@ export function PageShell({ children }: { children: ReactNode }) {
   return (
     <div className="shell-wrap">
       <header className="shell-topbar">
-        <div className="shell-brand-mark">
-          <span className="shell-brand-main">Finance</span>
-          <span className="shell-brand-go">GO</span>
-        </div>
+        <a className="shell-brand-mark" href="/dashboard" aria-label="Abrir início do Finance GO">
+          <span className="shell-brand-symbol" aria-hidden="true">FG</span>
+          <span className="shell-brand-copy">
+            <span>
+              <span className="shell-brand-main">Finance</span>
+              <span className="shell-brand-go">GO</span>
+            </span>
+            <small>gestão financeira inteligente</small>
+          </span>
+        </a>
 
         <nav className="shell-topnav" aria-label="Navegação principal">
           <TopNavLinks items={navItems} />
         </nav>
 
-        <LogoutButton />
+        <div className="shell-actions">
+          <span className="shell-live-pill">Online</span>
+          <LogoutButton />
+        </div>
       </header>
 
       <main className="shell-main">

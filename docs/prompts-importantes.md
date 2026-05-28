@@ -3,6 +3,16 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: remodelar visualmente o site e o APK Finance GO.
+- Prompt base: "Preciso que voce reestruture o layout do site FinanceGO e do apk para torna-los significativamente mais modernos, intuitivos e sofisticados, seguindo as tendencias atuais. Tambem forneca sugestoes de melhorias na hierarquia visual e jornada do usuario."
+- Resultado:
+  - Site recebeu cabecalho redesenhado, marca mais sofisticada, status online, navegacao em glass surface e nova camada global de estilos.
+  - Dashboard/transacoes receberam contexto visual da area atual.
+  - Cards, tabelas, botoes, inputs, paineis laterais, categorias, loading e transacoes foram refinados visualmente.
+  - APK recebeu visual renovado em login, fundos, headers, cards, botoes, inputs, badges, transacoes e botao flutuante.
+  - APK atualizado para `1.0.17`.
+  - Criado `docs/design-direcao.md` com hierarquia visual e jornada recomendada.
+
 - Objetivo: restaurar o botao `Adicionar Transacao` na pagina web de transacoes.
 - Prompt base: "Na pagina transactions no site retornar com o botao Adicionar Transacao com layout harmonico ao site Finance GO para adicionar uma nova transacao."
 - Resultado:

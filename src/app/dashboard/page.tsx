@@ -291,6 +291,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <LegacyToolbar
             selectedMonthRef={selectedMonthRef}
             dateInfo={dateInfo}
+            currentTab={currentTab}
           />
 
           {currentTab === "transactions" ? (
@@ -366,10 +367,21 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 function LegacyToolbar(input: {
   selectedMonthRef: string;
   dateInfo: { weekdayDate: string; accessText: string };
+  currentTab: "overview" | "transactions";
 }) {
+  const title = input.currentTab === "transactions" ? "Transações" : "Início";
+  const subtitle = input.currentTab === "transactions"
+    ? "Lançamentos, filtros e manutenção financeira do mês"
+    : "Resumo mensal com entradas, saídas, previsões e contas";
+
   return (
     <div className="fg-legacy-toolbar">
       <div className="fg-legacy-toolbar-left">
+        <div className="fg-toolbar-context">
+          <span>Área atual</span>
+          <strong>{title}</strong>
+          <small>{subtitle}</small>
+        </div>
         <MonthRefPicker value={input.selectedMonthRef} />
       </div>
 
