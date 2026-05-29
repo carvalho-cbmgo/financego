@@ -657,3 +657,17 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.20` / `versionCode 21`.
+
+- Data: `2026-05-29`
+- Entrega principal: ajuste visual da tela de Configuracoes do APK para evitar deformacao, corte ou omissao de textos.
+- Resultado entregue:
+  - Linhas horizontais apertadas do diagnostico foram substituidas por blocos verticais responsivos.
+  - Cada status agora apresenta rotulo em cima e valor abaixo, permitindo quebra de linha em telas pequenas.
+  - Secoes `Estado do monitoramento`, `Eventos e reenvio automatico` e `Acoes rapidas` foram adicionadas para organizar melhor a leitura.
+  - Textos longos do diagnostico ganharam limite maior de linhas e nao devem competir com outros elementos na mesma linha.
+  - APK debug atualizado para `versionCode 22` e `versionName 1.0.21`.
+- Validacao executada:
+  - Build Android debug executado com sucesso apos limpeza de cache gerado do Gradle Kotlin DSL.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.21` / `versionCode 22`.

@@ -560,3 +560,8 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: reconhecer explicitamente que `Forcar parada` do Android nao pode ser contornado por um APK comum.
 - Motivo: apos force stop, o Android impede receivers/listeners ate o usuario abrir o aplicativo novamente.
 - Impacto: expectativa do usuario fica correta e o diagnostico passa a cobrir os cenarios que o app consegue tratar.
+
+- Data: `2026-05-29`
+- Decisao: telas de diagnostico/configuracao no APK devem priorizar blocos verticais em vez de linhas horizontais quando houver textos longos.
+- Motivo: telas pequenas deformam ou ocultam informacoes quando rotulos e valores competem pela mesma linha.
+- Impacto: leitura mais estavel e confiavel em celulares com larguras/fontes diferentes.

@@ -194,17 +194,19 @@ class MainActivity : Activity() {
     val pendingCount = NotificationOutbox(this).count()
     store.lastNotificationPendingCount = pendingCount
     val permissionBox = surface().apply {
-      addView(summaryLine("Permissão ativa", if (permissionActive) "Sim" else "Não", if (permissionActive) COLOR_GREEN else COLOR_DANGER, true))
-      addView(summaryLine("Listener conectado", store.notificationListenerStatus.ifBlank { "Aguardando conexão do Android" }))
-      addView(summaryLine("Última conexão", store.notificationListenerConnectedAt.ifBlank { "Ainda não registrada" }))
-      addView(summaryLine("Última desconexão", store.notificationListenerDisconnectedAt.ifBlank { "Nenhuma desconexão registrada" }))
-      addView(summaryLine("Execução sem restrição de bateria", if (isIgnoringBatteryOptimizations()) "Sim" else "Não", if (isIgnoringBatteryOptimizations()) COLOR_GREEN else COLOR_DANGER, true))
-      addView(summaryLine("Usuário logado", if (store.isLoggedIn()) "Sim" else "Não"))
-      addView(summaryLine("Nome completo", store.fullName.ifBlank { "Pendente" }, if (store.fullName.isBlank()) COLOR_DANGER else COLOR_TEXT))
+      addView(settingsSectionTitle("Estado do monitoramento"))
+      addView(settingsStatusRow("Permissão ativa", if (permissionActive) "Sim" else "Não", if (permissionActive) COLOR_GREEN else COLOR_DANGER, true))
+      addView(settingsStatusRow("Listener de notificações", store.notificationListenerStatus.ifBlank { "Aguardando conexão do Android" }))
+      addView(settingsStatusRow("Última conexão", store.notificationListenerConnectedAt.ifBlank { "Ainda não registrada" }))
+      addView(settingsStatusRow("Última desconexão", store.notificationListenerDisconnectedAt.ifBlank { "Nenhuma desconexão registrada" }))
+      addView(settingsStatusRow("Execução sem restrição de bateria", if (isIgnoringBatteryOptimizations()) "Sim" else "Não", if (isIgnoringBatteryOptimizations()) COLOR_GREEN else COLOR_DANGER, true))
+      addView(settingsStatusRow("Usuário logado", if (store.isLoggedIn()) "Sim" else "Não"))
+      addView(settingsStatusRow("Nome completo", store.fullName.ifBlank { "Pendente" }, if (store.fullName.isBlank()) COLOR_DANGER else COLOR_TEXT))
     }
     root.addView(permissionBox)
 
     val eventsBox = surface().apply {
+      addView(settingsSectionTitle("Eventos e reenvio automático"))
       addView(diagnosticInfo("Último evento capturado", diagnosticValue(store.lastNotificationCapturedAt, store.lastNotificationCapturedSummary, "Nenhum evento financeiro capturado ainda.")))
       addView(diagnosticInfo("Último envio", diagnosticValue(store.lastNotificationSendAt, store.lastNotificationSendStatus, "Nenhum envio realizado ainda.")))
       addView(diagnosticInfo("Pendências locais", "$pendingCount notificação(ões) aguardando reenvio."))
@@ -213,6 +215,7 @@ class MainActivity : Activity() {
     }
     root.addView(eventsBox)
 
+    root.addView(settingsSectionTitle("Ações rápidas"))
     root.addView(primaryButton("ABRIR PERMISSÕES DE NOTIFICAÇÃO").apply {
       setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
     }, matchWrap())
@@ -2105,12 +2108,49 @@ class MainActivity : Activity() {
     text = "$label\n$value"
     textSize = 13f
     setTextColor(if (alert) COLOR_DANGER else COLOR_TEXT)
+    setSingleLine(false)
+    maxLines = 8
     setPadding(dp(14), dp(11), dp(14), dp(11))
     background = rounded(if (alert) 0xFFFFF1F3.toInt() else 0xF8FFFFFF.toInt(), dp(1), if (alert) 0xFFFDA4AF.toInt() else 0xFFE0EAE3.toInt(), dp(18))
     layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       setMargins(0, dp(4), 0, dp(5))
     }
   }
+
+  private fun settingsSectionTitle(text: String): TextView = TextView(this).apply {
+    this.text = text
+    textSize = 13f
+    setTextColor(COLOR_TEXT)
+    setTypeface(typeface, Typeface.BOLD)
+    letterSpacing = 0.02f
+    setPadding(dp(2), dp(8), dp(2), dp(6))
+  }
+
+  private fun settingsStatusRow(label: String, value: String, valueColor: Int = COLOR_TEXT, strong: Boolean = false): LinearLayout =
+    LinearLayout(this).apply {
+      orientation = LinearLayout.VERTICAL
+      setPadding(dp(14), dp(10), dp(14), dp(10))
+      background = rounded(0xF8FFFFFF.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(18))
+      layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        setMargins(0, dp(4), 0, dp(5))
+      }
+      addView(TextView(this@MainActivity).apply {
+        text = label
+        textSize = 11.5f
+        setTextColor(COLOR_MUTED)
+        setTypeface(typeface, Typeface.BOLD)
+        setSingleLine(false)
+      })
+      addView(TextView(this@MainActivity).apply {
+        text = value
+        textSize = if (strong) 15f else 13f
+        setTextColor(valueColor)
+        setTypeface(typeface, if (strong) Typeface.BOLD else Typeface.NORMAL)
+        setSingleLine(false)
+        maxLines = 5
+        setPadding(0, dp(3), 0, 0)
+      })
+    }
 
   private fun diagnosticValue(at: String, detail: String, empty: String): String {
     val cleanAt = at.ifBlank { "" }

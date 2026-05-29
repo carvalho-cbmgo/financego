@@ -306,3 +306,10 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: fechar normalmente o app e testar notificacoes; depois usar `Forcar parada`, gerar notificacao e confirmar que o Android bloqueia ate o app ser aberto novamente.
 - Status: pendente de teste fisico em campo
 - Responsavel: time de desenvolvimento
+
+- ID: `AND-030`
+- Descricao: validar em celular real se a tela de Configuracoes do APK `1.0.21` exibe todos os textos sem corte em diferentes tamanhos de fonte do Android.
+- Severidade: media
+- Como reproduzir: instalar o APK, abrir Configuracoes pelo menu de tres pontos, testar com fonte padrao e fonte grande do Android.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

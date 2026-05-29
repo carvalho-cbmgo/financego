@@ -398,3 +398,11 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Diagnostico mostra status do listener, bateria, pendencias, ultimo envio e ultimo erro.
   - APK passou a solicitar liberacao de otimizacao de bateria para reduzir bloqueios em segundo plano.
   - APK debug `1.0.20` gerado com sucesso.
+
+- Objetivo: ajustar a tela de Configuracoes do APK para distribuir melhor o conteudo e impedir deformacao/corte de textos.
+- Prompt base: "Ajustar a tela de Configurações do apk para que o conteúdo fique distribuido na tela de forma que não deforme a leitura do texto ou omita informações."
+- Resultado:
+  - Status do monitoramento passou para cards verticais responsivos.
+  - Diagnostico foi organizado em secoes claras.
+  - Textos longos passaram a quebrar linha com mais seguranca.
+  - APK debug `1.0.21` gerado com sucesso.
