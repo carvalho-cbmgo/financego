@@ -362,3 +362,17 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: abrir `accounts`, clicar em `Cadastrar banco`, `Cadastrar Conta` e `Cadastrar cartao`, e confirmar que todos os campos e botoes aparecem completos em desktop e celular.
 - Status: pendente de teste em producao
 - Responsavel: time de desenvolvimento
+
+- ID: `AND-038`
+- Descricao: validar em celular real o gesto de puxar para atualizar no APK `1.0.25`.
+- Severidade: media
+- Como reproduzir: instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`, abrir `Transacoes`, `Graficos`, uma conta especifica, `Bancos`, `Categorias`, `Perfil` e `Configuracoes`; em cada tela, posicionar no topo, deslizar de cima para baixo e confirmar exibicao de `Carregando...` e dados atualizados.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-039`
+- Descricao: validar em celular real se o gesto vertical de atualizacao nao interfere na rolagem normal nem no swipe horizontal de troca de mes.
+- Severidade: media
+- Como reproduzir: abrir telas mensais do APK `1.0.25`, testar rolagem vertical, puxar para atualizar no topo e swipe horizontal para mes anterior/posterior.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

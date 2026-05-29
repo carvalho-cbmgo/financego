@@ -725,3 +725,20 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.24` / `versionCode 25`.
+
+- Data: `2026-05-29`
+- Entrega principal: gesto de puxar para atualizar no APK.
+- Resultado entregue:
+  - Android nativo:
+    - Telas rolaveis do APK passaram a reconhecer o gesto de deslizar de cima para baixo quando a tela estiver no topo.
+    - Ao executar o gesto, o app mostra o overlay `Carregando...` com a animacao piscando ja usada nos demais processamentos.
+    - A atualizacao busca novamente os dados via `api.bootstrap()` e redesenha a tela aberta com os dados atualizados.
+    - O gesto foi aplicado em `Transacoes`, `Graficos`, tela de uma conta especifica, `Bancos`, `Categorias`, `Perfil`, `Configuracoes`, `Configuracao inicial` e tela de recuperacao de sessao.
+    - O gesto vertical foi integrado ao mesmo detector dos gestos horizontais de troca de mes, preservando a troca de mes por swipe lateral.
+    - APK debug atualizado para `versionCode 26` e `versionName 1.0.25`.
+- Validacoes executadas:
+  - `:app:assembleDebug` com sucesso usando `GRADLE_USER_HOME` temporario.
+  - `git diff --check` com sucesso.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.25` / `versionCode 26`.

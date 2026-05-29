@@ -600,3 +600,13 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: renderizar os modais de cadastro rapido de `accounts` via portal React no `document.body`.
 - Motivo: os cards da pagina usam `overflow: hidden` e superficies com efeitos visuais; renderizar o modal dentro do card fazia parte do formulario ficar oculta.
 - Impacto: os atalhos `Cadastrar banco`, `Cadastrar Conta` e `Cadastrar cartao` abrem janelas completas, centralizadas e com rolagem propria quando necessario.
+
+- Data: `2026-05-29`
+- Decisao: adicionar gesto nativo de puxar para atualizar nas telas rolaveis do APK.
+- Motivo: em celular, o gesto de arrastar a tela para baixo e um padrao esperado para recarregar dados sem procurar um botao de atualizar.
+- Impacto: quando a tela esta no topo, o gesto vertical descendente chama `api.bootstrap()`, exibe `Carregando...` e redesenha a tela aberta com dados atualizados.
+
+- Data: `2026-05-29`
+- Decisao: manter os gestos verticais de atualizacao e horizontais de troca de mes no mesmo detector, mas com limiares distintos.
+- Motivo: evitar conflito entre rolagem normal, puxar para atualizar e swipe lateral de mes.
+- Impacto: swipe lateral continua alterando o mes de referencia; puxar para baixo so atualiza quando iniciado no topo da tela.

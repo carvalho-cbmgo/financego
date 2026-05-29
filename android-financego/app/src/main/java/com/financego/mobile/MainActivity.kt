@@ -104,6 +104,22 @@ class MainActivity : Activity() {
     bootstrap?.let { showDashboard(it) } ?: loadHome()
   }
 
+  private fun refreshBootstrap(then: (JSONObject) -> Unit) {
+    showLoading("Carregando...")
+    runAsync(
+      work = { api.bootstrap() },
+      done = {
+        bootstrap = it
+        store.fullName = it.optJSONObject("profile")?.optString("full_name") ?: store.fullName
+        then(it)
+      },
+      fail = {
+        toast(it)
+        bootstrap?.let { data -> then(data) } ?: showSessionRecovery(it)
+      },
+    )
+  }
+
   private fun showLogin() {
     currentBackAction = null
     val root = verticalRoot().apply {
@@ -200,7 +216,7 @@ class MainActivity : Activity() {
       }
     }, matchWrap())
 
-    setContentView(scroll(root))
+    setContentView(scroll(root, refreshSwipe = { loadHome() }))
   }
 
   private fun showSetup() {
@@ -223,7 +239,7 @@ class MainActivity : Activity() {
     }, matchWrap())
     root.addView(secondaryButton("TESTAR CONFIGURAÇÃO").apply { setOnClickListener { loadHome() } }, matchWrap())
     root.addView(secondaryButton("ABRIR MESMO ASSIM").apply { setOnClickListener { showDashboard(data ?: JSONObject()) } }, matchWrap())
-    setContentView(scroll(root))
+    setContentView(scroll(root, refreshSwipe = { loadHome() }))
   }
 
   private fun showSettingsPage() {
@@ -277,7 +293,7 @@ class MainActivity : Activity() {
     root.addView(secondaryButton("VOLTAR PARA TRANSAÇÕES").apply {
       setOnClickListener { bootstrap?.let { showDashboard(it) } ?: loadHome() }
     }, matchWrap())
-    setContentView(scroll(root))
+    setContentView(scroll(root, refreshSwipe = { refreshBootstrap { showSettingsPage() } }))
   }
 
   private fun showDashboard(data: JSONObject) {
@@ -302,7 +318,7 @@ class MainActivity : Activity() {
 
     root.addView(section("Transações do mês"))
     addTransactionRows(root, monthRows)
-    setContentViewWithFab(root, monthSwipe = { showDashboard(data) })
+    setContentViewWithFab(root, monthSwipe = { showDashboard(data) }, refreshSwipe = { refreshBootstrap { showDashboard(it) } })
   }
 
   private fun showChartsPage(data: JSONObject = bootstrap ?: JSONObject()) {
@@ -353,7 +369,7 @@ class MainActivity : Activity() {
       root.addView(list)
     }
 
-    setContentView(scroll(root, monthSwipe = { showChartsPage(data) }))
+    setContentView(scroll(root, monthSwipe = { showChartsPage(data) }, refreshSwipe = { refreshBootstrap { showChartsPage(it) } }))
   }
 
   private fun showBanksPage(data: JSONObject = bootstrap ?: JSONObject()) {
@@ -370,7 +386,7 @@ class MainActivity : Activity() {
       for (bank in banks) root.addView(bankCard(data, bank))
     }
 
-    setContentView(scroll(root))
+    setContentView(scroll(root, refreshSwipe = { refreshBootstrap { showBanksPage(it) } }))
   }
 
   private fun showCategoriesPage(data: JSONObject = bootstrap ?: JSONObject()) {
@@ -421,7 +437,7 @@ class MainActivity : Activity() {
     }
     root.addView(treeBox)
 
-    setContentView(scroll(root))
+    setContentView(scroll(root, refreshSwipe = { refreshBootstrap { showCategoriesPage(it) } }))
   }
 
   private fun showAccountPage(account: JSONObject) {
@@ -437,7 +453,18 @@ class MainActivity : Activity() {
     addAccountSummary(root, initial, rows)
     root.addView(section("Transações da conta"))
     addTransactionRows(root, rows)
-    setContentViewWithFab(root, account.optString("id"), monthSwipe = { showAccountPage(account) })
+    setContentViewWithFab(
+      root,
+      account.optString("id"),
+      monthSwipe = { showAccountPage(account) },
+      refreshSwipe = {
+        val accountId = account.optString("id")
+        refreshBootstrap { data ->
+          val updatedAccount = accountsList(data).firstOrNull { it.optString("id") == accountId } ?: account
+          showAccountPage(updatedAccount)
+        }
+      },
+    )
   }
 
   private fun showProfilePage() {
@@ -468,7 +495,7 @@ class MainActivity : Activity() {
       }
     }, matchWrap())
     root.addView(box, matchWrap())
-    setContentView(scroll(root))
+    setContentView(scroll(root, refreshSwipe = { refreshBootstrap { showProfilePage() } }))
   }
 
   private fun periodSelector(onChange: () -> Unit): LinearLayout = surface().apply {
@@ -1991,16 +2018,21 @@ class MainActivity : Activity() {
   }
 
   private fun verticalRoot(): LinearLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-  private fun scroll(view: View, monthSwipe: (() -> Unit)? = null): ScrollView =
+  private fun scroll(view: View, monthSwipe: (() -> Unit)? = null, refreshSwipe: (() -> Unit)? = null): ScrollView =
     ScrollView(this).apply {
       background = appBackground()
-      if (monthSwipe != null) enableMonthSwipe(this, monthSwipe)
+      if (monthSwipe != null || refreshSwipe != null) enableScreenGestures(this, monthSwipe, refreshSwipe)
       addView(view)
     }
 
-  private fun setContentViewWithFab(root: LinearLayout, preferredAccountId: String? = null, monthSwipe: (() -> Unit)? = null) {
+  private fun setContentViewWithFab(
+    root: LinearLayout,
+    preferredAccountId: String? = null,
+    monthSwipe: (() -> Unit)? = null,
+    refreshSwipe: (() -> Unit)? = null,
+  ) {
     val frame = FrameLayout(this).apply { background = appBackground() }
-    frame.addView(scroll(root, monthSwipe), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+    frame.addView(scroll(root, monthSwipe, refreshSwipe), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
     val fab = primaryButton("+").apply {
       textSize = 28f
       contentDescription = "Nova transação"
@@ -2015,23 +2047,28 @@ class MainActivity : Activity() {
     setContentView(frame)
   }
 
-  private fun enableMonthSwipe(view: View, onChange: () -> Unit) {
+  private fun enableScreenGestures(view: ScrollView, onMonthChange: (() -> Unit)?, onRefresh: (() -> Unit)?) {
     var downX = 0f
     var downY = 0f
+    var startedAtTop = false
     view.setOnTouchListener { _, event ->
       when (event.action) {
         MotionEvent.ACTION_DOWN -> {
           downX = event.x
           downY = event.y
+          startedAtTop = view.scrollY == 0
         }
         MotionEvent.ACTION_UP -> {
           val dx = event.x - downX
           val dy = event.y - downY
-          val minSwipe = dp(72).toFloat()
-          if (abs(dx) > minSwipe && abs(dx) > abs(dy) * 1.35f) {
+          val minHorizontalSwipe = dp(72).toFloat()
+          val minRefreshSwipe = dp(92).toFloat()
+          if (onMonthChange != null && abs(dx) > minHorizontalSwipe && abs(dx) > abs(dy) * 1.35f) {
             selectedMonth = if (dx > 0) selectedMonth.minusMonths(1) else selectedMonth.plusMonths(1)
             toast(monthLabel(selectedMonth))
-            onChange()
+            onMonthChange()
+          } else if (onRefresh != null && startedAtTop && dy > minRefreshSwipe && dy > abs(dx) * 1.35f) {
+            onRefresh()
           }
         }
       }

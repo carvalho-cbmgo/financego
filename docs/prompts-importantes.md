@@ -431,3 +431,11 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Mes de referencia no APK recebeu destaque visual harmonico.
   - Modais dos atalhos de `accounts` passaram a ser renderizados via portal React para nao ficarem recortados dentro do card.
   - Build web, TypeScript e APK debug `1.0.24` validados com sucesso.
+
+- Objetivo: implementar gesto de puxar para atualizar no APK.
+- Prompt base: "No apk, ajustar para que quando o usuário deslizar o dedo na tela de cima para baixo, os dados da tela que está aberta sejam atualizados imediatamente de forma que apareça na tela o aviso Carregando... piscando da mesma forma que para os demais processamentos do aplicativo."
+- Resultado:
+  - Telas rolaveis do APK passaram a reconhecer gesto vertical descendente iniciado no topo.
+  - O gesto exibe `Carregando...`, executa novo `api.bootstrap()` e redesenha a tela aberta com dados atualizados.
+  - O detector preserva o swipe horizontal de troca de mes.
+  - APK debug `1.0.25` gerado com sucesso.
