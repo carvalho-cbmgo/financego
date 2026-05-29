@@ -580,3 +580,8 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: a identidade visual do APK deve usar uma paleta mais profunda e harmonia entre fundo, cards, bordas e botoes.
 - Motivo: aumentar a percepcao de produto nativo, moderno e confiavel.
 - Impacto: base visual mais sofisticada sem alterar regras financeiras.
+
+- Data: `2026-05-29`
+- Decisao: notificacoes de aplicativos de mensagem, inicialmente WhatsApp e WhatsApp Business, nao devem ser consideradas fontes validas para cadastro automatico de transacoes.
+- Motivo: mensagens podem conter `Pix`, `R$`, `pagamento` ou textos financeiros sem representar uma transacao bancaria real.
+- Impacto: reduz falsos positivos e evita registros automaticos indevidos originados de conversas.

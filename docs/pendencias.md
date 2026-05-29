@@ -334,3 +334,10 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: instalar APK 1.0.22, navegar por Login, Transacoes, Conta, Graficos e Configuracoes com fonte normal e fonte grande.
 - Status: pendente de teste fisico em campo
 - Responsavel: time de desenvolvimento
+
+- ID: `NTF-034`
+- Descricao: validar em aparelho real que notificacoes do WhatsApp contendo termos financeiros nao geram transacoes no FinanceGO.
+- Severidade: alta
+- Como reproduzir: instalar APK `1.0.23`, receber mensagens no WhatsApp/WhatsApp Business com textos como `Pix de R$ 120,00` e conferir que nenhuma transacao e criada.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

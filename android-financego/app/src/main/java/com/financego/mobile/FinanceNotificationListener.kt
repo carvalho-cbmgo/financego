@@ -36,6 +36,8 @@ class FinanceNotificationListener : NotificationListenerService() {
 
     val extras = sbn.notification.extras
     val appName = resolveAppName(sbn.packageName)
+    if (isIgnoredNotificationSource(sbn.packageName, appName)) return
+
     val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
     val titleBig = extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString().orEmpty()
     val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
@@ -124,6 +126,11 @@ class FinanceNotificationListener : NotificationListenerService() {
     }
 
     return knownBank || Regex("pix|cart[aã]o|r\\$|brl|compra|transfer[eê]ncia|pagamento|estorno|reembolso").containsMatchIn(source)
+  }
+
+  private fun isIgnoredNotificationSource(packageName: String, appName: String): Boolean {
+    val source = "$packageName $appName".lowercase()
+    return Regex("(^|\\s|\\.)com\\.whatsapp(\\.|\\s|$)|whatsapp|whats app").containsMatchIn(source)
   }
 
   private fun resolveAppName(packageName: String): String =

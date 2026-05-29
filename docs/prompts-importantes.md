@@ -414,3 +414,11 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Swipe horizontal muda o mes de referencia nas telas mensais.
   - Paleta visual base foi refinada para fundo, cards, botoes, badges e bordas.
   - APK debug `1.0.22` gerado com sucesso.
+
+- Objetivo: impedir que mensagens do WhatsApp sejam interpretadas como transacoes financeiras automaticas.
+- Prompt base: "Ajuste o apk para que as notificações do whatsapp não sejam interpretados como transações..."
+- Resultado:
+  - APK ignora `WhatsApp` e `WhatsApp Business` antes do filtro financeiro.
+  - Parser backend tambem bloqueia payloads desses aplicativos.
+  - Simulacoes confirmaram WhatsApp ignorado e Nubank ainda reconhecido.
+  - APK debug `1.0.23` gerado com sucesso.

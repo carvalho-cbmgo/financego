@@ -292,6 +292,14 @@ export function detectBankFromPackageOrText(input: {
   return "generic";
 }
 
+function isIgnoredNotificationSource(input: {
+  packageName?: string | null;
+  appName?: string | null;
+}) {
+  const source = normalize([input.packageName, input.appName].filter(Boolean).join(" "));
+  return /(^|\s|\.)(com\s+)?whatsapp(\s|$)|whats\s*app/.test(source);
+}
+
 export function parseNotificationByBank(input: {
   profileId: string;
   packageName?: string | null;
@@ -307,6 +315,8 @@ export function parseNotificationByBank(input: {
   postedAt?: string | null;
   profileFullName?: string | null;
 }): ParsedBankTransaction | null {
+  if (isIgnoredNotificationSource(input)) return null;
+
   const textLines = Array.isArray(input.textLines) ? input.textLines.join(" | ") : String(input.textLines || "");
   const allText = [
     input.title,

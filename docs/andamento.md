@@ -686,3 +686,19 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.22` / `versionCode 23`.
+
+- Data: `2026-05-29`
+- Entrega principal: bloqueio de interpretacao automatica de notificacoes do WhatsApp como transacoes financeiras.
+- Resultado entregue:
+  - APK passou a ignorar notificacoes cuja origem seja `WhatsApp` ou `WhatsApp Business` antes de aplicar o filtro financeiro.
+  - Backend/parser tambem passou a recusar payloads de notificacao com pacote/nome de app do WhatsApp, evitando falso positivo caso algum evento seja reenviado por outra origem.
+  - Simulacao confirmou que mensagens do WhatsApp contendo `Pix`, `pagamento` e `R$` retornam `null`, enquanto notificacao real de banco continua sendo interpretada.
+  - APK debug atualizado para `versionCode 24` e `versionName 1.0.23`.
+- Validacoes executadas:
+  - `npx tsc --noEmit` com sucesso.
+  - Simulacao local do parser com WhatsApp, WhatsApp Business e Nubank com sucesso.
+  - `npm run build` com sucesso.
+  - Build Android debug com sucesso usando `GRADLE_USER_HOME` temporario por falha recorrente no cache Kotlin DSL local.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.23` / `versionCode 24`.
