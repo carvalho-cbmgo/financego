@@ -8,6 +8,7 @@ export type BankKey =
   | "santander"
   | "banco_do_brasil"
   | "caixa"
+  | "btg"
   | "c6"
   | "inter"
   | "mercado_pago"
@@ -81,7 +82,11 @@ function extractPixCounterparty(text: string) {
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    const value = match?.[1]?.replace(/\s+/g, " ").trim();
+    const value = match?.[1]
+      ?.replace(/\s+(?:no\s+)?valor\s+de\s+r?\$?.*$/i, "")
+      .replace(/\s+(?:R\$|\brs\$?|brl)\s*[\d.,]+.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (value) return value.slice(0, 70);
   }
 
@@ -107,8 +112,8 @@ function buildShortNotificationDescription(input: {
   }
   if (isTransferText) return `Transferencia enviada${suffix}`;
   if (isPixText) return `PIX Enviado${suffix}`;
-  if (/compra.*credito|credito.*aprovad|cartao.*credito/.test(input.normalizedText)) {
-    const merchantFromText = input.rawText.match(/\bem\s+([^|.,;]+)/i)?.[1]?.replace(/\s+/g, " ").trim();
+  if (/compra.*cr.?dito|cr.?dito.*aprovad|cart.?o.*cr.?dito/.test(input.normalizedText)) {
+    const merchantFromText = extractNotificationMerchant(input.rawText);
     return merchantFromText ? `Compra - ${merchantFromText.slice(0, 60)}` : "Compra no credito";
   }
 
@@ -116,9 +121,29 @@ function buildShortNotificationDescription(input: {
   return merchant ? `Compra - ${merchant}` : "Despesa registrada";
 }
 
+function extractNotificationMerchant(rawText: string) {
+  const patterns = [
+    /\bem\s+([^|.,;]+?)(?:\s+(?:no|com|pelo)\s+cart[aã]o|\s+cart[aã]o|\s+final\s+\d{2,4}|$|[|.,;])/i,
+    /\bno\s+estabelecimento\s+([^|.,;]+)/i,
+    /\bcompra\s+(?:aprovada|realizada)?\s*(?:de\s+(?:R\$|\brs\$?|brl)?\s*[\d.,]+\s*)?\bem\s+([^|.,;]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = rawText.match(pattern);
+    const value = match?.[1]
+      ?.replace(/(?:no|com|pelo)\s+cart[aã]o.*$/i, "")
+      .replace(/\bfinal\s+\d{2,4}.*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (value && value.length >= 3) return value.slice(0, 80);
+  }
+
+  return "";
+}
+
 function parseMoneyBR(input: string): number | null {
   const withCurrency = input.match(
-    /(?:R\$|\brs\$?)\s*(-?\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|-?\d{1,3}(?:,\d{3})*(?:\.\d{2})|-?\d+[.,]\d{2}|-?\d+)/i
+    /(?:R\$|\brs\$?|brl)\s*(-?\d{1,3}(?:[.\s]\d{3})+,\d{2}|-?\d{1,3}(?:,\d{3})+\.\d{2}|-?\d+[.,]\d{2}|-?\d{1,3}(?:[.\s]\d{3})+|-?\d+)/i
   );
   if (withCurrency?.[1]) {
     const parsed = parseFlexibleMoneyToken(withCurrency[1]);
@@ -153,6 +178,8 @@ function parseFlexibleMoneyToken(raw: string): number | null {
     }
   } else if (hasComma) {
     normalized = token.replace(/\./g, "").replace(",", ".");
+  } else if (hasDot && /^-?\d{1,3}(?:\.\d{3})+$/.test(token)) {
+    normalized = token.replace(/\./g, "");
   } else {
     normalized = token.replace(/,/g, "");
   }
@@ -250,12 +277,13 @@ export function detectBankFromPackageOrText(input: {
 }): BankKey {
   const s = normalize([input.packageName, input.appName, input.text].filter(Boolean).join(" "));
 
-  if (/nu\.production|nubank|nu bank/.test(s)) return "nubank";
+  if (/nu\.production|nubank|nu bank|\bnu\b/.test(s)) return "nubank";
   if (/itau|itaucard/.test(s)) return "itau";
   if (/bradesco/.test(s)) return "bradesco";
   if (/santander/.test(s)) return "santander";
   if (/bb\.android|banco do brasil|\bbb\b/.test(s)) return "banco_do_brasil";
-  if (/caixa/.test(s)) return "caixa";
+  if (/caixa|br\.com\.gabba|caixatem|caixa tem|gov\.caixa/.test(s)) return "caixa";
+  if (/btg|btgpactual|btg pactual|pactual/.test(s)) return "btg";
   if (/c6bank|c6 bank/.test(s)) return "c6";
   if (/bancointer|inter/.test(s)) return "inter";
   if (/mercadopago|mercado pago/.test(s)) return "mercado_pago";
@@ -271,27 +299,45 @@ export function parseNotificationByBank(input: {
   title?: string | null;
   text?: string | null;
   bigText?: string | null;
+  subText?: string | null;
+  summaryText?: string | null;
+  infoText?: string | null;
+  textLines?: string[] | string | null;
+  extraText?: string | null;
   postedAt?: string | null;
   profileFullName?: string | null;
 }): ParsedBankTransaction | null {
+  const textLines = Array.isArray(input.textLines) ? input.textLines.join(" | ") : String(input.textLines || "");
+  const allText = [
+    input.title,
+    input.text,
+    input.bigText,
+    input.subText,
+    input.summaryText,
+    input.infoText,
+    textLines,
+    input.extraText,
+  ].filter(Boolean).join(" | ");
+
   const bankKey = detectBankFromPackageOrText({
     packageName: input.packageName,
     appName: input.appName,
-    text: [input.title, input.text, input.bigText].filter(Boolean).join(" "),
+    text: allText,
   });
 
-  const full = [input.appName, input.title, input.text, input.bigText].filter(Boolean).join(" | ");
+  const full = [input.appName, allText].filter(Boolean).join(" | ");
   const money = parseMoneyBR(full);
   if (money === null) return null;
 
   const s = normalize(full);
   let signedAmount = money;
-  const counterparty = extractPixCounterparty(full);
+  const counterparty = extractPixCounterparty(allText);
+  const isOwnCounterparty = looksSamePerson(counterparty, input.profileFullName);
   let forcedType: ParsedBankTransaction["type"] | undefined;
   const looksRefund = /estorno|reembolso|devolucao|chargeback|cancelamento/.test(s);
   const isPixOrTransfer = /\bpix\b|transferencia|\bted\b|\bdoc\b/.test(s);
-  const looksCreditCardText = /cartao.*credito|credito.*cartao|compra.*credito|credito.*aprovad|compra no credito|no credito|fatura do cartao/.test(s);
-  const looksCardTransaction = looksCreditCardText || (/cartao|credito/.test(s) && /compra|aprovad|parcela|fatura/.test(s));
+  const looksCreditCardText = /cart.?o.*cr.?dito|cr.?dito.*cart.?o|compra.*cr.?dito|cr.?dito.*aprovad|compra no cr.?dito|no cr.?dito|fatura do cart.?o/.test(s);
+  const looksCardTransaction = looksCreditCardText || (/cart.?o|cr.?dito/.test(s) && /compra|aprovad|parcela|fatura/.test(s));
   const looksReceived = /pix recebido|transferencia recebida|recebido|recebida|recebeu|voce recebeu|deposito|depositado|entrada|creditado|credito em conta|caiu na sua conta/.test(s);
   const looksSent = /pix enviado|pix realizado|transferencia enviada|transferencia realizada|enviado|enviada|enviou|voce enviou|pagamento realizado|pagamento aprovado|pagou|pago|saida|debitado|debito em conta/.test(s);
   const looksPurchaseOrPayment = /compra|pagamento|debito|cartao|parcela|boleto|saque|tarifa/.test(s);
@@ -303,6 +349,9 @@ export function parseNotificationByBank(input: {
     // Regra de negocio do APK: lancamento em cartao de credito e sempre despesa, exceto estorno/reembolso.
     forcedType = "debit";
     signedAmount = -Math.abs(money);
+  } else if (isPixOrTransfer && isOwnCounterparty) {
+    forcedType = "transfer";
+    signedAmount = looksSent ? -Math.abs(money) : Math.abs(money);
   } else if (isPixOrTransfer && looksReceived) {
     forcedType = "credit";
     signedAmount = Math.abs(money);
@@ -334,7 +383,7 @@ export function parseNotificationByBank(input: {
   parsed.description = buildShortNotificationDescription({
     type: parsed.type === "credit" || parsed.type === "transfer" ? parsed.type : "debit",
     normalizedText: s,
-    rawText: full,
+    rawText: allText || full,
     counterparty,
   });
   parsed.merchant = counterparty || parsed.merchant;
@@ -344,6 +393,32 @@ export function parseNotificationByBank(input: {
   }
 
   return parsed;
+}
+
+export function inferPreferredAccountTypeFromNotification(input: {
+  title?: string | null;
+  text?: string | null;
+  bigText?: string | null;
+  subText?: string | null;
+  summaryText?: string | null;
+  infoText?: string | null;
+  textLines?: string[] | string | null;
+  extraText?: string | null;
+}): "CHECKING_ACCOUNT" | "CREDIT_CARD" {
+  const textLines = Array.isArray(input.textLines) ? input.textLines.join(" | ") : String(input.textLines || "");
+  const s = normalize([
+    input.title,
+    input.text,
+    input.bigText,
+    input.subText,
+    input.summaryText,
+    input.infoText,
+    textLines,
+    input.extraText,
+  ].filter(Boolean).join(" | "));
+
+  const isCreditCard = /cartao|cartoes|cart.?o|credito.*aprovad|cr.?dito.*aprovad|compra.*credito|compra.*cr.?dito|compra no credito|compra no cr.?dito|fatura.*cartao|fatura.*cart.?o|limite.*cartao|limite.*cart.?o/.test(s);
+  return isCreditCard ? "CREDIT_CARD" : "CHECKING_ACCOUNT";
 }
 
 

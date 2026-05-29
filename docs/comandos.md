@@ -294,3 +294,21 @@ git push origin main
 5) Verificar se a transação aparece no FinanceGO web e no app após atualizar
 6) Conferir se PIX para o próprio nome foi classificado como transferência
 ```
+
+## Diagnostico de notificacoes bancarias no APK
+```bash
+# Validar TypeScript/API
+npx tsc --noEmit
+
+# Validar build web para Vercel
+npm run build
+
+# Gerar APK debug atualizado
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug
+
+# Conferir APK gerado
+Get-ChildItem -Path "android-financego/app/build/outputs/apk/debug/app-debug.apk" | Select-Object Name,Length,LastWriteTime,FullName | Format-List
+
+# Conferir metadados de versao do APK
+Get-Content "android-financego/app/build/outputs/apk/debug/output-metadata.json"
+```

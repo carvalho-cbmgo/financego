@@ -377,3 +377,13 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Nova transacao criada pela tela de conta ja preseleciona aquela conta como `Conta Origem`.
   - Terceira linha dos cards de transacao passou a exibir banco em selo roxo e tipo de conta.
   - Versao Android atualizada para `1.0.8`.
+
+- Objetivo: corrigir o registro automatico de transacoes por notificacoes reais de NuBank, CAIXA e BTG no APK.
+- Prompt base: "O aplicativo apk nao esta identificando nem registrando de forma automatica as transacoes dos bancos NuBank, CAIXA e BTG por meio das notificacoes recebidas no celular android..."
+- Resultado:
+  - Listener Android passou a enviar mais campos da notificacao para o backend.
+  - Filtro local de notificacoes financeiras foi ampliado para NuBank, CAIXA/CAIXA Tem e BTG/BTG Pactual.
+  - Parser backend passou a reconhecer BTG oficialmente e usar campos extras (`subText`, `summaryText`, `infoText`, `textLines`, `extraText`).
+  - Parser passou a classificar com mais precisao cartao de credito, Pix recebido, Pix enviado, estorno e transferencia propria.
+  - Associacao automatica de conta passou a respeitar `CREDIT_CARD` para cartao e `CHECKING_ACCOUNT` para Pix/transferencias.
+  - APK debug `1.0.19` gerado com sucesso.

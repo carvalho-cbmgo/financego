@@ -3,7 +3,7 @@ import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { supabaseAdmin } from "@/lib/supabase";
 import { auditLog } from "@/lib/audit-log";
 import { getDeviceByToken } from "@/lib/device-auth";
-import { parseNotificationByBank } from "@/lib/bank-parsers";
+import { inferPreferredAccountTypeFromNotification, parseNotificationByBank } from "@/lib/bank-parsers";
 import { ensureAccountForBank } from "@/lib/accounts";
 
 
@@ -34,6 +34,11 @@ export async function POST(req: NextRequest) {
       title: body.title,
       text: body.text,
       bigText: body.bigText || body.big_text,
+      subText: body.subText || body.sub_text,
+      summaryText: body.summaryText || body.summary_text,
+      infoText: body.infoText || body.info_text,
+      textLines: body.textLines || body.text_lines,
+      extraText: body.extraText || body.extra_text,
       postedAt: body.postedAt || body.posted_at,
       profileFullName: profile?.full_name || null,
     });
@@ -59,7 +64,17 @@ export async function POST(req: NextRequest) {
     if (!parsed) {
       return NextResponse.json({ ok: true, parsed: false, event_id: event?.id });
     }
-    const accountId = await ensureAccountForBank(profileId, parsed.bankKey);
+    const preferredAccountType = inferPreferredAccountTypeFromNotification({
+      title: body.title,
+      text: body.text,
+      bigText: body.bigText || body.big_text,
+      subText: body.subText || body.sub_text,
+      summaryText: body.summaryText || body.summary_text,
+      infoText: body.infoText || body.info_text,
+      textLines: body.textLines || body.text_lines,
+      extraText: body.extraText || body.extra_text,
+    });
+    const accountId = await ensureAccountForBank(profileId, parsed.bankKey, preferredAccountType);
 
     const { data: tx, error: txError } = await supabaseAdmin
       .from("transactions")

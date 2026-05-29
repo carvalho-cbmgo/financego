@@ -264,3 +264,24 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: instalar APK `1.0.10`, abrir uma conta, tocar no `+`, conferir `Conta Origem`, salvar uma transacao de teste e verificar se aparece na conta correta.
 - Status: pendente de teste fisico
 - Responsavel: time de desenvolvimento
+
+- ID: `NTF-024`
+- Descricao: validar em celular real notificacoes reais de NuBank, CAIXA/CAIXA Tem e BTG/BTG Pactual apos APK `1.0.19`.
+- Severidade: critica
+- Como reproduzir: instalar `android-financego/app/build/outputs/apk/debug/app-debug.apk`, conceder acesso a notificacoes, gerar uma compra no cartao, um Pix recebido e um Pix enviado, depois conferir se as transacoes aparecem no FinanceGO.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `NTF-025`
+- Descricao: validar se notificacoes reais de cartao sao vinculadas a contas do tipo `CREDIT_CARD` e notificacoes de Pix/transferencia a contas do tipo `CHECKING_ACCOUNT`.
+- Severidade: alta
+- Como reproduzir: testar notificacoes reais de cartao e Pix em bancos com conta corrente e cartao cadastrados separadamente.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `NTF-026`
+- Descricao: conferir a tela de diagnostico de notificacoes apos eventos reais para validar permissao ativa, ultimo evento capturado, ultimo envio e ultimo erro.
+- Severidade: alta
+- Como reproduzir: abrir diagnostico pelo menu de tres pontos do APK, gerar notificacao bancaria real e observar os campos atualizados.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

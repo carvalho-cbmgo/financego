@@ -15,28 +15,54 @@ class FinanceNotificationListener : NotificationListenerService() {
     if (!store.isLoggedIn()) return
 
     val extras = sbn.notification.extras
+    val appName = resolveAppName(sbn.packageName)
     val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty()
+    val titleBig = extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString().orEmpty()
     val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString().orEmpty()
     val bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString().orEmpty()
-    val joined = listOf(title, text, bigText).joinToString(" ").lowercase()
+    val subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString().orEmpty()
+    val summaryText = extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString().orEmpty()
+    val infoText = extras.getCharSequence(Notification.EXTRA_INFO_TEXT)?.toString().orEmpty()
+    val textLines = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+      ?.mapNotNull { it?.toString()?.takeIf(String::isNotBlank) }
+      ?: emptyList()
+    val extraText = extras.keySet()
+      .asSequence()
+      .mapNotNull { key -> extras.get(key)?.toString()?.takeIf { it.isNotBlank() } }
+      .joinToString(" | ")
+      .take(900)
+    val joined = listOf(appName, title, titleBig, text, bigText, subText, summaryText, infoText, textLines.joinToString(" "), extraText)
+      .filter { it.isNotBlank() }
+      .joinToString(" ")
+      .lowercase()
 
-    if (!looksFinancial(joined)) return
+    if (!looksFinancial(sbn.packageName, appName, joined)) return
 
     val capturedAt = Instant.now().toString()
     store.lastNotificationCapturedAt = capturedAt
     store.lastNotificationCapturedSummary = buildString {
-      append(sbn.packageName)
+      append(appName.ifBlank { sbn.packageName })
       if (title.isNotBlank()) append(" | ").append(title)
+      if (titleBig.isNotBlank() && titleBig != title) append(" | ").append(titleBig)
       if (text.isNotBlank()) append(" | ").append(text)
       if (bigText.isNotBlank() && bigText != text) append(" | ").append(bigText)
+      if (subText.isNotBlank()) append(" | ").append(subText)
+      if (summaryText.isNotBlank()) append(" | ").append(summaryText)
+      if (infoText.isNotBlank()) append(" | ").append(infoText)
+      if (textLines.isNotEmpty()) append(" | ").append(textLines.joinToString(" | "))
     }.take(320)
 
     val payload = JSONObject()
       .put("packageName", sbn.packageName)
-      .put("appName", sbn.packageName)
-      .put("title", title)
+      .put("appName", appName.ifBlank { sbn.packageName })
+      .put("title", title.ifBlank { titleBig })
       .put("text", text)
       .put("bigText", bigText)
+      .put("subText", subText)
+      .put("summaryText", summaryText)
+      .put("infoText", infoText)
+      .put("textLines", org.json.JSONArray(textLines))
+      .put("extraText", extraText)
       .put("postedAt", java.time.Instant.ofEpochMilli(sbn.postTime).toString())
       .put("notificationId", "${sbn.packageName}:${sbn.id}:${sbn.postTime}")
 
@@ -58,11 +84,27 @@ class FinanceNotificationListener : NotificationListenerService() {
     }
   }
 
-  private fun looksFinancial(text: String): Boolean {
-    if (!Regex("r\\$|pix|compra|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|pagamento|recebido").containsMatchIn(text)) {
+  private fun looksFinancial(packageName: String, appName: String, text: String): Boolean {
+    val source = "$packageName $appName $text".lowercase()
+    val knownBank = Regex(
+      "nu\\.production|nubank|nu bank|\\bnu\\b|caixa|caixatem|caixa tem|br\\.com\\.gabba|gov\\.caixa|btg|btgpactual|btg pactual|pactual|itau|itaú|bradesco|santander|bancointer|inter|c6bank|c6 bank|mercado pago|mercadopago|picpay|banco do brasil|bb"
+    ).containsMatchIn(source)
+    val hasFinancialAction = Regex(
+      "r\\$|brl|pix|compra|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|pagamento|recebido|recebida|enviado|enviada|aprovad|estorno|reembolso|fatura|boleto|saque|ted|doc|deposito|dep[oó]sito"
+    ).containsMatchIn(source)
+
+    if (!knownBank && !hasFinancialAction) {
       return false
     }
 
-    return Regex("nubank|nu bank|itau|itaú|bradesco|santander|caixa|inter|c6|mercado pago|picpay|banco do brasil|bb|porto seguro|btg|pix|cart[aã]o").containsMatchIn(text)
+    return knownBank || Regex("pix|cart[aã]o|r\\$|brl|compra|transfer[eê]ncia|pagamento|estorno|reembolso").containsMatchIn(source)
   }
+
+  private fun resolveAppName(packageName: String): String =
+    try {
+      val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
+      applicationContext.packageManager.getApplicationLabel(info).toString()
+    } catch (_: Exception) {
+      packageName
+    }
 }

@@ -609,3 +609,29 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
     - `scripts/build-android-financego.ps1 -Mode debug` executado com sucesso.
     - `testDebugUnitTest`, `lintDebug`, `assembleDebug` e `assembleRelease` executados com sucesso.
     - Observacao: `assembleRelease` teve uma falha transitoria de `AccessDeniedException` em intermediario gerado do Gradle; a pasta gerada foi removida com verificacao de caminho dentro do workspace e o release foi recompilado com sucesso.
+
+- Data: `2026-05-29`
+- Entrega principal: correcao aprofundada da captura automatica de notificacoes bancarias no APK para NuBank, CAIXA e BTG.
+- Resultado entregue:
+  - Android nativo:
+    - Listener de notificacoes passou a capturar o nome real do aplicativo, titulo expandido, texto, texto grande, subtitulo, resumo, informacao complementar, linhas de texto e extras da notificacao.
+    - Filtro local `looksFinancial` foi ampliado para nao descartar notificacoes validas de NuBank, CAIXA, CAIXA Tem, BTG e BTG Pactual antes do envio ao backend.
+    - Payload enviado ao backend agora inclui `subText`, `summaryText`, `infoText`, `textLines` e `extraText` para aumentar a chance de interpretar notificacoes com layouts diferentes do Android.
+    - Diagnostico local do ultimo evento capturado passou a registrar mais conteudo util da notificacao.
+    - APK debug atualizado para `versionCode 20` e `versionName 1.0.19`.
+  - Backend/API:
+    - Parser de notificacoes passou a reconhecer explicitamente `btg` como banco suportado.
+    - Deteccao de banco foi reforcada para NuBank, CAIXA/CAIXA Tem e BTG/BTG Pactual.
+    - Parser passou a considerar todos os campos extras enviados pelo APK, nao apenas `title`, `text` e `bigText`.
+    - Valores em formatos `R$`, `rs`, `BRL`, `1.234,56`, `89.90` e variacoes passaram a ser tratados com mais seguranca.
+    - Compras no credito continuam sendo despesa, estornos/reembolsos continuam sendo receita, Pix recebido vira receita, Pix enviado vira despesa e Pix/transferencia envolvendo o nome completo do usuario vira transferencia interna.
+    - Cadastro automatico agora escolhe/cria conta do tipo correto: cartao de credito para notificacoes de cartao e conta corrente para Pix/transferencias.
+    - Descricoes automaticas foram encurtadas para formatos como `Compra - MERCADO CENTRAL`, `PIX Recebido - JOAO SILVA`, `PIX Enviado - MARIA LIMA` e `Transferencia - NOME`.
+- Validacoes executadas:
+  - `npx tsc --noEmit` com sucesso.
+  - Simulacao local do parser para NuBank credito, CAIXA Pix recebido, BTG credito, BTG Pix enviado e transferencia propria com sucesso.
+  - `npm run build` com sucesso.
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug` com sucesso.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.19` / `versionCode 20`.

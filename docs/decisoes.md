@@ -530,3 +530,18 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: classificacao automatica de notificacoes deve tratar `Compra no credito aprovada` como despesa e `estorno`/`reembolso` como receita.
 - Motivo: evitar inversao de sinais no registro automatico de cartao de credito e devolucoes.
 - Impacto: notificacoes bancarias ficam mais confiaveis e coerentes com o controle financeiro.
+
+- Data: `2026-05-29`
+- Decisao: o listener Android deve enviar todos os campos relevantes da notificacao, incluindo campos expandidos e linhas de texto.
+- Motivo: bancos diferentes e versoes diferentes do Android podem colocar valor, contraparte e tipo da transacao em campos distintos.
+- Impacto: menor risco de NuBank, CAIXA e BTG serem ignorados por falta de dados no `title/text/bigText`.
+
+- Data: `2026-05-29`
+- Decisao: o backend deve decidir o banco e o tipo de conta preferencial com base no pacote, nome do app e conteudo completo da notificacao.
+- Motivo: uma compra no cartao precisa cair em conta `CREDIT_CARD`, enquanto Pix/transferencias precisam cair em `CHECKING_ACCOUNT`.
+- Impacto: registros automaticos ficam associados a conta mais coerente e evitam misturar cartao de credito com conta corrente.
+
+- Data: `2026-05-29`
+- Decisao: `BTG` passa a ser um `BankKey` oficial do parser.
+- Motivo: antes o BTG podia cair como `generic`, prejudicando criacao/associacao automatica de banco e conta.
+- Impacto: notificacoes do BTG/BTG Pactual passam a registrar transacoes vinculadas ao banco correto.

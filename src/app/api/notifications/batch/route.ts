@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { auditLog } from "@/lib/audit-log";
 import { getDeviceByToken } from "@/lib/device-auth";
-import { parseNotificationByBank } from "@/lib/bank-parsers";
+import { inferPreferredAccountTypeFromNotification, parseNotificationByBank } from "@/lib/bank-parsers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { ensureAccountForBank } from "@/lib/accounts";
 
@@ -14,6 +14,11 @@ async function saveParsedNotification(body: any, profileId: string, profileFullN
     title: body.title,
     text: body.text,
     bigText: body.bigText || body.big_text,
+    subText: body.subText || body.sub_text,
+    summaryText: body.summaryText || body.summary_text,
+    infoText: body.infoText || body.info_text,
+    textLines: body.textLines || body.text_lines,
+    extraText: body.extraText || body.extra_text,
     postedAt: body.postedAt || body.posted_at,
     profileFullName,
   });
@@ -36,7 +41,17 @@ async function saveParsedNotification(body: any, profileId: string, profileFullN
 
   if (eventError) throw eventError;
   if (!parsed) return { ok: true, parsed: false, event_id: event?.id };
-  const accountId = await ensureAccountForBank(profileId, parsed.bankKey);
+  const preferredAccountType = inferPreferredAccountTypeFromNotification({
+    title: body.title,
+    text: body.text,
+    bigText: body.bigText || body.big_text,
+    subText: body.subText || body.sub_text,
+    summaryText: body.summaryText || body.summary_text,
+    infoText: body.infoText || body.info_text,
+    textLines: body.textLines || body.text_lines,
+    extraText: body.extraText || body.extra_text,
+  });
+  const accountId = await ensureAccountForBank(profileId, parsed.bankKey, preferredAccountType);
 
   const { data: tx, error: txError } = await supabaseAdmin
     .from("transactions")

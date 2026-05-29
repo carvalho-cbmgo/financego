@@ -10,6 +10,7 @@ const BANK_LABEL_BY_KEY: Record<BankKey, string> = {
   santander: "SANTANDER",
   banco_do_brasil: "BANCO DO BRASIL",
   caixa: "CAIXA",
+  btg: "BTG",
   c6: "C6",
   inter: "INTER",
   mercado_pago: "MERCADO PAGO",
@@ -52,6 +53,7 @@ export function bankKeyFromBankName(bankName?: string | null): BankKey {
   if (/santander/.test(s)) return "santander";
   if (/banco do brasil|\bbb\b/.test(s)) return "banco_do_brasil";
   if (/caixa/.test(s)) return "caixa";
+  if (/btg|pactual/.test(s)) return "btg";
   if (/\bc6\b/.test(s)) return "c6";
   if (/inter/.test(s)) return "inter";
   if (/mercado pago/.test(s)) return "mercado_pago";
@@ -101,7 +103,7 @@ export async function ensureBankForKey(profileId: string, bankKey: BankKey) {
   return ensureBankByName(profileId, label);
 }
 
-export async function findBestAccountForBank(profileId: string, bankKey: BankKey) {
+export async function findBestAccountForBank(profileId: string, bankKey: BankKey, preferredType?: InternalAccountType) {
   const targetLabel = bankLabelFromKey(bankKey);
 
   const [{ data: accounts }, { data: banks }] = await Promise.all([
@@ -121,15 +123,26 @@ export async function findBestAccountForBank(profileId: string, bankKey: BankKey
   const bankById = new Map<string, string>((banks || []).map((b: any) => [String(b.id), String(b.name || "")]));
   const targetNormalized = normalize(targetLabel);
 
+  const byBankIdAndType = accounts.find((account: any) => {
+    const bankName = bankById.get(String(account.bank_id || ""));
+    return normalize(bankName) === targetNormalized && (!preferredType || account.type === preferredType);
+  });
+
+  if (byBankIdAndType) return byBankIdAndType;
+
+  const byLegacyInstitutionNameAndType = accounts.find((account: any) => {
+    return normalize(account.institution_name) === targetNormalized && (!preferredType || account.type === preferredType);
+  });
+  if (byLegacyInstitutionNameAndType) return byLegacyInstitutionNameAndType;
+
   const byBankId = accounts.find((account: any) => {
     const bankName = bankById.get(String(account.bank_id || ""));
     return normalize(bankName) === targetNormalized;
   });
-
-  if (byBankId) return byBankId;
+  if (!preferredType && byBankId) return byBankId;
 
   const byLegacyInstitutionName = accounts.find((account: any) => normalize(account.institution_name) === targetNormalized);
-  if (byLegacyInstitutionName) return byLegacyInstitutionName;
+  if (!preferredType && byLegacyInstitutionName) return byLegacyInstitutionName;
 
   return null;
 }
@@ -137,18 +150,17 @@ export async function findBestAccountForBank(profileId: string, bankKey: BankKey
 export async function ensureAccountForBank(profileId: string, bankKey: BankKey, preferredType: InternalAccountType = "CHECKING_ACCOUNT") {
   const bank = await ensureBankForKey(profileId, bankKey);
 
-  const { data: sameBankAccount } = await supabaseAdmin
+  const { data: sameBankAccounts } = await supabaseAdmin
     .from("accounts")
-    .select("id")
+    .select("id, type")
     .eq("profile_id", profileId)
     .eq("bank_id", bank.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
-  if (sameBankAccount?.id) return sameBankAccount.id as string;
+  const sameTypeAccount = (sameBankAccounts || []).find((account: any) => account.type === preferredType);
+  if (sameTypeAccount?.id) return sameTypeAccount.id as string;
 
-  const legacyMatch = await findBestAccountForBank(profileId, bankKey);
+  const legacyMatch = await findBestAccountForBank(profileId, bankKey, preferredType);
   if (legacyMatch?.id) {
     await supabaseAdmin
       .from("accounts")
