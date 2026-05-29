@@ -4,15 +4,19 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.text.Editable
 import android.text.InputType
@@ -76,11 +80,13 @@ class MainActivity : Activity() {
     store = SessionStore(this)
     store.migrateLegacyBaseUrl()
     api = FinanceGoApi(store)
+    if (store.isLoggedIn()) NotificationRetryWorker.enqueue(this)
     if (store.isLoggedIn()) loadHome() else showLogin()
   }
 
   override fun onResume() {
     super.onResume()
+    if (store.isLoggedIn()) NotificationRetryWorker.enqueue(this)
     if (store.isLoggedIn() && bootstrap != null && !isNotificationListenerEnabled()) showSetup()
   }
 
@@ -166,9 +172,13 @@ class MainActivity : Activity() {
     val fullNameOk = store.fullName.isNotBlank()
     root.addView(infoRow("Nome completo", if (fullNameOk) store.fullName else "Pendente no Perfil"))
     root.addView(infoRow("Acesso às notificações", if (isNotificationListenerEnabled()) "Ativo" else "Pendente"))
+    root.addView(infoRow("Execução em segundo plano", if (isIgnoringBatteryOptimizations()) "Liberada" else "Pode ser bloqueada pela bateria"))
 
     root.addView(primaryButton("PERMITIR NOTIFICAÇÕES").apply {
       setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+    }, matchWrap())
+    root.addView(secondaryButton("LIBERAR BATERIA").apply {
+      setOnClickListener { requestBatteryOptimizationExemption() }
     }, matchWrap())
     root.addView(secondaryButton("TESTAR CONFIGURAÇÃO").apply { setOnClickListener { loadHome() } }, matchWrap())
     root.addView(secondaryButton("ABRIR MESMO ASSIM").apply { setOnClickListener { showDashboard(data ?: JSONObject()) } }, matchWrap())
@@ -181,8 +191,14 @@ class MainActivity : Activity() {
     root.addView(metricCard("Diagnóstico de notificações", "Verifique se o Finance GO está autorizado a capturar notificações bancárias e enviar os eventos para o sistema."))
 
     val permissionActive = isNotificationListenerEnabled()
+    val pendingCount = NotificationOutbox(this).count()
+    store.lastNotificationPendingCount = pendingCount
     val permissionBox = surface().apply {
       addView(summaryLine("Permissão ativa", if (permissionActive) "Sim" else "Não", if (permissionActive) COLOR_GREEN else COLOR_DANGER, true))
+      addView(summaryLine("Listener conectado", store.notificationListenerStatus.ifBlank { "Aguardando conexão do Android" }))
+      addView(summaryLine("Última conexão", store.notificationListenerConnectedAt.ifBlank { "Ainda não registrada" }))
+      addView(summaryLine("Última desconexão", store.notificationListenerDisconnectedAt.ifBlank { "Nenhuma desconexão registrada" }))
+      addView(summaryLine("Execução sem restrição de bateria", if (isIgnoringBatteryOptimizations()) "Sim" else "Não", if (isIgnoringBatteryOptimizations()) COLOR_GREEN else COLOR_DANGER, true))
       addView(summaryLine("Usuário logado", if (store.isLoggedIn()) "Sim" else "Não"))
       addView(summaryLine("Nome completo", store.fullName.ifBlank { "Pendente" }, if (store.fullName.isBlank()) COLOR_DANGER else COLOR_TEXT))
     }
@@ -191,12 +207,24 @@ class MainActivity : Activity() {
     val eventsBox = surface().apply {
       addView(diagnosticInfo("Último evento capturado", diagnosticValue(store.lastNotificationCapturedAt, store.lastNotificationCapturedSummary, "Nenhum evento financeiro capturado ainda.")))
       addView(diagnosticInfo("Último envio", diagnosticValue(store.lastNotificationSendAt, store.lastNotificationSendStatus, "Nenhum envio realizado ainda.")))
+      addView(diagnosticInfo("Pendências locais", "$pendingCount notificação(ões) aguardando reenvio."))
+      addView(diagnosticInfo("Última tentativa de reenvio", store.lastNotificationRetryAt.ifBlank { "Nenhuma tentativa registrada." }))
       addView(diagnosticInfo("Último erro", store.lastNotificationError.ifBlank { "Nenhum erro registrado." }, store.lastNotificationError.isNotBlank()))
     }
     root.addView(eventsBox)
 
     root.addView(primaryButton("ABRIR PERMISSÕES DE NOTIFICAÇÃO").apply {
       setOnClickListener { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
+    }, matchWrap())
+    root.addView(secondaryButton("LIBERAR EXECUÇÃO EM SEGUNDO PLANO").apply {
+      setOnClickListener { requestBatteryOptimizationExemption() }
+    }, matchWrap())
+    root.addView(secondaryButton("REENVIAR PENDÊNCIAS AGORA").apply {
+      setOnClickListener {
+        NotificationRetryWorker.enqueue(this@MainActivity)
+        toast("Reenvio agendado. O Android executará assim que houver rede disponível.")
+        showSettingsPage()
+      }
     }, matchWrap())
     root.addView(secondaryButton("ATUALIZAR DIAGNÓSTICO").apply {
       setOnClickListener { showSettingsPage() }
@@ -1841,6 +1869,32 @@ class MainActivity : Activity() {
     val flat = Settings.Secure.getString(contentResolver, "enabled_notification_listeners") ?: return false
     val me = ComponentName(this, FinanceNotificationListener::class.java).flattenToString()
     return flat.split(':').any { it.equals(me, ignoreCase = true) }
+  }
+
+  private fun isIgnoringBatteryOptimizations(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+    val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+    return powerManager.isIgnoringBatteryOptimizations(packageName)
+  }
+
+  private fun requestBatteryOptimizationExemption() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      toast("Este Android não exige liberação adicional de bateria.")
+      return
+    }
+
+    if (isIgnoringBatteryOptimizations()) {
+      toast("O Finance GO já está liberado para execução em segundo plano.")
+      return
+    }
+
+    try {
+      startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        data = Uri.parse("package:$packageName")
+      })
+    } catch (_: Exception) {
+      startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+    }
   }
 
   private fun showLoading(text: String) {

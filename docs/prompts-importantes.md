@@ -387,3 +387,14 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Parser passou a classificar com mais precisao cartao de credito, Pix recebido, Pix enviado, estorno e transferencia propria.
   - Associacao automatica de conta passou a respeitar `CREDIT_CARD` para cartao e `CHECKING_ACCOUNT` para Pix/transferencias.
   - APK debug `1.0.19` gerado com sucesso.
+
+- Objetivo: reforcar o APK para continuar monitorando notificacoes bancarias em segundo plano e nao perder eventos quando houver falha de envio.
+- Prompt base: "Executar a proxima melhoria recomendada no APK"
+- Resultado:
+  - Listener passou a registrar conexao/desconexao e solicitar rebind automatico.
+  - Notificacoes capturadas e nao enviadas sao salvas em fila local persistente.
+  - WorkManager reenvia pendencias automaticamente quando houver rede.
+  - BootReceiver agenda reenvio e rebind apos reinicializacao/atualizacao do app.
+  - Diagnostico mostra status do listener, bateria, pendencias, ultimo envio e ultimo erro.
+  - APK passou a solicitar liberacao de otimizacao de bateria para reduzir bloqueios em segundo plano.
+  - APK debug `1.0.20` gerado com sucesso.

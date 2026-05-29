@@ -1,6 +1,8 @@
 ﻿package com.financego.mobile
 
 import android.app.Notification
+import android.content.ComponentName
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import org.json.JSONObject
@@ -9,6 +11,24 @@ import java.util.concurrent.Executors
 
 class FinanceNotificationListener : NotificationListenerService() {
   private val executor = Executors.newSingleThreadExecutor()
+
+  override fun onListenerConnected() {
+    val store = SessionStore(applicationContext)
+    store.notificationListenerConnectedAt = Instant.now().toString()
+    store.notificationListenerStatus = "Conectado e monitorando notificações."
+    store.lastNotificationPendingCount = NotificationOutbox(applicationContext).count()
+    NotificationRetryWorker.enqueue(applicationContext)
+  }
+
+  override fun onListenerDisconnected() {
+    val store = SessionStore(applicationContext)
+    store.notificationListenerDisconnectedAt = Instant.now().toString()
+    store.notificationListenerStatus = "Desconectado pelo Android. Reativação solicitada automaticamente."
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      requestRebind(ComponentName(applicationContext, FinanceNotificationListener::class.java))
+    }
+  }
 
   override fun onNotificationPosted(sbn: StatusBarNotification) {
     val store = SessionStore(applicationContext)
@@ -67,6 +87,7 @@ class FinanceNotificationListener : NotificationListenerService() {
       .put("notificationId", "${sbn.packageName}:${sbn.id}:${sbn.postTime}")
 
     executor.execute {
+      val outbox = NotificationOutbox(applicationContext)
       try {
         val response = FinanceGoApi(store).sendNotification(payload)
         store.lastNotificationSendAt = Instant.now().toString()
@@ -75,11 +96,16 @@ class FinanceNotificationListener : NotificationListenerService() {
         } else {
           "Enviado, mas não gerou transação automática."
         }
+        store.lastNotificationPendingCount = outbox.count()
         store.lastNotificationError = ""
+        NotificationRetryWorker.enqueue(applicationContext)
       } catch (error: Exception) {
+        outbox.enqueue(payload)
         store.lastNotificationSendAt = Instant.now().toString()
-        store.lastNotificationSendStatus = "Falha ao enviar para o Finance GO."
+        store.lastNotificationPendingCount = outbox.count()
+        store.lastNotificationSendStatus = "Falha ao enviar para o Finance GO. Notificação salva para reenvio automático."
         store.lastNotificationError = error.message ?: "Erro desconhecido no envio da notificação."
+        NotificationRetryWorker.enqueue(applicationContext)
       }
     }
   }

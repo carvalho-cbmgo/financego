@@ -41,6 +41,26 @@ class SessionStore(context: Context) {
     get() = prefs.getString("last_notification_error", "") ?: ""
     set(value) = prefs.edit().putString("last_notification_error", value).apply()
 
+  var lastNotificationRetryAt: String
+    get() = prefs.getString("last_notification_retry_at", "") ?: ""
+    set(value) = prefs.edit().putString("last_notification_retry_at", value).apply()
+
+  var lastNotificationPendingCount: Int
+    get() = prefs.getInt("last_notification_pending_count", 0)
+    set(value) = prefs.edit().putInt("last_notification_pending_count", value.coerceAtLeast(0)).apply()
+
+  var notificationListenerConnectedAt: String
+    get() = prefs.getString("notification_listener_connected_at", "") ?: ""
+    set(value) = prefs.edit().putString("notification_listener_connected_at", value).apply()
+
+  var notificationListenerDisconnectedAt: String
+    get() = prefs.getString("notification_listener_disconnected_at", "") ?: ""
+    set(value) = prefs.edit().putString("notification_listener_disconnected_at", value).apply()
+
+  var notificationListenerStatus: String
+    get() = prefs.getString("notification_listener_status", "") ?: ""
+    set(value) = prefs.edit().putString("notification_listener_status", value).apply()
+
   fun isLoggedIn(): Boolean = accessToken.isNotBlank()
 
   fun migrateLegacyBaseUrl() {

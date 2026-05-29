@@ -635,3 +635,25 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.19` / `versionCode 20`.
+
+- Data: `2026-05-29`
+- Entrega principal: fortalecimento do funcionamento em segundo plano do APK para monitoramento e registro automatico de notificacoes bancarias.
+- Resultado entregue:
+  - Android nativo:
+    - `FinanceNotificationListener` passou a registrar status real de conexao/desconexao do listener.
+    - Ao desconectar, o APK solicita `requestRebind` automaticamente quando suportado pelo Android.
+    - Criada caixa de saida local persistente (`NotificationOutbox`) para salvar notificacoes capturadas quando o envio ao FinanceGO falhar.
+    - Criado `NotificationRetryWorker` com WorkManager para reenviar notificacoes pendentes automaticamente quando houver rede disponivel.
+    - `BootReceiver` passou a reagir tambem a atualizacao do pacote e agenda reenvio de pendencias apos reinicializacao/atualizacao.
+    - Tela de Configuracoes/Diagnostico passou a exibir status do listener, ultima conexao, ultima desconexao, pendencias locais, ultima tentativa de reenvio e status de bateria.
+    - Tela de Configuracao inicial passou a indicar se a execucao em segundo plano esta liberada.
+    - Adicionado pedido de liberacao de otimizacao de bateria via Android para reduzir bloqueios de execucao em segundo plano.
+    - APK debug atualizado para `versionCode 21` e `versionName 1.0.20`.
+- Observacao importante:
+  - O APK agora fica mais robusto para app fechado normalmente, aparelho reiniciado, rede instavel e listener desconectado pelo Android.
+  - Se o usuario usar `Forcar parada` nas configuracoes do Android, o proprio sistema operacional bloqueia receivers/listeners ate o app ser aberto novamente; nenhum APK comum consegue contornar essa restricao de forma confiavel.
+- Validacao executada:
+  - `powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug` com sucesso.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.20` / `versionCode 21`.

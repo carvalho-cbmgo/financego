@@ -312,3 +312,29 @@ Get-ChildItem -Path "android-financego/app/build/outputs/apk/debug/app-debug.apk
 # Conferir metadados de versao do APK
 Get-Content "android-financego/app/build/outputs/apk/debug/output-metadata.json"
 ```
+
+## Validacao de segundo plano do APK
+```bash
+# Gerar APK debug com listener robusto, fila local e WorkManager
+powershell -ExecutionPolicy Bypass -File .\scripts\build-android-financego.ps1 -Mode debug
+
+# Conferir versao gerada
+Get-Content "android-financego/app/build/outputs/apk/debug/output-metadata.json"
+
+# Caminho do APK para instalar no Android
+android-financego/app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Roteiro de teste em aparelho real
+```txt
+1) Instalar o APK 1.0.20.
+2) Fazer login no Finance GO.
+3) Conceder acesso a notificacoes.
+4) Abrir Configuracoes pelo menu de tres pontos.
+5) Tocar em LIBERAR EXECUCAO EM SEGUNDO PLANO.
+6) Gerar notificacao bancaria com internet ligada e conferir cadastro imediato.
+7) Desligar internet, gerar outra notificacao bancaria e conferir pendencia no diagnostico.
+8) Religar internet e aguardar o WorkManager reenviar.
+9) Remover o app dos recentes e testar nova notificacao.
+10) Evitar usar Forcar parada, pois o Android bloqueia o app ate ele ser aberto novamente.
+```

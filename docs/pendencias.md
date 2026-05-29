@@ -285,3 +285,24 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: abrir diagnostico pelo menu de tres pontos do APK, gerar notificacao bancaria real e observar os campos atualizados.
 - Status: pendente de teste fisico em campo
 - Responsavel: time de desenvolvimento
+
+- ID: `AND-027`
+- Descricao: validar em celular real se o WorkManager reenvia notificacoes pendentes apos falha de rede.
+- Severidade: critica
+- Como reproduzir: fazer login, conceder notificacoes, desligar internet, gerar notificacao bancaria, religar internet e conferir se a transacao aparece automaticamente.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-028`
+- Descricao: validar no celular se a liberacao de bateria melhora a permanencia do listener em segundo plano.
+- Severidade: alta
+- Como reproduzir: instalar APK `1.0.20`, abrir Configuracoes, tocar em `LIBERAR EXECUCAO EM SEGUNDO PLANO`, conceder permissao e monitorar notificacoes reais por algumas horas.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-029`
+- Descricao: validar o comportamento apos remover o app da lista de recentes versus usar `Forcar parada` nas configuracoes do Android.
+- Severidade: alta
+- Como reproduzir: fechar normalmente o app e testar notificacoes; depois usar `Forcar parada`, gerar notificacao e confirmar que o Android bloqueia ate o app ser aberto novamente.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

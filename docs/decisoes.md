@@ -545,3 +545,18 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: `BTG` passa a ser um `BankKey` oficial do parser.
 - Motivo: antes o BTG podia cair como `generic`, prejudicando criacao/associacao automatica de banco e conta.
 - Impacto: notificacoes do BTG/BTG Pactual passam a registrar transacoes vinculadas ao banco correto.
+
+- Data: `2026-05-29`
+- Decisao: notificacoes capturadas pelo APK devem ser persistidas localmente quando o envio imediato ao backend falhar.
+- Motivo: notificacoes bancarias podem chegar sem internet, com Vercel indisponivel momentaneamente ou com o Android limitando tarefas em segundo plano.
+- Impacto: reduz perda de transacoes automaticas; eventos pendentes sao reenviados pelo WorkManager quando houver rede.
+
+- Data: `2026-05-29`
+- Decisao: o APK deve solicitar liberacao de otimizacao de bateria e mostrar esse estado no diagnostico.
+- Motivo: fabricantes Android podem bloquear servicos em segundo plano agressivamente.
+- Impacto: o usuario tem um caminho guiado para reduzir bloqueios e verificar a saude do monitoramento.
+
+- Data: `2026-05-29`
+- Decisao: reconhecer explicitamente que `Forcar parada` do Android nao pode ser contornado por um APK comum.
+- Motivo: apos force stop, o Android impede receivers/listeners ate o usuario abrir o aplicativo novamente.
+- Impacto: expectativa do usuario fica correta e o diagnostico passa a cobrir os cenarios que o app consegue tratar.
