@@ -313,3 +313,24 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: instalar o APK, abrir Configuracoes pelo menu de tres pontos, testar com fonte padrao e fonte grande do Android.
 - Status: pendente de teste fisico em campo
 - Responsavel: time de desenvolvimento
+
+- ID: `AND-031`
+- Descricao: validar em celular real se o APK 1.0.22 inicia automaticamente logado apos fechar/reabrir o app, sem pedir email/senha, enquanto o usuario nao clicar em `Sair`.
+- Severidade: alta
+- Como reproduzir: instalar APK, fazer login, fechar o app, reabrir e conferir entrada automatica; depois tocar em `Sair` e confirmar retorno ao login.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-032`
+- Descricao: validar gestos horizontais para troca de mes nas telas de Transacoes, Graficos e Conta especifica.
+- Severidade: media
+- Como reproduzir: abrir cada tela, deslizar da esquerda para direita e da direita para esquerda, conferindo o mes selecionado e os dados exibidos.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-033`
+- Descricao: validar em aparelho real se a nova paleta visual do APK mantem contraste e legibilidade em tela pequena e modo de fonte grande.
+- Severidade: media
+- Como reproduzir: instalar APK 1.0.22, navegar por Login, Transacoes, Conta, Graficos e Configuracoes com fonte normal e fonte grande.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

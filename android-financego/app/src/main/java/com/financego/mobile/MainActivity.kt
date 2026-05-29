@@ -158,9 +158,32 @@ class MainActivity : Activity() {
       },
       fail = {
         toast(it)
-        showLogin()
+        showSessionRecovery(it)
       },
     )
+  }
+
+  private fun showSessionRecovery(message: String) {
+    val root = screenRoot().apply {
+      gravity = Gravity.CENTER_HORIZONTAL
+      setPadding(dp(20), dp(42), dp(20), dp(28))
+    }
+
+    root.addView(brandLogo())
+    root.addView(spacer(16))
+    root.addView(metricCard("Sessão mantida", "O Finance GO preservou seu login. Não foi possível atualizar os dados agora, mas você continuará conectado enquanto não tocar em Sair."))
+    root.addView(diagnosticInfo("Detalhe técnico", message.ifBlank { "Falha temporária ao carregar dados." }, true))
+    root.addView(primaryButton("TENTAR NOVAMENTE").apply {
+      setOnClickListener { loadHome() }
+    }, matchWrap())
+    root.addView(secondaryButton("SAIR").apply {
+      setOnClickListener {
+        store.clear()
+        showLogin()
+      }
+    }, matchWrap())
+
+    setContentView(scroll(root))
   }
 
   private fun showSetup() {
@@ -259,7 +282,7 @@ class MainActivity : Activity() {
 
     root.addView(section("Transações do mês"))
     addTransactionRows(root, monthRows)
-    setContentViewWithFab(root)
+    setContentViewWithFab(root, monthSwipe = { showDashboard(data) })
   }
 
   private fun showChartsPage(data: JSONObject = bootstrap ?: JSONObject()) {
@@ -309,7 +332,7 @@ class MainActivity : Activity() {
       root.addView(list)
     }
 
-    setContentView(scroll(root))
+    setContentView(scroll(root, monthSwipe = { showChartsPage(data) }))
   }
 
   private fun showBanksPage(data: JSONObject = bootstrap ?: JSONObject()) {
@@ -390,7 +413,7 @@ class MainActivity : Activity() {
     addAccountSummary(root, initial, rows)
     root.addView(section("Transações da conta"))
     addTransactionRows(root, rows)
-    setContentViewWithFab(root, account.optString("id"))
+    setContentViewWithFab(root, account.optString("id"), monthSwipe = { showAccountPage(account) })
   }
 
   private fun showProfilePage() {
@@ -1760,7 +1783,7 @@ class MainActivity : Activity() {
     orientation = LinearLayout.HORIZONTAL
     gravity = Gravity.CENTER_VERTICAL
     setPadding(dp(12), dp(12), dp(10), dp(12))
-    background = gradientRounded(0xF8FFFFFF.toInt(), 0xFFEFFAF4.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(24))
+    background = gradientRounded(0xFFFFFFFF.toInt(), 0xFFEAFBF4.toInt(), dp(1), COLOR_BORDER, dp(24))
     layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       setMargins(0, 0, 0, dp(10))
     }
@@ -1940,15 +1963,21 @@ class MainActivity : Activity() {
   }
 
   private fun verticalRoot(): LinearLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-  private fun scroll(view: View): ScrollView = ScrollView(this).apply { background = appBackground(); addView(view) }
-  private fun setContentViewWithFab(root: LinearLayout, preferredAccountId: String? = null) {
+  private fun scroll(view: View, monthSwipe: (() -> Unit)? = null): ScrollView =
+    ScrollView(this).apply {
+      background = appBackground()
+      if (monthSwipe != null) enableMonthSwipe(this, monthSwipe)
+      addView(view)
+    }
+
+  private fun setContentViewWithFab(root: LinearLayout, preferredAccountId: String? = null, monthSwipe: (() -> Unit)? = null) {
     val frame = FrameLayout(this).apply { background = appBackground() }
-    frame.addView(scroll(root), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+    frame.addView(scroll(root, monthSwipe), FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
     val fab = primaryButton("+").apply {
       textSize = 28f
       contentDescription = "Nova transação"
       setPadding(0, 0, 0, dp(4))
-      background = gradientRounded(0xFF19B978.toInt(), 0xFF0D5F49.toInt(), 0, 0, dp(32))
+      background = gradientRounded(0xFF2DD4A3.toInt(), COLOR_PRIMARY_DARK, 0, 0, dp(32))
       setOnClickListener { openTransactionDialog(null, preferredAccountId = preferredAccountId) }
     }
     frame.addView(fab, FrameLayout.LayoutParams(dp(62), dp(62)).apply {
@@ -1957,6 +1986,31 @@ class MainActivity : Activity() {
     })
     setContentView(frame)
   }
+
+  private fun enableMonthSwipe(view: View, onChange: () -> Unit) {
+    var downX = 0f
+    var downY = 0f
+    view.setOnTouchListener { _, event ->
+      when (event.action) {
+        MotionEvent.ACTION_DOWN -> {
+          downX = event.x
+          downY = event.y
+        }
+        MotionEvent.ACTION_UP -> {
+          val dx = event.x - downX
+          val dy = event.y - downY
+          val minSwipe = dp(72).toFloat()
+          if (abs(dx) > minSwipe && abs(dx) > abs(dy) * 1.35f) {
+            selectedMonth = if (dx > 0) selectedMonth.minusMonths(1) else selectedMonth.plusMonths(1)
+            toast(monthLabel(selectedMonth))
+            onChange()
+          }
+        }
+      }
+      false
+    }
+  }
+
   private fun spacer(size: Int): View = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(size)) }
   private fun title(text: String, size: Float): TextView = TextView(this).apply { this.text = text; textSize = size; setTextColor(COLOR_TEXT); setTypeface(typeface, Typeface.BOLD); letterSpacing = -0.02f }
   private fun section(text: String): TextView = title(text, 18f).apply { setPadding(dp(2), dp(18), 0, dp(8)) }
@@ -1982,19 +2036,19 @@ class MainActivity : Activity() {
     setTextColor(COLOR_TEXT)
     setHintTextColor(COLOR_MUTED)
     setPadding(dp(14), dp(10), dp(14), dp(10))
-    background = rounded(0xF7FFFFFF.toInt(), dp(1), 0xFFD9E4DD.toInt(), dp(16))
+    background = rounded(0xF8FFFFFF.toInt(), dp(1), COLOR_BORDER, dp(16))
   }
 
   private fun primaryButton(text: String): Button = Button(this).apply {
     this.text = text
     setTextColor(0xFFFFFFFF.toInt())
-    background = gradientRounded(0xFF19B978.toInt(), 0xFF0D5F49.toInt(), 0, 0, dp(16))
+    background = gradientRounded(COLOR_PRIMARY, COLOR_PRIMARY_DARK, 0, 0, dp(16))
     setTypeface(typeface, Typeface.BOLD)
   }
   private fun secondaryButton(text: String): Button = Button(this).apply {
     this.text = text
     setTextColor(COLOR_TEXT)
-    background = rounded(0xF2FFFFFF.toInt(), dp(1), 0xFFD9E4DD.toInt(), dp(16))
+    background = rounded(0xF4FFFFFF.toInt(), dp(1), COLOR_BORDER, dp(16))
     setTypeface(typeface, Typeface.BOLD)
   }
   private fun iconActionButton(symbol: String, description: String): Button = secondaryButton(symbol).apply {
@@ -2008,7 +2062,7 @@ class MainActivity : Activity() {
       setImageResource(drawableId)
       setColorFilter(COLOR_TEXT)
       setPadding(dp(10), dp(10), dp(10), dp(10))
-      background = rounded(0xF2FFFFFF.toInt(), dp(1), 0xFFD9E4DD.toInt(), dp(16))
+      background = rounded(0xF4FFFFFF.toInt(), dp(1), COLOR_BORDER, dp(16))
     }
   private fun compactActionButton(text: String, primary: Boolean): Button =
     (if (primary) primaryButton(text) else secondaryButton(text)).apply { textSize = 10f; setSingleLine(true); setPadding(0, 0, 0, 0) }
@@ -2032,7 +2086,7 @@ class MainActivity : Activity() {
       setTextColor(COLOR_PRIMARY)
       setTypeface(typeface, Typeface.BOLD)
       setPadding(dp(8), dp(3), dp(9), dp(4))
-      background = gradientRounded(0xFFE7F8EF.toInt(), 0xFFFFFFFF.toInt(), dp(1), 0xFFB9E6D1.toInt(), dp(12))
+      background = gradientRounded(0xFFE8FFF5.toInt(), 0xFFFFFFFF.toInt(), dp(1), 0xFF9BE6CE.toInt(), dp(12))
     }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       setMargins(dp(5), 0, 0, 0)
     })
@@ -2040,7 +2094,7 @@ class MainActivity : Activity() {
 
   private fun surface(): LinearLayout = verticalRoot().apply {
     setPadding(dp(16), dp(14), dp(16), dp(14))
-    background = gradientRounded(0xFAFFFFFF.toInt(), 0xF1F8FBF8.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(22))
+    background = gradientRounded(0xFCFFFFFF.toInt(), 0xFFF3F8F6.toInt(), dp(1), COLOR_BORDER, dp(24))
     val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
     lp.setMargins(0, dp(6), 0, dp(8))
     layoutParams = lp
@@ -2056,7 +2110,7 @@ class MainActivity : Activity() {
     })
     setTypeface(typeface, Typeface.BOLD)
     setPadding(dp(16), dp(14), dp(16), dp(14))
-    background = gradientRounded(if (highlight) 0xFFE7F8EF.toInt() else 0xFAFFFFFF.toInt(), 0xFFF8FBF8.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(22))
+    background = gradientRounded(if (highlight) 0xFFE8FFF5.toInt() else 0xFCFFFFFF.toInt(), 0xFFF7FAF9.toInt(), dp(1), COLOR_BORDER, dp(22))
     val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
     lp.setMargins(0, dp(4), 0, dp(6))
     layoutParams = lp
@@ -2101,7 +2155,7 @@ class MainActivity : Activity() {
     textSize = 13f
     setTextColor(COLOR_TEXT)
     setPadding(dp(14), dp(10), dp(14), dp(10))
-    background = rounded(0xF8FFFFFF.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(18))
+    background = rounded(0xF8FFFFFF.toInt(), dp(1), COLOR_BORDER, dp(18))
   }
 
   private fun diagnosticInfo(label: String, value: String, alert: Boolean = false): TextView = TextView(this).apply {
@@ -2111,7 +2165,7 @@ class MainActivity : Activity() {
     setSingleLine(false)
     maxLines = 8
     setPadding(dp(14), dp(11), dp(14), dp(11))
-    background = rounded(if (alert) 0xFFFFF1F3.toInt() else 0xF8FFFFFF.toInt(), dp(1), if (alert) 0xFFFDA4AF.toInt() else 0xFFE0EAE3.toInt(), dp(18))
+    background = rounded(if (alert) 0xFFFFF1F3.toInt() else 0xF8FFFFFF.toInt(), dp(1), if (alert) 0xFFFDA4AF.toInt() else COLOR_BORDER, dp(18))
     layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       setMargins(0, dp(4), 0, dp(5))
     }
@@ -2130,7 +2184,7 @@ class MainActivity : Activity() {
     LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
       setPadding(dp(14), dp(10), dp(14), dp(10))
-      background = rounded(0xF8FFFFFF.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(18))
+      background = rounded(0xF8FFFFFF.toInt(), dp(1), COLOR_BORDER, dp(18))
       layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
         setMargins(0, dp(4), 0, dp(5))
       }
@@ -2162,7 +2216,7 @@ class MainActivity : Activity() {
   private fun emptyState(text: String): TextView = muted(text).apply {
     gravity = Gravity.CENTER
     setPadding(dp(14), dp(20), dp(14), dp(20))
-    background = rounded(0xF8FFFFFF.toInt(), dp(1), 0xFFE0EAE3.toInt(), dp(18))
+    background = rounded(0xF8FFFFFF.toInt(), dp(1), COLOR_BORDER, dp(18))
   }
 
   private fun spinner(items: List<String>, selected: Int = 0): Spinner = Spinner(this).apply {
@@ -2183,7 +2237,7 @@ class MainActivity : Activity() {
     }
 
   private fun appBackground(): GradientDrawable =
-    GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(0xFFF7FBF8.toInt(), COLOR_BG, 0xFFEAF0FF.toInt()))
+    GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(0xFFF8FBFA.toInt(), COLOR_BG, 0xFFE8F0FF.toInt()))
 
   private fun matchWrap(): LinearLayout.LayoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
   private fun weightWrap(weight: Float): LinearLayout.LayoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) }
@@ -2195,16 +2249,18 @@ class MainActivity : Activity() {
 
   companion object {
     private const val ROOT_CATEGORY_NAME = "Raiz"
-    private val COLOR_BG = 0xFFEDF4F1.toInt()
-    private val COLOR_TEXT = 0xFF111827.toInt()
-    private val COLOR_MUTED = 0xFF667085.toInt()
-    private val COLOR_PRIMARY = 0xFF0D8F66.toInt()
-    private val COLOR_GREEN = 0xFF0F9F61.toInt()
+    private val COLOR_BG = 0xFFEAF3F0.toInt()
+    private val COLOR_TEXT = 0xFF0F172A.toInt()
+    private val COLOR_MUTED = 0xFF64748B.toInt()
+    private val COLOR_PRIMARY = 0xFF0FA67A.toInt()
+    private val COLOR_PRIMARY_DARK = 0xFF075B4D.toInt()
+    private val COLOR_BORDER = 0xFFD7E4DF.toInt()
+    private val COLOR_GREEN = 0xFF0E9F6E.toInt()
     private val COLOR_BLUE = 0xFF2563EB.toInt()
-    private val COLOR_PURPLE = 0xFF7C3AED.toInt()
-    private val COLOR_PAGE_BADGE = 0xFF1D4ED8.toInt()
-    private val COLOR_PAGE_BADGE_BG = 0xFFEFF6FF.toInt()
-    private val COLOR_PAGE_BADGE_BORDER = 0xFF93C5FD.toInt()
-    private val COLOR_DANGER = 0xFFDC2F55.toInt()
+    private val COLOR_PURPLE = 0xFF6D28D9.toInt()
+    private val COLOR_PAGE_BADGE = 0xFF7C2D12.toInt()
+    private val COLOR_PAGE_BADGE_BG = 0xFFFFF7ED.toInt()
+    private val COLOR_PAGE_BADGE_BORDER = 0xFFFDBA74.toInt()
+    private val COLOR_DANGER = 0xFFE11D48.toInt()
   }
 }

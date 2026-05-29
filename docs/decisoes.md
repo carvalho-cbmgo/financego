@@ -565,3 +565,18 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: telas de diagnostico/configuracao no APK devem priorizar blocos verticais em vez de linhas horizontais quando houver textos longos.
 - Motivo: telas pequenas deformam ou ocultam informacoes quando rotulos e valores competem pela mesma linha.
 - Impacto: leitura mais estavel e confiavel em celulares com larguras/fontes diferentes.
+
+- Data: `2026-05-29`
+- Decisao: o APK nao deve retornar para a tela de login por falha temporaria de rede/bootstrap quando ja existe token salvo.
+- Motivo: o usuario espera continuar logado ate clicar explicitamente em `Sair`.
+- Impacto: falhas temporarias passam a abrir tela de recuperacao de sessao, preservando a autenticacao local.
+
+- Data: `2026-05-29`
+- Decisao: telas orientadas por mes devem suportar gesto horizontal para troca rapida do mes de referencia.
+- Motivo: em celular, gestos reduzem friccao e deixam a navegacao mensal mais natural.
+- Impacto: `Transacoes`, `Graficos` e detalhe de conta aceitam swipe para mes anterior/posterior.
+
+- Data: `2026-05-29`
+- Decisao: a identidade visual do APK deve usar uma paleta mais profunda e harmonia entre fundo, cards, bordas e botoes.
+- Motivo: aumentar a percepcao de produto nativo, moderno e confiavel.
+- Impacto: base visual mais sofisticada sem alterar regras financeiras.

@@ -671,3 +671,18 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.21` / `versionCode 22`.
+
+- Data: `2026-05-29`
+- Entrega principal: persistencia de login, gestos de troca de mes e refinamento visual do APK.
+- Resultado entregue:
+  - Login automatico reforcado: enquanto houver token salvo e o usuario nao tocar em `Sair`, o APK continua tentando entrar automaticamente ao iniciar.
+  - Em falha temporaria de carregamento, o app nao volta para tela de login; mostra uma tela de sessao mantida com `TENTAR NOVAMENTE` e `SAIR`.
+  - Telas mensais passaram a aceitar gesto horizontal: deslizar da esquerda para a direita volta um mes; deslizar da direita para a esquerda avanca um mes.
+  - Gesto aplicado nas telas `Transacoes`, `Graficos` e tela de uma conta especifica.
+  - Paleta visual do APK foi refinada com fundo mais suave, cards mais sofisticados, bordas harmonizadas e botoes com gradiente mais profissional.
+  - APK debug atualizado para `versionCode 23` e `versionName 1.0.22`.
+- Validacao executada:
+  - Build Android debug executado com sucesso apos limpeza segura de cache gerado do Gradle Kotlin DSL.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.22` / `versionCode 23`.

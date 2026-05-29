@@ -406,3 +406,11 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Diagnostico foi organizado em secoes claras.
   - Textos longos passaram a quebrar linha com mais seguranca.
   - APK debug `1.0.21` gerado com sucesso.
+
+- Objetivo: manter login automatico ate o usuario clicar em Sair, adicionar gesto de troca de mes e melhorar a sofisticacao visual do APK.
+- Prompt base: "Ajustar o apk para que se o usuário logar uma vez o login do mesmo permaneça automático enquanto ele não realizar o logoff..."
+- Resultado:
+  - App preserva sessao e mostra tela de recuperacao em falha temporaria, sem voltar ao login automaticamente.
+  - Swipe horizontal muda o mes de referencia nas telas mensais.
+  - Paleta visual base foi refinada para fundo, cards, botoes, badges e bordas.
+  - APK debug `1.0.22` gerado com sucesso.
