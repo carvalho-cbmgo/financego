@@ -585,3 +585,18 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: notificacoes de aplicativos de mensagem, inicialmente WhatsApp e WhatsApp Business, nao devem ser consideradas fontes validas para cadastro automatico de transacoes.
 - Motivo: mensagens podem conter `Pix`, `R$`, `pagamento` ou textos financeiros sem representar uma transacao bancaria real.
 - Impacto: reduz falsos positivos e evita registros automaticos indevidos originados de conversas.
+
+- Data: `2026-05-29`
+- Decisao: centralizar o comportamento do botao `Voltar` do APK em uma acao por tela.
+- Motivo: o botao fisico do Android e o botao visual do cabecalho precisam ter comportamento previsivel; telas principais devem minimizar o app, enquanto telas secundarias devem retornar para a tela anterior/principal.
+- Impacto: `Login` e `Transacoes` minimizam o aplicativo; telas secundarias retornam para `Transacoes`; o cabecalho reutiliza a mesma regra.
+
+- Data: `2026-05-29`
+- Decisao: destacar visualmente o mes de referencia selecionado no APK.
+- Motivo: o seletor de mes e central para a leitura financeira mensal e precisava ficar mais evidente sem quebrar a paleta do aplicativo.
+- Impacto: o botao do mes usa fundo verde-claro, borda harmonica e texto em negrito.
+
+- Data: `2026-05-29`
+- Decisao: renderizar os modais de cadastro rapido de `accounts` via portal React no `document.body`.
+- Motivo: os cards da pagina usam `overflow: hidden` e superficies com efeitos visuais; renderizar o modal dentro do card fazia parte do formulario ficar oculta.
+- Impacto: os atalhos `Cadastrar banco`, `Cadastrar Conta` e `Cadastrar cartao` abrem janelas completas, centralizadas e com rolagem propria quando necessario.

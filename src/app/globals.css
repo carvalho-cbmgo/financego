@@ -433,13 +433,18 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   inset: 0;
   z-index: 1200;
   background: rgba(18, 22, 30, 0.4);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px;
 }
 
 .fg-accounts-modal {
   width: min(420px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   border: 1px solid #c7d5ac;
   border-radius: 12px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fcec 100%);
@@ -447,6 +452,18 @@ h1, h2, h3, h4, h5, p { margin: 0; }
   display: grid;
   gap: 10px;
   box-shadow: 0 12px 34px rgba(16, 26, 41, 0.28);
+}
+
+@media (max-width: 640px) {
+  .fg-accounts-modal-backdrop {
+    align-items: flex-start;
+    padding: 10px;
+  }
+
+  .fg-accounts-modal {
+    width: min(100%, 520px);
+    max-height: calc(100vh - 20px);
+  }
 }
 
 .fg-accounts-table-grid {

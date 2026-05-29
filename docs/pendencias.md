@@ -341,3 +341,24 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: instalar APK `1.0.23`, receber mensagens no WhatsApp/WhatsApp Business com textos como `Pix de R$ 120,00` e conferir que nenhuma transacao e criada.
 - Status: pendente de teste fisico em campo
 - Responsavel: time de desenvolvimento
+
+- ID: `AND-035`
+- Descricao: validar em celular real o comportamento do botao fisico `Voltar` no APK `1.0.24`.
+- Severidade: media
+- Como reproduzir: abrir `Transacoes` e `Login` e confirmar que `Voltar` minimiza o app; abrir `Graficos`, `Bancos`, `Categorias`, `Conta`, `Perfil` e `Configuracoes` e confirmar retorno para `Transacoes`.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `AND-036`
+- Descricao: validar em celular real se o mes de referencia destacado no APK `1.0.24` mantem contraste e legibilidade em telas pequenas.
+- Severidade: baixa
+- Como reproduzir: instalar APK, abrir telas mensais, trocar o mes por setas/swipe e observar o destaque visual do seletor.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `WEB-037`
+- Descricao: validar em producao que os modais dos atalhos de cadastro da pagina `accounts` nao ficam mais recortados dentro do card.
+- Severidade: media
+- Como reproduzir: abrir `accounts`, clicar em `Cadastrar banco`, `Cadastrar Conta` e `Cadastrar cartao`, e confirmar que todos os campos e botoes aparecem completos em desktop e celular.
+- Status: pendente de teste em producao
+- Responsavel: time de desenvolvimento

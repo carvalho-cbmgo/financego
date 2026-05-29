@@ -74,6 +74,7 @@ class MainActivity : Activity() {
   private var chartAllAccounts = true
   private val chartSelectedAccountIds = linkedSetOf<String>()
   private val collapsedCategoryNames = linkedSetOf<String>()
+  private var currentBackAction: (() -> Unit)? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -90,7 +91,21 @@ class MainActivity : Activity() {
     if (store.isLoggedIn() && bootstrap != null && !isNotificationListenerEnabled()) showSetup()
   }
 
+  @Deprecated("Deprecated in Java")
+  override fun onBackPressed() {
+    goBackOrMinimize()
+  }
+
+  private fun goBackOrMinimize() {
+    currentBackAction?.invoke() ?: moveTaskToBack(true)
+  }
+
+  private fun showDashboardOrLoadHome() {
+    bootstrap?.let { showDashboard(it) } ?: loadHome()
+  }
+
   private fun showLogin() {
+    currentBackAction = null
     val root = verticalRoot().apply {
       gravity = Gravity.CENTER
       setPadding(dp(22), dp(28), dp(22), dp(28))
@@ -148,6 +163,7 @@ class MainActivity : Activity() {
   }
 
   private fun loadHome() {
+    currentBackAction = null
     showLoading("Carregando...")
     runAsync(
       work = { api.bootstrap() },
@@ -164,6 +180,7 @@ class MainActivity : Activity() {
   }
 
   private fun showSessionRecovery(message: String) {
+    currentBackAction = null
     val root = screenRoot().apply {
       gravity = Gravity.CENTER_HORIZONTAL
       setPadding(dp(20), dp(42), dp(20), dp(28))
@@ -187,6 +204,7 @@ class MainActivity : Activity() {
   }
 
   private fun showSetup() {
+    currentBackAction = { bootstrap?.let { showDashboard(it) } ?: moveTaskToBack(true) }
     val data = bootstrap
     val root = screenRoot()
     root.addView(appHeader("Configuração", showBack = false))
@@ -209,6 +227,7 @@ class MainActivity : Activity() {
   }
 
   private fun showSettingsPage() {
+    currentBackAction = { showDashboardOrLoadHome() }
     val root = screenRoot()
     root.addView(appHeader("Configurações", showBack = true))
     root.addView(metricCard("Diagnóstico de notificações", "Verifique se o Finance GO está autorizado a capturar notificações bancárias e enviar os eventos para o sistema."))
@@ -262,6 +281,7 @@ class MainActivity : Activity() {
   }
 
   private fun showDashboard(data: JSONObject) {
+    currentBackAction = null
     bootstrap = data
     val root = screenRoot()
     root.addView(appHeader("Transações", showProfile = true, showCharts = true))
@@ -286,6 +306,7 @@ class MainActivity : Activity() {
   }
 
   private fun showChartsPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    currentBackAction = { showDashboardOrLoadHome() }
     bootstrap = data
     val root = screenRoot()
     root.addView(appHeader("Gráficos", showBack = true))
@@ -336,6 +357,7 @@ class MainActivity : Activity() {
   }
 
   private fun showBanksPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    currentBackAction = { showDashboardOrLoadHome() }
     bootstrap = data
     val root = screenRoot()
     root.addView(appHeader("Bancos", showBack = true))
@@ -352,6 +374,7 @@ class MainActivity : Activity() {
   }
 
   private fun showCategoriesPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    currentBackAction = { showDashboardOrLoadHome() }
     bootstrap = data
     val root = screenRoot()
     root.addView(appHeader("Categorias", showBack = true))
@@ -402,6 +425,7 @@ class MainActivity : Activity() {
   }
 
   private fun showAccountPage(account: JSONObject) {
+    currentBackAction = { showDashboardOrLoadHome() }
     val data = bootstrap ?: JSONObject()
     val root = screenRoot()
     root.addView(appHeader(accountTitle(account), showBack = true, showProfile = true, editAccount = account))
@@ -417,6 +441,7 @@ class MainActivity : Activity() {
   }
 
   private fun showProfilePage() {
+    currentBackAction = { showDashboardOrLoadHome() }
     val data = bootstrap ?: JSONObject()
     val profile = data.optJSONObject("profile") ?: JSONObject()
     val root = screenRoot()
@@ -493,8 +518,10 @@ class MainActivity : Activity() {
 
   private fun monthButton(): Button = secondaryButton(monthLabel(selectedMonth)).apply {
     textSize = 13f
-    setTextColor(COLOR_TEXT)
-    background = rounded(0xFFFFFFFF.toInt(), dp(1), 0xFFE3E7DA.toInt(), dp(14))
+    setTextColor(COLOR_PRIMARY_DARK)
+    setTypeface(typeface, Typeface.BOLD)
+    background = gradientRounded(COLOR_MONTH_BG, 0xFFFFFFFF.toInt(), dp(2), COLOR_MONTH_BORDER, dp(16))
+    setPadding(dp(12), 0, dp(12), 0)
   }
 
   private fun addChartAccountSelector(root: LinearLayout, data: JSONObject) {
@@ -1787,7 +1814,7 @@ class MainActivity : Activity() {
     layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       setMargins(0, 0, 0, dp(10))
     }
-    if (showBack) addView(iconButton("‹").apply { setOnClickListener { bootstrap?.let { showDashboard(it) } ?: showLogin() } }, fixed(dp(42), dp(42)))
+    if (showBack) addView(iconButton("‹").apply { setOnClickListener { goBackOrMinimize() } }, fixed(dp(42), dp(42)))
     addView(LinearLayout(this@MainActivity).apply {
       orientation = LinearLayout.VERTICAL
       addView(brandLogo())
@@ -1924,6 +1951,7 @@ class MainActivity : Activity() {
   }
 
   private fun showLoading(text: String) {
+    currentBackAction = null
     val root = verticalRoot().apply {
       gravity = Gravity.CENTER
       setPadding(dp(24), dp(24), dp(24), dp(24))
@@ -2254,6 +2282,8 @@ class MainActivity : Activity() {
     private val COLOR_MUTED = 0xFF64748B.toInt()
     private val COLOR_PRIMARY = 0xFF0FA67A.toInt()
     private val COLOR_PRIMARY_DARK = 0xFF075B4D.toInt()
+    private val COLOR_MONTH_BG = 0xFFE0FFF2.toInt()
+    private val COLOR_MONTH_BORDER = 0xFF62D6B1.toInt()
     private val COLOR_BORDER = 0xFFD7E4DF.toInt()
     private val COLOR_GREEN = 0xFF0E9F6E.toInt()
     private val COLOR_BLUE = 0xFF2563EB.toInt()

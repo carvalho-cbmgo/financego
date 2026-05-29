@@ -702,3 +702,26 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.23` / `versionCode 24`.
+
+- Data: `2026-05-29`
+- Entrega principal: ajuste de navegacao Android, destaque do mes de referencia e correcao dos modais de cadastro em `accounts`.
+- Resultado entregue:
+  - Android nativo:
+    - Botao fisico `Voltar` passou a executar a mesma acao de retorno da tela atual.
+    - Em telas principais (`Login` e `Transacoes`), o botao `Voltar` minimiza o aplicativo com `moveTaskToBack(true)`.
+    - Em telas secundarias (`Graficos`, `Bancos`, `Categorias`, `Conta`, `Perfil`, `Configuracoes`), o botao `Voltar` retorna para a tela principal de transacoes.
+    - Botao visual de voltar do cabecalho passou a reutilizar a mesma regra centralizada.
+    - Mes de referencia selecionado recebeu fundo verde-claro, contorno destacado e texto em negrito.
+    - APK debug atualizado para `versionCode 25` e `versionName 1.0.24`.
+  - Web:
+    - Janelas dos atalhos `Cadastrar banco`, `Cadastrar Conta` e `Cadastrar cartao` na pagina `accounts` passaram a ser renderizadas via portal no `document.body`.
+    - Modal deixou de ficar preso/recortado dentro do card de atalhos.
+    - Backdrop/modal ganhou rolagem propria e ajuste responsivo para telas pequenas.
+    - Criada declaracao local minima para `react-dom/createPortal` porque o projeto nao possui `@types/react-dom`.
+- Validacoes executadas:
+  - `npm run build` com sucesso.
+  - `npx tsc --noEmit` com sucesso apos o build gerar os tipos da pasta `.next`.
+  - `:app:assembleDebug` com sucesso usando `GRADLE_USER_HOME` temporario.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.24` / `versionCode 25`.

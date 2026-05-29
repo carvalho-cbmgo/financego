@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 type BankOption = {
   id: string;
@@ -14,9 +15,12 @@ export function AccountsQuickCreateDialogs(input: {
   banks: BankOption[];
 }) {
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
+  const [mounted, setMounted] = useState(false);
   const hasBanks = input.banks.length > 0;
 
   useEffect(() => {
+    setMounted(true);
+
     function onKeydown(event: KeyboardEvent) {
       if (event.key === "Escape") setDialogMode(null);
     }
@@ -28,6 +32,70 @@ export function AccountsQuickCreateDialogs(input: {
   function closeDialog() {
     setDialogMode(null);
   }
+
+  const dialogContent = dialogMode ? (
+    <div className="fg-accounts-modal-backdrop" role="dialog" aria-modal="true" onClick={closeDialog}>
+      <div className="fg-accounts-modal" onClick={(event) => event.stopPropagation()}>
+        {dialogMode === "bank" ? (
+          <>
+            <div className="fg-card-title">Cadastrar banco</div>
+            <form action="/api/banks/save" method="post" className="fg-form">
+              <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
+              <input name="bank_code" placeholder="Código opcional (ex: 260, 208, 104)" className="fg-input" />
+              <div className="fg-account-actions">
+                <button className="fg-btn">Confirmar criação</button>
+                <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
+              </div>
+            </form>
+          </>
+        ) : null}
+
+        {dialogMode === "checking" ? (
+          <>
+            <div className="fg-card-title">Cadastrar Conta</div>
+            <form action="/api/accounts/save" method="post" className="fg-form">
+              <input type="hidden" name="account_type" value="CONTA_CORRENTE" />
+              <select name="bank_id" required className="fg-select" defaultValue={String(input.banks[0]?.id || "")}>
+                {input.banks.map((bank) => (
+                  <option key={bank.id} value={bank.id}>
+                    {bank.name} {bank.code ? `(${bank.code})` : ""}
+                  </option>
+                ))}
+              </select>
+              <input name="account_name" required placeholder="Nome da conta" className="fg-input" />
+              <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
+              <div className="fg-account-actions">
+                <button className="fg-btn">Confirmar criação</button>
+                <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
+              </div>
+            </form>
+          </>
+        ) : null}
+
+        {dialogMode === "credit" ? (
+          <>
+            <div className="fg-card-title">Cadastrar cartão</div>
+            <form action="/api/accounts/save" method="post" className="fg-form">
+              <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
+              <select name="bank_id" required className="fg-select" defaultValue={String(input.banks[0]?.id || "")}>
+                {input.banks.map((bank) => (
+                  <option key={bank.id} value={bank.id}>
+                    {bank.name} {bank.code ? `(${bank.code})` : ""}
+                  </option>
+                ))}
+              </select>
+              <input name="account_name" required placeholder="Nome do cartão" className="fg-input" />
+              <input name="balance" type="number" step="0.01" placeholder="Fatura inicial (opcional)" className="fg-input" />
+              <div className="fg-account-actions">
+                <button className="fg-btn">Confirmar criação</button>
+                <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
+              </div>
+            </form>
+          </>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -50,69 +118,7 @@ export function AccountsQuickCreateDialogs(input: {
         <p className="fg-field-note">Cadastre ao menos um banco antes de criar conta ou cartão.</p>
       ) : null}
 
-      {dialogMode ? (
-        <div className="fg-accounts-modal-backdrop" role="dialog" aria-modal="true" onClick={closeDialog}>
-          <div className="fg-accounts-modal" onClick={(event) => event.stopPropagation()}>
-            {dialogMode === "bank" ? (
-              <>
-                <div className="fg-card-title">Cadastrar banco</div>
-                <form action="/api/banks/save" method="post" className="fg-form">
-                  <input name="bank_name" required placeholder="Nome do banco (ex: NUBANK, BTG, CAIXA)" className="fg-input" />
-                  <input name="bank_code" placeholder="Codigo opcional (ex: 260, 208, 104)" className="fg-input" />
-                  <div className="fg-account-actions">
-                    <button className="fg-btn">Confirmar criação</button>
-                    <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
-                  </div>
-                </form>
-              </>
-            ) : null}
-
-            {dialogMode === "checking" ? (
-              <>
-                <div className="fg-card-title">Cadastrar Conta</div>
-                <form action="/api/accounts/save" method="post" className="fg-form">
-                  <input type="hidden" name="account_type" value="CONTA_CORRENTE" />
-                  <select name="bank_id" required className="fg-select" defaultValue={String(input.banks[0]?.id || "")}>
-                    {input.banks.map((bank) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name} {bank.code ? `(${bank.code})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <input name="account_name" required placeholder="Nome da conta" className="fg-input" />
-                  <input name="balance" type="number" step="0.01" placeholder="Saldo inicial (opcional)" className="fg-input" />
-                  <div className="fg-account-actions">
-                    <button className="fg-btn">Confirmar criação</button>
-                    <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
-                  </div>
-                </form>
-              </>
-            ) : null}
-
-            {dialogMode === "credit" ? (
-              <>
-                <div className="fg-card-title">Cadastrar cartão</div>
-                <form action="/api/accounts/save" method="post" className="fg-form">
-                  <input type="hidden" name="account_type" value="CARTAO_DE_CREDITO" />
-                  <select name="bank_id" required className="fg-select" defaultValue={String(input.banks[0]?.id || "")}>
-                    {input.banks.map((bank) => (
-                      <option key={bank.id} value={bank.id}>
-                        {bank.name} {bank.code ? `(${bank.code})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <input name="account_name" required placeholder="Nome do cartão" className="fg-input" />
-                  <input name="balance" type="number" step="0.01" placeholder="Fatura inicial (opcional)" className="fg-input" />
-                  <div className="fg-account-actions">
-                    <button className="fg-btn">Confirmar criação</button>
-                    <button type="button" className="fg-btn-secondary" onClick={closeDialog}>Cancelar</button>
-                  </div>
-                </form>
-              </>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      {mounted && dialogContent ? createPortal(dialogContent, document.body) : null}
     </>
   );
 }

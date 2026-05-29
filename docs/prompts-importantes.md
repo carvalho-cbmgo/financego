@@ -422,3 +422,12 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - Parser backend tambem bloqueia payloads desses aplicativos.
   - Simulacoes confirmaram WhatsApp ignorado e Nubank ainda reconhecido.
   - APK debug `1.0.23` gerado com sucesso.
+
+- Objetivo: ajustar navegacao Android, destaque do mes e modais de cadastro em `accounts`.
+- Prompt base: "No apk, ajustar para o botão de voltar no celular, seja interpretado como um comando para voltar na janela anterior do aplicativo e se estiver na tela principal (transações ou login) que seja interpretado como comando para minimizar o aplicativo... No site FinanceGO, na página accounts, quando clico nos atalhos Cadastrar banco ou Cadastrar conta ou Cadastrar cartão..."
+- Resultado:
+  - APK passou a centralizar a acao do botao `Voltar` por tela.
+  - `Login` e `Transacoes` minimizam o aplicativo; telas secundarias retornam para `Transacoes`.
+  - Mes de referencia no APK recebeu destaque visual harmonico.
+  - Modais dos atalhos de `accounts` passaram a ser renderizados via portal React para nao ficarem recortados dentro do card.
+  - Build web, TypeScript e APK debug `1.0.24` validados com sucesso.
