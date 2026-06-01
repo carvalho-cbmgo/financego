@@ -3,6 +3,11 @@
 Registro das decisoes arquiteturais, de interface e de dados.
 
 ## Decisoes tecnicas
+- Data: `2026-06-01`
+- Decisao: separar a manutencao de bancos e contas em telas nativas distintas no APK.
+- Motivo: `Bancos` deve cuidar da instituicao financeira e suas relacoes gerais, enquanto `Contas` deve permitir editar/remover diretamente contas correntes e cartoes cadastrados.
+- Impacto: menu principal do APK passa a ter `Bancos` e `Contas`; a tela `Contas` agrupa registros por banco e reutiliza o fluxo de dialogo existente de conta para criacao, edicao e exclusao.
+
 - Data: `2026-05-28`
 - Decisao: armazenar localmente no APK o diagnostico mais recente de notificacoes bancarias.
 - Motivo: permitir verificar no proprio celular se a permissao esta ativa, se o listener capturou algum evento e se o envio ao Finance GO funcionou ou falhou.

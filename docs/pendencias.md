@@ -3,6 +3,8 @@
 Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 
 ## Pendencias criticas
+- [ ] Instalar o APK Android nativo `1.0.27` em celular real e validar a nova opcao `Contas` abaixo de `Bancos` no menu de tres pontos.
+- [ ] Validar no APK `1.0.27` a tela `Contas`: agrupamento por banco, abertura de conta, edicao, exclusao com `DEL`, criacao de nova conta e atualizacao da lista.
 - [ ] Instalar o APK Android nativo `1.0.18` em celular real e validar a tela `Configuracoes` com permissao de notificacoes ativa e inativa.
 - [ ] Receber uma notificacao bancaria real e confirmar se `Ultimo evento capturado`, `Ultimo envio` e `Ultimo erro` sao atualizados corretamente no diagnostico.
 - [ ] Validar em producao o novo layout web em desktop, tablet e celular, especialmente `dashboard`, `transactions`, `accounts` e `login`.

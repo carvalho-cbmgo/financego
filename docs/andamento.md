@@ -3,6 +3,21 @@
 Documento vivo para registrar o estado do projeto e permitir continuidade em qualquer ambiente.
 
 ## Ultima etapa concluida
+- Data: `2026-06-01`
+- Entrega principal: tela nativa `Contas` no APK para editar e remover contas.
+- Resultado entregue:
+  - Android nativo:
+    - Menu de tres pontos da tela principal de `Transacoes` passou a exibir a opcao `Contas` logo abaixo de `Bancos`.
+    - Nova tela `Contas` criada no APK, agrupando as contas por banco.
+    - Cada conta passou a exibir banco, tipo, nome, saldo, saldo base e quantidade de transacoes vinculadas.
+    - Cada card de conta recebeu acoes `Abrir`, `Editar` e `DEL`.
+    - Edicao, criacao e exclusao de conta passaram a retornar para a tela `Contas` quando iniciadas por ela.
+    - APK atualizado para `versionCode=28` e `versionName=1.0.27`.
+  - Validacoes:
+    - `assembleDebug` executado com sucesso.
+    - `git diff --check` executado com sucesso.
+    - APK debug gerado em `android-financego/app/build/outputs/apk/debug/app-debug.apk`.
+
 - Data: `2026-05-28`
 - Entrega principal: tela de diagnostico de notificacoes no APK.
 - Resultado entregue:

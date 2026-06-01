@@ -3,6 +3,15 @@
 Registro de prompts que direcionaram implementacoes e ajustes relevantes.
 
 ## Prompts usados para implementacao
+- Objetivo: criar tela nativa de `Contas` no APK para manutencao individual de contas.
+- Prompt base: "Criar tela de Contas no APK para editar / remover contas. Para acessar essa tela o usuario ira acessar a opcao Contas que deve aparecer quando o usuario clicar no botao representado por tres pontos verticiais na parte superior direita da tela de transacoes, logo abaixo de Bancos."
+- Resultado:
+  - Menu de tres pontos da tela principal passou a exibir `Contas` logo abaixo de `Bancos`.
+  - Tela `Contas` criada no APK agrupando contas por banco.
+  - Cada conta recebeu acoes `Abrir`, `Editar` e `DEL`.
+  - Fluxos de criacao, edicao e exclusao de conta passaram a atualizar e retornar para a tela `Contas` quando acionados por ela.
+  - APK atualizado para `1.0.27`.
+
 - Objetivo: criar diagnostico de notificacoes no APK.
 - Prompt base: "Criar tela de diagnóstico no APK para notificações: permissão ativa, último evento capturado, último envio e último erro. Criar um modo de acessar essa tela de diagnóstico pela tela principal de transações do APK, com a opção Configurações..."
 - Resultado:

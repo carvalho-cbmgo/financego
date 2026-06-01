@@ -389,6 +389,47 @@ class MainActivity : Activity() {
     setContentView(scroll(root, refreshSwipe = { refreshBootstrap { showBanksPage(it) } }))
   }
 
+  private fun showAccountsPage(data: JSONObject = bootstrap ?: JSONObject()) {
+    currentBackAction = { showDashboardOrLoadHome() }
+    bootstrap = data
+    val root = screenRoot()
+    root.addView(appHeader("Contas", showBack = true))
+
+    val toolbar = surface().apply {
+      addView(title("Manutenção de contas", 17f))
+      addView(muted("Edite, remova ou abra uma conta específica para conferir as transações vinculadas."))
+      val actions = LinearLayout(this@MainActivity).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+      }
+      actions.addView(primaryButton("Nova conta").apply {
+        textSize = 12f
+        setOnClickListener { openAccountDialog(null) { showAccountsPage(it) } }
+      }, weightWrap(1f))
+      actions.addView(secondaryButton("Atualizar").apply {
+        textSize = 12f
+        setOnClickListener { refreshBootstrap { showAccountsPage(it) } }
+      }, weightWrap(1f))
+      addView(actions)
+    }
+    root.addView(toolbar)
+
+    val accounts = accountsList(data)
+    if (accounts.isEmpty()) {
+      root.addView(emptyState("Nenhuma conta cadastrada. Toque em Nova conta para iniciar."))
+    } else {
+      val byBank = accounts.groupBy { it.optString("institution_name", "Banco").ifBlank { "Banco" } }
+      for ((bankName, bankAccounts) in byBank.toSortedMap()) {
+        root.addView(section(bankName))
+        for (account in bankAccounts.sortedBy { it.optString("name") }) {
+          root.addView(accountMaintenanceCard(data, account))
+        }
+      }
+    }
+
+    setContentView(scroll(root, refreshSwipe = { refreshBootstrap { showAccountsPage(it) } }))
+  }
+
   private fun showCategoriesPage(data: JSONObject = bootstrap ?: JSONObject()) {
     currentBackAction = { showDashboardOrLoadHome() }
     bootstrap = data
@@ -994,6 +1035,61 @@ class MainActivity : Activity() {
     return box
   }
 
+  private fun accountMaintenanceCard(data: JSONObject, account: JSONObject): View = surface().apply {
+    val balance = accountBalance(data, account)
+    val txCount = allTransactions(data).count { it.optString("account_id") == account.optString("id") }
+
+    val header = LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+    }
+    header.addView(LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.VERTICAL
+      addView(LinearLayout(this@MainActivity).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        addView(bankBadge(account.optString("institution_name", "Banco")))
+        addView(typeBadge(account.optString("type"), topMargin = 0))
+      })
+      addView(title(account.optString("name", "Conta"), 16f).apply {
+        setPadding(0, dp(7), 0, dp(2))
+      })
+      addView(muted("${txCount} transação(ões) vinculada(s)"))
+    }, weightWrap(1f))
+    header.addView(TextView(this@MainActivity).apply {
+      text = money(balance)
+      textSize = 15f
+      setTextColor(if (balance < 0) COLOR_DANGER else COLOR_GREEN)
+      setTypeface(typeface, Typeface.BOLD)
+      gravity = Gravity.END
+    })
+    addView(header)
+    addView(summaryLine("Saldo base", money(account.optDouble("balance", 0.0)), COLOR_TEXT))
+
+    val actions = LinearLayout(this@MainActivity).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER_VERTICAL
+      setPadding(0, dp(8), 0, 0)
+    }
+    actions.addView(compactActionButton("Abrir", false).apply {
+      setOnClickListener {
+        showLoading("Carregando...")
+        mainHandler.postDelayed({ showAccountPage(account) }, 140)
+      }
+    }, weightWrap(1f))
+    actions.addView(compactActionButton("Editar", false).apply {
+      setOnClickListener { openAccountDialog(account) { showAccountsPage(it) } }
+    }, weightWrap(1f))
+    actions.addView(compactActionButton("DEL", false).apply {
+      setTextColor(COLOR_DANGER)
+      background = rounded(0xFFFFF5F5.toInt(), dp(1), COLOR_DANGER, dp(12))
+      setOnClickListener {
+        confirmDeleteAccount(account, afterReload = { refreshed -> showAccountsPage(refreshed) })
+      }
+    }, fixed(dp(58), dp(38)))
+    addView(actions)
+  }
+
   private fun addTransactionRows(root: LinearLayout, rows: List<JSONObject>) {
     if (rows.isEmpty()) {
       root.addView(emptyState("Nenhuma transação para o mês selecionado."))
@@ -1333,7 +1429,7 @@ class MainActivity : Activity() {
     dialog.show()
   }
 
-  private fun openAccountDialog(account: JSONObject?) {
+  private fun openAccountDialog(account: JSONObject?, afterReload: ((JSONObject) -> Unit)? = null) {
     val data = bootstrap ?: JSONObject()
     val banks = banksList(data)
     if (banks.isEmpty()) {
@@ -1399,37 +1495,52 @@ class MainActivity : Activity() {
       dialog.dismiss()
       showLoading("Carregando...")
       runAsync(
-        work = { api.saveAccount(payload) },
-        done = { loadHome() },
+        work = {
+          api.saveAccount(payload)
+          api.bootstrap()
+        },
+        done = { afterReload?.invoke(it) ?: showDashboard(it) },
         fail = {
           toast(it)
-          if (account != null) bootstrap?.let { showAccountPage(account) } ?: showLogin()
-          else bootstrap?.let { showDashboard(it) } ?: showLogin()
+          bootstrap?.let { data ->
+            if (afterReload != null) afterReload(data)
+            else if (account != null) showAccountPage(account)
+            else showDashboard(data)
+          } ?: showLogin()
         },
       )
     }
     deleteButton?.setOnClickListener {
       val editingAccount = account ?: return@setOnClickListener
-      AlertDialog.Builder(this)
-        .setTitle("Excluir conta")
-        .setMessage("Deseja realmente excluir esta conta e seus dados vinculados?")
-        .setNegativeButton("Cancelar", null)
-        .setPositiveButton("Excluir") { _, _ ->
-          dialog.dismiss()
-          showLoading("Carregando...")
-          runAsync(
-            work = { api.deleteAccount(editingAccount.optString("id")) },
-            done = { loadHome() },
-            fail = {
-              toast(it)
-              bootstrap?.let { showAccountPage(editingAccount) } ?: showLogin()
-            },
-          )
-        }
-        .show()
+      confirmDeleteAccount(editingAccount, afterReload) { dialog.dismiss() }
     }
 
     dialog.show()
+  }
+
+  private fun confirmDeleteAccount(account: JSONObject, afterReload: ((JSONObject) -> Unit)? = null, beforeDelete: (() -> Unit)? = null) {
+    AlertDialog.Builder(this)
+      .setTitle("Excluir conta")
+      .setMessage("Deseja realmente excluir ${account.optString("name", "esta conta")} e seus dados vinculados?")
+      .setNegativeButton("Cancelar", null)
+      .setPositiveButton("Excluir") { _, _ ->
+        beforeDelete?.invoke()
+        showLoading("Carregando...")
+        runAsync(
+          work = {
+            api.deleteAccount(account.optString("id"))
+            api.bootstrap()
+          },
+          done = { afterReload?.invoke(it) ?: showDashboard(it) },
+          fail = {
+            toast(it)
+            bootstrap?.let { data ->
+              if (afterReload != null) afterReload(data) else showAccountPage(account)
+            } ?: showLogin()
+          },
+        )
+      }
+      .show()
   }
 
   private fun simpleSelected(onSelected: () -> Unit) = object : android.widget.AdapterView.OnItemSelectedListener {
@@ -1860,7 +1971,7 @@ class MainActivity : Activity() {
     val labels = if (editAccount != null) {
       arrayOf("Edição de Conta", "Atualizar", "Perfil")
     } else {
-      arrayOf("Configurações", "Categorias", "Bancos", "Adicionar Conta", "Atualizar", "Perfil")
+      arrayOf("Configurações", "Categorias", "Bancos", "Contas", "Adicionar Conta", "Atualizar", "Perfil")
     }
     AlertDialog.Builder(this)
       .setItems(labels) { dialog, which ->
@@ -1869,6 +1980,7 @@ class MainActivity : Activity() {
           "Configurações" -> showSettingsPage()
           "Categorias" -> showCategoriesPage()
           "Bancos" -> showBanksPage()
+          "Contas" -> showAccountsPage()
           "Adicionar Conta" -> openAccountDialog(null)
           "Edição de Conta" -> editAccount?.let { openAccountDialog(it) }
           "Atualizar" -> loadHome()
