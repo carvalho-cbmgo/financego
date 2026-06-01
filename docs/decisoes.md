@@ -610,3 +610,18 @@ Registro das decisoes arquiteturais, de interface e de dados.
 - Decisao: manter os gestos verticais de atualizacao e horizontais de troca de mes no mesmo detector, mas com limiares distintos.
 - Motivo: evitar conflito entre rolagem normal, puxar para atualizar e swipe lateral de mes.
 - Impacto: swipe lateral continua alterando o mes de referencia; puxar para baixo so atualiza quando iniciado no topo da tela.
+
+- Data: `2026-06-01`
+- Decisao: notificacoes automaticas so podem ser interpretadas como transacoes quando a origem do pacote/app for banco ou financeira confiavel.
+- Motivo: textos com `R$`, `pagamento`, `compra` ou `pix` podem aparecer em aplicativos nao bancarios, como o `KMV`, gerando falsos positivos.
+- Impacto: o APK bloqueia fontes nao bancarias antes do envio e o backend rejeita payloads nao confiaveis caso cheguem por reenvio/API.
+
+- Data: `2026-06-01`
+- Decisao: adicionar `PORTOBANK` como banco oficial (`bankKey=portobank`).
+- Motivo: o usuario informou `PORTOBANK` como uma das fontes reais de notificacoes bancarias a serem reconhecidas.
+- Impacto: notificacoes do Porto Bank podem gerar banco/conta automaticamente e importacoes manuais exibem `Portobank` como parser.
+
+- Data: `2026-06-01`
+- Decisao: compras do NuBank sem a palavra explicita `credito` devem preferir conta do tipo `CREDIT_CARD` quando a origem for NuBank e o texto indicar compra/aprovacao.
+- Motivo: algumas notificacoes de cartao do NuBank informam apenas `Compra aprovada` e valor/estabelecimento, sem repetir `cartao de credito`.
+- Impacto: reduz risco de registrar compra de cartao em conta corrente automatica.

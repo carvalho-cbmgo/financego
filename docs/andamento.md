@@ -742,3 +742,28 @@ Documento vivo para registrar o estado do projeto e permitir continuidade em qua
 - APK gerado:
   - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
   - Versao: `1.0.25` / `versionCode 26`.
+
+- Data: `2026-06-01`
+- Entrega principal: filtro consistente de notificacoes bancarias no APK e backend para evitar falsos positivos e melhorar captura de cartao.
+- Resultado entregue:
+  - Android nativo:
+    - Listener deixou de aceitar notificacoes apenas por conterem termos financeiros (`R$`, `pagamento`, `compra`, `pix`).
+    - Uma notificacao agora so e candidata se a origem do pacote/app for banco ou instituicao financeira conhecida.
+    - Notificacoes do `KMV` e fontes nao bancarias semelhantes passam a ser ignoradas antes do envio ao backend.
+    - Lista confiavel reforcada para `NUBANK`, `BTG`, `CAIXA`, `PORTOBANK` e demais bancos/financeiras ja suportados.
+    - Termos reais de cartao foram ampliados (`compr`, `aprovad`, `autorizad`, `valor`, `R$`, `BRL`) para capturar melhor notificacoes de cartao de credito, especialmente do NuBank.
+    - APK debug atualizado para `versionCode 27` e `versionName 1.0.26`.
+  - Backend/API:
+    - Parser de notificacoes passou a rejeitar payloads cuja origem (`packageName/appName`) nao seja banco confiavel, mesmo que o texto mencione dinheiro.
+    - `PORTOBANK` foi adicionado como `bankKey` oficial e mapeado para criacao/associacao de banco e conta.
+    - A inferencia de conta para notificacoes de compra do NuBank ficou mais agressiva para `CREDIT_CARD`, evitando criacao/uso incorreto de conta corrente quando a notificacao de compra nao menciona explicitamente `credito`.
+    - Importacao manual por extrato tambem passou a oferecer `BTG` e `Portobank` no seletor de banco/parser.
+- Validacoes executadas:
+  - Simulacao local confirmou: `KMV` retorna `null`; `Nubank`, `BTG`, `CAIXA` e `Portobank` sao reconhecidos com banco/tipo/valor corretos.
+  - `npm run build` com sucesso.
+  - `npx tsc --noEmit` com sucesso apos o build regenerar `.next/types`.
+  - `:app:assembleDebug` com sucesso apos limpeza segura da pasta gerada `android-financego/app/build` travada pelo Gradle/Windows.
+  - `git diff --check` com sucesso.
+- APK gerado:
+  - `android-financego/app/build/outputs/apk/debug/app-debug.apk`
+  - Versao: `1.0.26` / `versionCode 27`.

@@ -51,6 +51,8 @@ export async function POST(req: Request) {
   if (!parsed) return NextResponse.json({ ok: true, parsed: false, event_id: event?.id });
 
   const preferredAccountType = inferPreferredAccountTypeFromNotification({
+    packageName: body.packageName || body.package_name,
+    appName: body.appName || body.app_name,
     title: body.title,
     text: body.text,
     bigText: body.bigText || body.big_text,

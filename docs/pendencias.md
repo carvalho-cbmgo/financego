@@ -376,3 +376,24 @@ Backlog operacional para manter visibilidade do que ainda precisa ser entregue.
 - Como reproduzir: abrir telas mensais do APK `1.0.25`, testar rolagem vertical, puxar para atualizar no topo e swipe horizontal para mes anterior/posterior.
 - Status: pendente de teste fisico em campo
 - Responsavel: time de desenvolvimento
+
+- ID: `NTF-040`
+- Descricao: validar em celular real que notificacoes do KMV e outros apps nao bancarios com termos financeiros nao geram transacoes.
+- Severidade: alta
+- Como reproduzir: instalar APK `1.0.26`, receber notificacao do KMV ou app nao bancario contendo `R$`, `pagamento`, `compra` ou `pix`, e confirmar que nenhuma transacao e criada.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `NTF-041`
+- Descricao: validar em celular real que notificacoes de compra no cartao do NuBank sao capturadas e registradas imediatamente como despesa em conta `CREDIT_CARD`.
+- Severidade: critica
+- Como reproduzir: instalar APK `1.0.26`, conceder acesso a notificacoes, realizar compra no cartao NuBank, abrir diagnostico e confirmar ultimo evento/ultimo envio e transacao criada no FinanceGO.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento
+
+- ID: `NTF-042`
+- Descricao: validar em celular real notificacoes bancarias de `BTG`, `CAIXA` e `PORTOBANK` apos reforco do filtro por origem confiavel.
+- Severidade: alta
+- Como reproduzir: instalar APK `1.0.26`, receber notificacoes reais desses bancos e confirmar registro automatico com banco, conta, tipo e valor corretos.
+- Status: pendente de teste fisico em campo
+- Responsavel: time de desenvolvimento

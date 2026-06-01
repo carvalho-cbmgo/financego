@@ -11,6 +11,7 @@ const BANK_LABEL_BY_KEY: Record<BankKey, string> = {
   banco_do_brasil: "BANCO DO BRASIL",
   caixa: "CAIXA",
   btg: "BTG",
+  portobank: "PORTOBANK",
   c6: "C6",
   inter: "INTER",
   mercado_pago: "MERCADO PAGO",
@@ -54,6 +55,7 @@ export function bankKeyFromBankName(bankName?: string | null): BankKey {
   if (/banco do brasil|\bbb\b/.test(s)) return "banco_do_brasil";
   if (/caixa/.test(s)) return "caixa";
   if (/btg|pactual/.test(s)) return "btg";
+  if (/portobank|porto bank|porto seguro bank|porto seguro cartao|porto cartao/.test(s)) return "portobank";
   if (/\bc6\b/.test(s)) return "c6";
   if (/inter/.test(s)) return "inter";
   if (/mercado pago/.test(s)) return "mercado_pago";

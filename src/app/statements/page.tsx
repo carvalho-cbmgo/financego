@@ -101,6 +101,8 @@ export default async function StatementsPage() {
                 <option value="santander">Santander</option>
                 <option value="banco_do_brasil">Banco do Brasil</option>
                 <option value="caixa">Caixa</option>
+                <option value="btg">BTG</option>
+                <option value="portobank">Portobank</option>
                 <option value="c6">C6</option>
                 <option value="inter">Inter</option>
                 <option value="mercado_pago">Mercado Pago</option>

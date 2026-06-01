@@ -439,3 +439,13 @@ Registro de prompts que direcionaram implementacoes e ajustes relevantes.
   - O gesto exibe `Carregando...`, executa novo `api.bootstrap()` e redesenha a tela aberta com dados atualizados.
   - O detector preserva o swipe horizontal de troca de mes.
   - APK debug `1.0.25` gerado com sucesso.
+
+- Objetivo: corrigir falso positivo do KMV e melhorar captura de notificacoes bancarias reais, principalmente NuBank cartao.
+- Prompt base: "No apk FinanceGO, o aplicativo identificou de forma errônea que uma notificação do KMV era uma transação... várias notificações de transações no cartão de crédito, principalmente do NUBANK... não fez a identificação automática tampouco o registro delas."
+- Resultado:
+  - APK passou a aceitar notificacoes candidatas somente quando `packageName/appName` pertencem a banco/financeira confiavel.
+  - Backend passou a aplicar a mesma regra, rejeitando payloads nao bancarios mesmo com texto financeiro.
+  - `PORTOBANK` foi adicionado como banco oficial.
+  - Notificacoes de compra do NuBank passaram a preferir conta `CREDIT_CARD` quando a origem e NuBank e o texto indica compra/aprovacao.
+  - Simulacoes confirmaram KMV ignorado e NuBank/BTG/CAIXA/Portobank reconhecidos.
+  - APK debug `1.0.26` gerado com sucesso.

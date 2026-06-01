@@ -9,6 +9,7 @@ export type BankKey =
   | "banco_do_brasil"
   | "caixa"
   | "btg"
+  | "portobank"
   | "c6"
   | "inter"
   | "mercado_pago"
@@ -270,24 +271,38 @@ function extractMerchant(text: string) {
   return cleaned.length >= 3 ? cleaned.slice(0, 80) : undefined;
 }
 
+function detectKnownBankFromNormalizedSource(source: string): BankKey | null {
+  if (/\bnu\s+production\b|\bnubank\b|\bnu\s+bank\b|\bnu\b/.test(source)) return "nubank";
+  if (/\bitau\b|\bitaucard\b/.test(source)) return "itau";
+  if (/\bbradesco\b/.test(source)) return "bradesco";
+  if (/\bsantander\b/.test(source)) return "santander";
+  if (/\bbb\s+android\b|\bbanco\s+do\s+brasil\b|\bbb\b/.test(source)) return "banco_do_brasil";
+  if (/\bcaixa\b|\bcaixatem\b|\bcaixa\s+tem\b|\bgov\s+caixa\b|\bbr\s+com\s+gabba\b/.test(source)) return "caixa";
+  if (/\bbtg\b|\bbtgpactual\b|\bbtg\s+pactual\b|\bpactual\b/.test(source)) return "btg";
+  if (/\bportobank\b|\bporto\s+bank\b|\bporto\s+seguro\s+bank\b|\bporto\s+seguro\s+cartoes?\b|\bporto\s+cartoes?\b|\bbr\s+com\s+portoseguro\b.*\bbank\b/.test(source)) return "portobank";
+  if (/\bc6bank\b|\bc6\s+bank\b|\bc6\b/.test(source)) return "c6";
+  if (/\bbancointer\b|\bbanco\s+inter\b|\binter\b/.test(source)) return "inter";
+  if (/\bmercadopago\b|\bmercado\s+pago\b/.test(source)) return "mercado_pago";
+  if (/\bpicpay\b/.test(source)) return "picpay";
+
+  return null;
+}
+
+export function detectTrustedBankNotificationSource(input: {
+  packageName?: string | null;
+  appName?: string | null;
+}): BankKey | null {
+  return detectKnownBankFromNormalizedSource(normalize([input.packageName, input.appName].filter(Boolean).join(" ")));
+}
+
 export function detectBankFromPackageOrText(input: {
   packageName?: string | null;
   appName?: string | null;
   text?: string | null;
 }): BankKey {
   const s = normalize([input.packageName, input.appName, input.text].filter(Boolean).join(" "));
-
-  if (/nu\.production|nubank|nu bank|\bnu\b/.test(s)) return "nubank";
-  if (/itau|itaucard/.test(s)) return "itau";
-  if (/bradesco/.test(s)) return "bradesco";
-  if (/santander/.test(s)) return "santander";
-  if (/bb\.android|banco do brasil|\bbb\b/.test(s)) return "banco_do_brasil";
-  if (/caixa|br\.com\.gabba|caixatem|caixa tem|gov\.caixa/.test(s)) return "caixa";
-  if (/btg|btgpactual|btg pactual|pactual/.test(s)) return "btg";
-  if (/c6bank|c6 bank/.test(s)) return "c6";
-  if (/bancointer|inter/.test(s)) return "inter";
-  if (/mercadopago|mercado pago/.test(s)) return "mercado_pago";
-  if (/picpay/.test(s)) return "picpay";
+  const detected = detectKnownBankFromNormalizedSource(s);
+  if (detected) return detected;
 
   return "generic";
 }
@@ -316,6 +331,12 @@ export function parseNotificationByBank(input: {
   profileFullName?: string | null;
 }): ParsedBankTransaction | null {
   if (isIgnoredNotificationSource(input)) return null;
+  const bankKey = detectTrustedBankNotificationSource({
+    packageName: input.packageName,
+    appName: input.appName,
+  });
+
+  if (!bankKey) return null;
 
   const textLines = Array.isArray(input.textLines) ? input.textLines.join(" | ") : String(input.textLines || "");
   const allText = [
@@ -328,12 +349,6 @@ export function parseNotificationByBank(input: {
     textLines,
     input.extraText,
   ].filter(Boolean).join(" | ");
-
-  const bankKey = detectBankFromPackageOrText({
-    packageName: input.packageName,
-    appName: input.appName,
-    text: allText,
-  });
 
   const full = [input.appName, allText].filter(Boolean).join(" | ");
   const money = parseMoneyBR(full);
@@ -406,6 +421,8 @@ export function parseNotificationByBank(input: {
 }
 
 export function inferPreferredAccountTypeFromNotification(input: {
+  packageName?: string | null;
+  appName?: string | null;
   title?: string | null;
   text?: string | null;
   bigText?: string | null;
@@ -416,6 +433,10 @@ export function inferPreferredAccountTypeFromNotification(input: {
   extraText?: string | null;
 }): "CHECKING_ACCOUNT" | "CREDIT_CARD" {
   const textLines = Array.isArray(input.textLines) ? input.textLines.join(" | ") : String(input.textLines || "");
+  const bankKey = detectTrustedBankNotificationSource({
+    packageName: input.packageName,
+    appName: input.appName,
+  });
   const s = normalize([
     input.title,
     input.text,
@@ -426,6 +447,10 @@ export function inferPreferredAccountTypeFromNotification(input: {
     textLines,
     input.extraText,
   ].filter(Boolean).join(" | "));
+
+  const isPixOrTransfer = /\bpix\b|transferencia|\bted\b|\bdoc\b/.test(s);
+  const isPurchase = /compra|comprou|aprovad|pagamento|parcela|estabelecimento/.test(s);
+  if (bankKey === "nubank" && isPurchase && !isPixOrTransfer) return "CREDIT_CARD";
 
   const isCreditCard = /cartao|cartoes|cart.?o|credito.*aprovad|cr.?dito.*aprovad|compra.*credito|compra.*cr.?dito|compra no credito|compra no cr.?dito|fatura.*cartao|fatura.*cart.?o|limite.*cartao|limite.*cart.?o/.test(s);
   return isCreditCard ? "CREDIT_CARD" : "CHECKING_ACCOUNT";

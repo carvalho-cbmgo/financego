@@ -113,19 +113,21 @@ class FinanceNotificationListener : NotificationListenerService() {
   }
 
   private fun looksFinancial(packageName: String, appName: String, text: String): Boolean {
-    val source = "$packageName $appName $text".lowercase()
-    val knownBank = Regex(
-      "nu\\.production|nubank|nu bank|\\bnu\\b|caixa|caixatem|caixa tem|br\\.com\\.gabba|gov\\.caixa|btg|btgpactual|btg pactual|pactual|itau|itaú|bradesco|santander|bancointer|inter|c6bank|c6 bank|mercado pago|mercadopago|picpay|banco do brasil|bb"
-    ).containsMatchIn(source)
+    val source = "$packageName $appName".lowercase()
+    if (!isTrustedBankNotificationSource(source)) return false
+
+    val content = "$source $text".lowercase()
     val hasFinancialAction = Regex(
-      "r\\$|brl|pix|compra|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|pagamento|recebido|recebida|enviado|enviada|aprovad|estorno|reembolso|fatura|boleto|saque|ted|doc|deposito|dep[oó]sito"
+      "r\\$|brl|\\d+[,.]\\d{2}|pix|compr|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|pagamento|recebido|recebida|enviado|enviada|aprovad|autorizad|estorno|reembolso|fatura|boleto|saque|ted|doc|deposito|dep[oó]sito|valor"
+    ).containsMatchIn(content)
+
+    return hasFinancialAction
+  }
+
+  private fun isTrustedBankNotificationSource(source: String): Boolean {
+    return Regex(
+      "nu\\.production|nubank|nu bank|\\bnu\\b|caixa|caixatem|caixa tem|br\\.com\\.gabba|gov\\.caixa|btg|btgpactual|btg pactual|pactual|portobank|porto bank|porto seguro bank|porto seguro cart[oõ]es?|porto cart[oõ]es?|itau|itaú|bradesco|santander|bancointer|banco inter|c6bank|c6 bank|mercado pago|mercadopago|picpay|banco do brasil|bb"
     ).containsMatchIn(source)
-
-    if (!knownBank && !hasFinancialAction) {
-      return false
-    }
-
-    return knownBank || Regex("pix|cart[aã]o|r\\$|brl|compra|transfer[eê]ncia|pagamento|estorno|reembolso").containsMatchIn(source)
   }
 
   private fun isIgnoredNotificationSource(packageName: String, appName: String): Boolean {
